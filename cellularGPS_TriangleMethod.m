@@ -1,4 +1,4 @@
-function [level]=SEGMENTATION_TriangleMethod(lehisto)
+function [level]=cellularGPS_TriangleMethod(lehisto)
 %     Triangle algorithm
 %     This technique is due to Zack (Zack GW, Rogers WE, Latt SA (1977), 
 %     "Automatic measurement of sister chromatid exchange frequency", 
