@@ -67,8 +67,14 @@ SizeOfSmoothingFilter=MinDiameter;
 BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
 
 % THRESHOLDING
-ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
+ThresholdedImage = imfill(OriginalImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
+
+LinearImage = double(OriginalImage(:));
+LinearImage = LinearImage(LinearImage <= quantile(LinearImage, 0.75));
+% [y,x] = hist(LinearImage, 100);
+% threshold = x((cellularGPS_TriangleMethod(y) * length(x))-1);
+
 Objects = imfill(edgeImage + im2bw(BlurredImage, graythresh(BlurredImage)), 'holes') & ThresholdedImage;
 Objects = imopen(Objects, strel('disk',2));
 Objects = imclearborder(Objects);
