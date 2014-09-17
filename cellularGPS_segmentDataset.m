@@ -1,4 +1,5 @@
 %% cellularGPS_segmentDataset
+% Find centroids for cells based upon a nuclear marker or signal.
 %
 %   [] = cellularGPS_segmentDataset(database, rawDataPath, segmentDataPath, channel)
 %
