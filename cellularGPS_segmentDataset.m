@@ -1,3 +1,23 @@
+%% cellularGPS_segmentDataset
+% 
+%   [] = cellularGPS_segmentDataset(database, rawDataPath, segmentDataPath, channel)
+%
+%%% Input
+% * database: database table of SuperMDA format.
+% * rawDataPath: path to the folder of images.
+% * segmentDataPath: output folder for segmented images
+% * channel: a string. The name of the channel used for segmentation.
+%
+%%% Output:
+% For each position from the dataset a table of centroid information is
+% created. For each image of a particular _channel_, a segmentation file is
+% created.
+%
+%%% Detailed Description
+% There is no detailed description.
+%
+%%% Other Notes
+% 
 function [] = cellularGPS_segmentDataset(database, rawDataPath, segmentDataPath, channel)
 tic
     database = database(strcmp(database.channel_name, channel),:);
@@ -11,8 +31,8 @@ tic
             files = find(strcmp(database.group_label, selectedGroup) & database.position_number == selectedPosition);
             centroidTable = repmat({zeros(500,3)},length(files),1);
             centroidNumber = zeros(length(files),1);
-            parfor k=1:length(files)
-                timepoint = database.timepoint(files(k));
+            parfor k=1:length(files) %#ok<PFUIX>
+                timepoint = database.timepoint(files(k)); %#ok<PFBNS>
                 IM = imread(fullfile(rawDataPath, database.filename{files(k)}));
                 IM = imbackground(IM, 10, 100);
                 [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
@@ -32,6 +52,5 @@ tic
             writetable(allCentroids, fullfile(segmentDataPath, sprintf('%s_s%d_w%d%s_centroidsTable.txt', selectedGroup, selectedPosition, database.channel_number(k), channel)), 'Delimiter', '\t');
         end
     end
-    
 toc
 end

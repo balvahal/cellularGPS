@@ -36,8 +36,11 @@
 % There is no detailed description.
 %
 %%% Other Notes
-% It is assumed that the origin is in the ULC and _x_ increases due east
+% It is assumed that the origin is in the ULC and _x_ increases from left
+% to right and _y_ increases from top to bottom.
 function [ObjectsLabeled, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
+%% Parse Input
+% and initilize and allocate memory for variables
 defaultMinDiameter = 25;
 defaultImageResizeFactor = 0.25;
 defaultMaximaSuppressionSize = 10;
@@ -67,7 +70,8 @@ OriginalImage_normalized = imnormalize(double(OriginalImage_medianFilter));
 SizeOfSmoothingFilter=MinDiameter;
 BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
 
-% THRESHOLDING
+%% THRESHOLDING
+%
 ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
 Objects = imfill(edgeImage + im2bw(BlurredImage, graythresh(BlurredImage)), 'holes') & ThresholdedImage;
@@ -108,7 +112,8 @@ Objects = Objects & ~primarySegmentation;
 BlurredImage(~Objects) = 0;
 
 if(sum(logical(Objects(:))) > 0)
-    % IDENTIFY LOCAL MAXIMA IN THE INTENSITY OF DISTANCE TRANSFORMED IMAGE
+    %%% IDENTIFY LOCAL MAXIMA IN THE INTENSITY OF DISTANCE TRANSFORMED IMAGE
+    %
     if strcmp(p.Results.LocalMaximaType, 'Intensity')
         BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
         BlurredImage(~Objects) = 0;
@@ -130,7 +135,8 @@ if(sum(logical(Objects(:))) > 0)
         MaximaImage = bwmorph(MaximaImage,'shrink',inf);
     end
     
-    %GENERATE WATERSHEDS TO SEPARATE TOUCHING NUCLEI
+    %%% GENERATE WATERSHEDS TO SEPARATE TOUCHING NUCLEI
+    %
     if strcmp(p.Results.WatershedTransformImageType,'Intensity')
         %%% Overlays the objects markers (maxima) on the inverted original
         %%% image so there are black dots on top of each dark object on a

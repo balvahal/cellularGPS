@@ -1,4 +1,4 @@
-function [Centroids] = table2centroids(matrixData, varargin)
+function [Centroids] = cellularGPS_table2centroids(matrixData, varargin)
 p = inputParser;
 p.addRequired('matrixData', @istable);
 addOptional(p,'maxrows', size(matrixData,1), @isnumeric);
