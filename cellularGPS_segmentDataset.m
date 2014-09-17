@@ -7,6 +7,7 @@ tic
         uniquePositions = unique(database.position_number(strcmp(database.group_label, selectedGroup)));
         for j=1:length(uniquePositions)
             selectedPosition = uniquePositions(j);
+            fprintf('Analyzing position %d\n', selectedPosition);
             files = find(strcmp(database.group_label, selectedGroup) & database.position_number == selectedPosition);
             centroidTable = repmat({zeros(500,3)},length(files),1);
             centroidNumber = zeros(length(files),1);
