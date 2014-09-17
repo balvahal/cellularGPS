@@ -37,7 +37,7 @@
 %
 %%% Other Notes
 % It is assumed that the origin is in the ULC and _x_ increases due east
-function [ObjectsLabeled] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
+function [ObjectsLabeled, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
 defaultMinDiameter = 25;
 defaultImageResizeFactor = 0.25;
 defaultMaximaSuppressionSize = 10;
@@ -62,22 +62,17 @@ ImageResizeFactor = p.Results.ImageResizeFactor;
 MaximaSuppressionSize = p.Results.MaximaSuppressionSize;
 MinimumThreshold = p.Results.MinimumThreshold;
 
-OriginalImage_normalized = imnormalize(double(OriginalImage));
+OriginalImage_medianFilter = medfilt2(OriginalImage, [2,2]);
+OriginalImage_normalized = imnormalize(double(OriginalImage_medianFilter));
 SizeOfSmoothingFilter=MinDiameter;
 BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
 
 % THRESHOLDING
-ThresholdedImage = imfill(OriginalImage > MinimumThreshold, 'holes');
+ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
-
-LinearImage = double(OriginalImage(:));
-LinearImage = LinearImage(LinearImage <= quantile(LinearImage, 0.75));
-% [y,x] = hist(LinearImage, 100);
-% threshold = x((cellularGPS_TriangleMethod(y) * length(x))-1);
-
 Objects = imfill(edgeImage + im2bw(BlurredImage, graythresh(BlurredImage)), 'holes') & ThresholdedImage;
 Objects = imopen(Objects, strel('disk',2));
-Objects = imclearborder(Objects);
+% Objects = imclearborder(Objects);
 
 % FIRST-TIER OBJECT: Keep round objects as they are to avoid
 % over-segmenting
@@ -159,4 +154,6 @@ end
 props = regionprops(ObjectsLabeled, 'Area');
 ObjectsLabeled = ObjectsLabeled .* ismember(ObjectsLabeled, find([props.Area] >= p.Results.AreaThreshold));
 ObjectsLabeled = bwlabel(ObjectsLabeled);
+Centroids = regionprops(ObjectsLabeled, 'Centroid');
+Centroids = reshape([Centroids.Centroid],2,length(Centroids))';
 end
