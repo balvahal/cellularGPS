@@ -37,7 +37,7 @@ for i=1:length(uniqueGroups);
         selectedPosition = uniquePositions(j);
         fprintf('Analyzing position %d\n', selectedPosition);
         files = find(strcmp(database.group_label, selectedGroup) & database.position_number == selectedPosition);
-        centroidTable = repmat({zeros(500,3)},length(files),1);
+        centroidTable = repmat({zeros(2^8,3)},length(files),1);
         centroidNumber = zeros(length(files),1);
         parfor k=1:length(files) %#ok<PFUIX>
             timepoint = database.timepoint(files(k)); %#ok<PFBNS>
@@ -51,12 +51,12 @@ for i=1:length(uniqueGroups);
             imwrite(Objects, fullfile(segmentDataPath,'segmentation_images',outputFilename{1}), 'tif');
         end
         allCentroids = zeros(sum(centroidNumber),3);
-        counter = 1;
+        numberOfCentroidsCounter = 1;
         for k=1:length(files)
-            allCentroids(counter:(counter+centroidNumber(k)-1),:) = centroidTable{k}(1:centroidNumber(k),:);
-            counter = counter + centroidNumber(k);
+            allCentroids(numberOfCentroidsCounter:(numberOfCentroidsCounter+centroidNumber(k)-1),:) = centroidTable{k}(1:centroidNumber(k),:);
+            numberOfCentroidsCounter = numberOfCentroidsCounter + centroidNumber(k);
         end
-        allCentroids = array2table(allCentroids, 'VariableNames', {'centroid_row', 'centroid_col', 'timepoint'});
+        allCentroids = array2table(allCentroids, 'VariableNames', {'centroid_col', 'centroid_row', 'timepoint'});
         tableFilename = sprintf('%s_s%d_w%d%s_centroidsTable.txt', selectedGroup, selectedPosition, database.channel_number(k), channel);
         writetable(allCentroids, fullfile(segmentDataPath,'tables',tableFilename), 'Delimiter', '\t');
     end
