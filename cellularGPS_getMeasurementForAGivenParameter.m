@@ -1,4 +1,4 @@
-function [myMeasurements] = cellularGPS_getMeasurementForAGivenParameter(measurementName,moviePath,centroidMegaTable,channelName)
+function [myMeasurements] = cellularGPS_getMeasurementForAGivenParameter(measurementName,moviePath,centroidTable,channelNumber)
 switch lower(measurementName)
     case 'meanintensity'
         measFun = @cellularGPSMeasurement_meanIntensity;
@@ -6,15 +6,18 @@ switch lower(measurementName)
         measFun = @cellularGPSMeasurement_totalIntensity;
     otherwise
         warning('cGPS:getMeas','Unknown measurement parameter or type, ''%s'', was found in measurement profile.',measurementName);
-        myMeasurements = zeros(height(centroidMegaTable,1));
+        myMeasurements = zeros(height(centroidTable,1));
         return
 end
-myMeasurements = centroidFun(measFun,moviePath,centroidMegaTable,channelName);
+myMeasurements = centroidFun(measFun,moviePath,centroidTable,channelName);
 end
 
-function [myMeasurements] = centroidFun(measFun,moviePath,centroidMegaTable,channelName)
-myMeasurements = cell(numberOfPositions,1);
-database = readtable(fullfile(moviePath,'smda_database.txt'));
+function [myMeasurements] = centroidFun(measFun,moviePath,centroidTable,channelNumber)
+%%%
+% This will not work unless all timepoints have data for the same channel.
+timepoints = unique(centroidTable.timepoint);
+myMeasurements = cell(size(timepoints));
+smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'));
 myFilenames
 myFilenamesIndices = cell(size(myFilenames));
     indStart = 1;

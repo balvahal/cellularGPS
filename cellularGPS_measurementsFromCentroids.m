@@ -38,11 +38,17 @@ end
 % a single image from a group, position, and settings (GPS) will be
 % analyzed. z-stack data must be collapsed into a single image file to be
 % analyzed.
+%
+% The positions from the SuperMDA are always independent of the group, so
+% the group can be ignored. From the measurement perspective we want to
+% find measurements across all settings, so again the position becomes the
+% pivot point.
 myDirectory = dir(fullfile(moviePath,'SEGMENT_DATA','tables'));
 filenamesInDirectory = {myDirectory(:).name};
 centroidsTableInDirectoryLogical = cellfun(@(x) ~isempty(regexp(x,'centroidsTable.txt$','ONCE')),filenamesInDirectory);
 centroidsTableFilenames = filenamesInDirectory(centroidsTableInDirectoryLogical);
-centroidsTables = cell(length(centroidsTableFilenames));
+centroidsTables = cell(length(centroidsTableFilenames),1);
+positionArray = zeros(length(centroidsTableFilenames),1);
 for i = 1:length(centroidsTables) %floop 1
     centroidsTables{i} = readtable(fullfile(moviePath,'SEGMENT_DATA','tables',centroidsTableFilenames{i}),'Delimiter','\t');
     %%%
@@ -51,19 +57,21 @@ for i = 1:length(centroidsTables) %floop 1
     floop1p1 = '(?<position>\d+)';
     floop1expr = ['.*_s' floop1p1 '.*'];
     floop1GPS = regexp(centroidsTableFilenames{i},floop1expr,'names');
-    floop1GPS.position = str2double(floop1GPS.position);
-    %%%
-    % The metadata is converted into a tabular format and appeneded to the
-    % centroid data.
-    floop1numberOfCentroids = height(centroidsTables{i});
-    floop1table = table(repmat({floop1GPS.group},floop1numberOfCentroids,1),repmat(floop1GPS.position,floop1numberOfCentroids,1),repmat(floop1GPS.settings,floop1numberOfCentroids,1),'VariableNames',{'group_label','position_number','settings_number'});
-    centroidsTables{i} = horzcat(centroidsTables{i},floop1table);
+    positionArray(i) = str2double(floop1GPS.position);
 end
 %%%
-% The centroidsTables were stored as individual files for each position,
-% which is inconvenient from a programming perspective. Therefore, all this
-% data is consolidated into one large "MEGA" table.
-centroidMegaTable = centroidsTables;
+% Find the all the channel numbers for each position and the channel names.
+smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+channelNumbers = cell(size(positionArray));
+for i = 1:length(positionArray)
+    channelNumbers{i} = unique(smdaDatabase.channel_number(smdaDatabase.position_number==positionArray(i)));
+end
+channelNumbersUnique = unique(vertcat(channelNumbers{:}));
+channelNames = cell(size(channelNumbersUnique));
+for i = 1:length(channelNumbersUnique)
+    myind = find(smdaDatabase.channel_number == channelNumbersUnique(i),1,'first');
+    channelNames{i} = sprintf('%s_w%d',smdaDatabase.channel_name{myind},channelNumbersUnique(i));
+end
 %% Determine which measurements to take
 % The measurements are specified in a JSON object called
 % |cGPS_measurementsProfile.txt|. Look at the list of measurement types for
@@ -75,12 +83,19 @@ if ~exist('loadjson','file')
 end
 measurementsProfile = loadjson(fullfile(moviePath,'cGPS_measurementsProfile.txt'));
 measurementsParameters = measurementsProfile.parameters;
-myMeasurements = cell(size(measurementsParameters));
+numberOfGPS = sum(cellfun(@numel,channelNumbers));
+measurement = cell(numberOfGPS*length(measurementsParameters),1);
+measurementName = cell(size(measurement));
 %%%
-% find _channelNames_
-for i = 1:length(channelNames)
-for j = 1:length(myMeasurements)
-    myMeasurements{i} = cellularGPS_getMeasurementForAGivenParameter(measurementsParameters{i},moviePath,centroidMegaTable);
-end
+%
+measCounter = 0;
+for i = 1:length(measurementsParameters)
+    for j = 1:length(positionArray)
+        for k = 1:length(channelNumbers{j})
+            measCounter = measCounter + 1;
+            measurement{measCounter} = cellularGPS_getMeasurementForAGivenParameter(measurementsParameters{i},moviePath,centroidsTables{j},channelNumbers{j}(k));
+            measurementName{measCounter} = sprintf('%s_%s',measurementsParameters{i},channelNames{channelNumbers{j}(k)});
+        end
+    end
 end
 end
