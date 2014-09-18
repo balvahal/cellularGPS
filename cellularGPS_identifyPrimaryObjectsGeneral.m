@@ -51,6 +51,7 @@ defaultMinimumThreshold = 250;
 p = inputParser;
 p.addRequired('OriginalImage', @isnumeric);
 addOptional(p,'LocalMaximaType', 'Shape', @(x) any(strcmp(x,{'Shape','Intensity'})));
+addOptional(p,'KnownCentroids', @isnumeric);
 addOptional(p,'WatershedTransformImageType', 'Distance', @(x) any(strcmp(x,{'Distance','Intensity'})))
 addOptional(p,'MinDiameter', defaultMinDiameter, @isnumeric)
 addOptional(p,'ImageResizeFactor', defaultImageResizeFactor, @isnumeric)
@@ -74,7 +75,7 @@ BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(Siz
 %
 ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
-Objects = imfill(edgeImage + im2bw(BlurredImage, graythresh(BlurredImage)), 'holes') & ThresholdedImage;
+Objects = imfill(edgeImage + (OriginalImage > cellularGPS_TriangleMethod(OriginalImage)), 'holes') & ThresholdedImage;
 Objects = imopen(Objects, strel('disk',2));
 % Objects = imclearborder(Objects);
 
