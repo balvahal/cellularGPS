@@ -75,7 +75,7 @@ BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(Siz
 %
 ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
-Objects = imfill(edgeImage + (OriginalImage > cellularGPS_TriangleMethod(OriginalImage)), 'holes') & ThresholdedImage;
+Objects = imfill(edgeImage + (OriginalImage > cellularGPS_TriangleMethod(OriginalImage, 0.975)), 'holes') & ThresholdedImage;
 Objects = imopen(Objects, strel('disk',2));
 % Objects = imclearborder(Objects);
 

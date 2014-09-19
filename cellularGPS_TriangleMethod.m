@@ -16,11 +16,12 @@
 %
 %%% Other Notes
 % 
-function [trithresh] = cellularGPS_TriangleMethod(I)
+function [trithresh] = cellularGPS_TriangleMethod(I, outlierQuantile)
 %% Approximate histogram as triangle
 %%%
 % Create the histogram
 A=double(reshape(I,[],1));
+A = A(A <= quantile(A, outlierQuantile));
 [n,xout]=hist(A,100);
 %%%
 % Find the highest peak the histogram
