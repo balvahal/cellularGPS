@@ -175,3 +175,11 @@ pip-log.txt
 ## Node.js and Bower
 #############
 bower_components/
+
+
+#############
+## cellularGPS
+#############
+
+testfiles/PROCESSED_DATA/
+testfiles/SEGMENT_DATA/
