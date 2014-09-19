@@ -75,8 +75,10 @@ BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(Siz
 %
 ThresholdedImage = imfill(BlurredImage > MinimumThreshold, 'holes');
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
-Objects = imfill(edgeImage + (OriginalImage > cellularGPS_TriangleMethod(OriginalImage, 0.975)), 'holes') & ThresholdedImage;
-Objects = imopen(Objects, strel('disk',2));
+edgeImage = imopen(edgeImage, strel('disk',5));
+protectImage = imdilate(edgeImage)
+Objects = imfill(edgeImage + (BlurredImage > 1.25*cellularGPS_TriangleMethod(BlurredImage, 0.95)), 'holes');%& ThresholdedImage;
+Objects = imopen(Objects, strel('disk',5));
 % Objects = imclearborder(Objects);
 
 % FIRST-TIER OBJECT: Keep round objects as they are to avoid

@@ -19,9 +19,9 @@
 %
 %%% Other Notes
 % z-stack information is ignored.
-function [] = cellularGPS_segmentDataset(moviePath, channel_number)
-if ~isdir(fullfile(moviePath,'SEGMENT_DATA','tables'))
-    mkdir(fullfile(moviePath,'SEGMENT_DATA','tables'));
+function [] = cellularGPS_segmentDataset(moviePath, channelNumber)
+if ~isdir(fullfile(moviePath,'SEGMENT_DATA'))
+    mkdir(fullfile(moviePath,'SEGMENT_DATA'));
 end
 if ~isdir(fullfile(moviePath,'SEGMENT_DATA','segmentation_images'))
     mkdir(fullfile(moviePath,'SEGMENT_DATA','segmentation_images'));
@@ -32,39 +32,25 @@ else
     imagePath = fullfile(moviePath,'PROCESSED_DATA');
 end
 smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
-smdaDatabase = smdaDatabase(smdaDatabase.channel_number == channel_number,:);
-uniquePosition = unique(smdaDatabase.position_number);
-timepointsAtPosition = cell(size(uniquePosition));
-for i=1:length(uniquePosition)
-    timepointsAtPosition{i} = unique(smdaDatabase.timepoint(smdaDatabase.position_number == uniquePosition(i)));
-end
+myFilename = smdaDatabase.filename(smdaDatabase.channel_number == channelNumber);
+myPositionNumber = smdaDatabase.position_number(smdaDatabase.channel_number == channelNumber);
+myTimepoint = smdaDatabase.timepoint(smdaDatabase.channel_number == channelNumber);
+centroids4AllFiles = cell(size(myFilename));
 tic
-for i=1:length(uniquePosition);
-fprintf('Analyzing position %d\n', uniquePosition(i));
-    for j=1:length(timepointsAtPosition{i})
-        s = uniquePosition(j);
-        t = timepointsAtPosition{i}(j);
-        filenameIndex = find(smdaDatabase.position_number == s & smdaDatabase.timepoint == t);
-        filename = smdaDatabase.filename(filenameIndex(1));
-        centroidTable = zeros(2^8,3);
-            IM = imread(fullfile(imagePath, smdaDatabase.filename{files(k)}));
-            IM = imbackground(IM, 10, 100);
-            [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
-            centroidNumber(k) = size(Centroids,1);
-            centroidTable{k}(1:centroidNumber(k),1:2) = Centroids;
-            centroidTable{k}(1:centroidNumber(k),3) = timepoint;
-            outputFilename = regexprep(smdaDatabase.filename(files(k)), '\.tiff', '_segment.tiff', 'ignorecase');
-            imwrite(Objects, fullfile(segmentDataPath,'segmentation_images',outputFilename{1}), 'tif');
-        allCentroids = zeros(sum(centroidNumber),3);
-        numberOfCentroidsCounter = 1;
-        for k=1:length(files)
-            allCentroids(numberOfCentroidsCounter:(numberOfCentroidsCounter+centroidNumber(k)-1),:) = centroidTable{k}(1:centroidNumber(k),:);
-            numberOfCentroidsCounter = numberOfCentroidsCounter + centroidNumber(k);
-        end
-        allCentroids = array2table(allCentroids, 'VariableNames', {'centroid_col', 'centroid_row', 'timepoint'});
-        tableFilename = sprintf('%s_s%d_w%d%s_centroidsTable.txt', selectedGroup, selectedPosition, smdaDatabase.channel_number(k), channel);
-        writetable(allCentroids, fullfile(segmentDataPath,'tables',tableFilename), 'Delimiter', '\t');
-    end
+parfor i=1:length(myFilename)
+    fprintf('%s\n',myFilename{i});
+    IM = imread(fullfile(imagePath,myFilename{i}));
+    [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
+    centroidTableCell = cell(1,4);
+    centroidTableCell{1} = Centroids(:,1);
+    centroidTableCell{2} = Centroids(:,2);
+    centroidTableCell{3} = repmat(myTimepoint(i),size(Centroids,1),1);
+    centroidTableCell{4} = repmat(myPositionNumber(i),size(Centroids,1),1);
+    outputFilename = regexprep(myFilename{i}, '\.tiff', '_segment.tiff', 'ignorecase');
+    imwrite(Objects,fullfile(moviePath,'SEGMENT_DATA','segmentation_images',outputFilename),'tiff');
+    centroids4AllFiles{i} = table(centroidTableCell{:}, 'VariableNames', {'centroid_col', 'centroid_row', 'timepoint','position_number'});
 end
 toc
+allCentroids = vertcat(centroids4AllFiles{:});
+writetable(allCentroids, fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'), 'Delimiter', '\t');
 end

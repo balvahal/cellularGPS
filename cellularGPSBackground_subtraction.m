@@ -67,7 +67,7 @@ bkgdFun = bkgdmethods(p2);
 %% subtract background from each image
 %
 parfor i = 1:length(myFilenames)
-    fprintf('Analyzing position %s\n', myFilenames{i});
+    fprintf('%s\n', myFilenames{i});
     imageIn = double(imread(fullfile(imagePathIn,myFilenames{i})));
     imageOut = bkgdFun(imageIn); %#ok<PFBNS>
     imwrite(uint16(imageOut),fullfile(imagePathOut,myFilenames{i}),'tiff');
