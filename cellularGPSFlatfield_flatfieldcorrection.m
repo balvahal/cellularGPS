@@ -85,7 +85,7 @@ for j=1:length(dirCon_ff) %floop 2
     floop2Filename=regexp(dirCon_ff(j).name,expr,'match','once','ignorecase');
     if floop2Filename
         for k=1:length(channelNumber)
-            if strcmpi(Temp2,sprintf('_w%d%s',channelNumber(k),channelName{k}))
+            if strcmpi(floop2Filename,sprintf('flatfield_w%d%s',channelNumber(k),channelName{k}))
                 channelTruthTable(k,2) = 1;
             end
         end

@@ -15,7 +15,7 @@
 %
 % Other Notes:
 % 
-function [a,b]=cellularGPSFlatfield_leastsquaresfit(x,y,j,k)
+function [a,b,r2]=cellularGPSFlatfield_leastsquaresfit(x,y)
 xm=mean(x);
 ym=mean(y);
 SSxx=sum(x.*x)-length(x)*xm^2;
@@ -24,7 +24,4 @@ SSxy=sum(x.*y)-length(x)*xm*ym;
 b=SSxy/SSxx;
 a=ym-b*xm;
 r2=(SSxy^2)/(SSxx*SSyy);
-if r2<0.8
-    disp(['not a good fit. x=', num2str(k), ' y=', num2str(j)])
-end
 end

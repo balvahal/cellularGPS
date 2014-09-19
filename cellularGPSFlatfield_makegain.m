@@ -22,7 +22,7 @@
 % Other Notes:
 % Assumes the image files have been converted to the PNG format
 function []=cellularGPSFlatfield_makegain(channelNumber,moviePath,channelName)
-disp(['making gain image for the ' channelNumber ' channel...'])
+fprintf('making gain image for the number %d or %s channel...\n',channelNumber,channelName);
 ffTable = readtable(fullfile(moviePath,'flatfield','smda_database.txt'),'Delimiter','\t');
 %%%
 % identify all the exposure images
@@ -43,31 +43,31 @@ end
 zeroInd = find(exposure == 0,1,'first');
 extraZeroNumbers = zeros(4,1);
 exposure = vertcat(exposure, extraZeroNumbers);
-extraZeroImages = cell(4,1);
+extraZeroImages = repmat(flatfieldIM(zeroInd),4,1);
 flatfieldIM = vertcat(flatfieldIM, extraZeroImages);
-for i=0:4
-    flatfieldIM{end-i} = flatfieldIM{zeroInd};
-end
 %% calculate the gain image
+tic
 [hei,wid]=size(flatfieldIM{1});
 gainIM=zeros(size(flatfieldIM{1}));
-for j=1:hei
-    for k=1:wid
-        [x,y]=deal(zeros(length(exposure),1));
-        for i=1:length(exposure)
-            y(i)=flatfieldIM{i}(j,k);
-            x(i)=exposure(i);
-        end
-        [~,b]=cellularGPSFlatfield_leastsquaresfit(x,y,j,k);
-        gainIM(j,k)=b;
+parfor i = 1:numel(gainIM)
+    [x,y]=deal(zeros(length(exposure),1));
+    for j=1:length(exposure)
+        y(j)=flatfieldIM{j}(i); %#ok<PFBNS>
+        x(j)=exposure(j);
     end
+    [~,b,r2]=cellularGPSFlatfield_leastsquaresfit(x,y);
+    if r2<0.8
+        fprintf('Pixel number %d in the %s channel is not a good fit.\n',i,channelName);
+    end
+    gainIM(i)=b;
 end
 gainIM=gainIM/mean(mean(gainIM));
+toc
 %% smooth the image
 % Images from the lab typically end up being 1344 x 1024 or 672 x 512,
 % depending on whether or not there is binning. The size of the image will
 % influence the size of the filters used to smooth the image.
-if info.Width >= 1344
+if hei >= 1344 || wid >= 1344
     h = fspecial('average',[31 31]);
     gainIM=imfilter(gainIM,h,'replicate');
 else
@@ -84,5 +84,5 @@ max_temp=round(max_temp*1000)/1000;
 im_temp=gainIM*65536/max_temp;
 im_temp=uint16(im_temp);
 max_temp=sprintf('%d',max_temp*1000);
-imwrite(im_temp,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_gain%d.tiff',channelNumber,channelName,max_temp)),'tif','Compression','none');
+imwrite(im_temp,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_gain%s.tiff',channelNumber,channelName,max_temp)),'tif','Compression','none');
 end

@@ -19,23 +19,34 @@
 %
 % Other Notes:
 % 
-function []=makeoffset(chan,ffpath)
-disp(['making offset image for the ' chan ' channel...'])
-fname = fullfile(ffpath,strcat(chan,'_0'));
-info = imfinfo(fname,'tif');
-IM=double(imread(fname,'tif','Info',info));
-%%
-% scale from 12-bit image to 16-bit image
-IM = uint16(IM);
-IM = bitshift(IM,4);
+function []=cellularGPSFlatfield_makeoffset(channelNumber,moviePath,channelName)
+fprintf('making offset image for the number %d or %s channel...\n',channelNumber,channelName);
+ffTable = readtable(fullfile(moviePath,'flatfield','smda_database.txt'),'Delimiter','\t');
+%%%
+% identify all the exposure images
+filename = ffTable.filename(ffTable.channel_number == channelNumber);
+%%%
+% identify the length of exposure for each image
+expr=sprintf('(\\d+)_w%d',channelNumber);
+for i=1:length(filename) %floop 1
+    [~, floop1num] = regexp(filename{i},expr,'match','once','tokens');
+    if strcmp(floop1num,'0')
+        myind = i;
+        break
+    end
+end
+
+IM=double(imread(fullfile(moviePath,'flatfield','RAW_DATA',filename{myind})));
 %% smooth the image
 % Images from the lab typically end up being 1344 x 1024 or 672 x 512,
 % depending on whether or not there is binning. The size of the image will
 % influence the size of the filters used to smooth the image.
-if info.Width == 1344
+[hei,wid]=size(IM);
+if hei >= 1344 || wid >= 1344
     IM = medfilt2(IM,[17,17],'symmetric'); %median filters are good for salt and pepper noise like that seen in the darkfield image
 else
     IM = medfilt2(IM,[9,9],'symmetric');
 end
-imwrite(IM,fullfile(ffpath,strcat(chan,'_offset.tif')),'tif','Compression','none');
+IM=uint16(IM);
+imwrite(IM,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_offset.tiff',channelNumber,channelName)),'tif','Compression','none');
 end
