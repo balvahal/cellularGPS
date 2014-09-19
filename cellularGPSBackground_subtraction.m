@@ -24,25 +24,28 @@ function [] = cellularGPSBackground_subtraction(moviePath,varargin)
 p = inputParser;
 p.addRequired('moviePath', @(x)isdir(x));
 p.addParamValue('method','Jared',@(x) any(strcmpi(x,{'Jared','Alex','Uri'})));
-p.addParamValue('magnification',20,@(x)any(bsxfun(@eq,x,[10,20,40,60,100])));
+p.addParamValue('magnification',20,@(x)any(bsxfun(@eq,x,[10,20,40,60])));
 p.addParamValue('binning',1,@(x)any(bsxfun(@eq,x,[1,2])));
 p.addParamValue('channelNumber',0,@(x)isnumeric(x));
-p.parse(stackpath, varargin{:});
+p.parse(moviePath, varargin{:});
 p2.met = p.Results.method;
 p2.mag = p.Results.magnification;
 p2.bin = p.Results.binning;
-
+channelNumber = p.Results.channelNumber;
 if p.Results.channelNumber == 0
     warning('cGPSBkgd:noChan','No channel for background subtraction was selected, so the process was aborted.');
     return;
+end
+smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+channelName = cell(size(channelNumber));
+for i = 1:length(channelNumber) %floop 1
+    myind = find(smdaDatabase.channel_number == channelNumber(i),1,'first');
+    channelName{i} = smdaDatabase.channel_name{myind};
 end
 %% read smda_database.txt
 % and prepare input and output paths. Only process the files specified by
 % channelNumber parameter
 imagePathOut = fullfile(moviePath,'PROCESSED_DATA');
-if ~isdir(imagePathOut)
-    mkdir(imagePathOut);
-end
 if ~isdir(imagePathOut)
     mkdir(imagePathOut);
     imagePathIn = fullfile(moviePath,'RAW_DATA');
@@ -51,18 +54,32 @@ else
 end
 %%%
 % Choose only the files that are specified by the channelNumber parameter.
-smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
 smdaDatabaseLogical = false(height(smdaDatabase),1);
-for i = 1:length(channelNumber) %floop 5
+for i = 1:length(channelNumber) %floop 1
     smdaDatabaseLogical = smdaDatabase.channel_number == channelNumber(i) | smdaDatabaseLogical;
 end
 myFilenames = smdaDatabase.filename(smdaDatabaseLogical);
+myFilenamesOfUncorrected = smdaDatabase.filename(~smdaDatabaseLogical);
 
-smdaDatabaseFilenamesOfUncorrected = smdaDatabase.filename(smdaDatabaseLogical);
-
-fprintf('Analyzing position %d\n', uniquePosition(i));
-
-
+%% Configure the background subtraction method
+%
+bkgdFun = bkgdmethods(p2);
+%% subtract background from each image
+%
+parfor i = 1:length(myFilenames)
+    fprintf('Analyzing position %s\n', myFilenames{i});
+    imageIn = double(imread(fullfile(imagePathIn,myFilenames{i})));
+    imageOut = bkgdFun(imageIn); %#ok<PFBNS>
+    imwrite(uint16(imageOut),fullfile(imagePathOut,myFilenames{i}),'tiff');
+end
+%% copy uncorrected files from _RAW_DATA_ (if reading from _RAW_DATA_)
+% if RAW_DATA is the source file then the uncorrected images need to be
+% copied over
+if ~isempty(myFilenamesOfUncorrected) && (imagePathIn == fullfile(moviePath,'RAW_DATA'))
+    for i = 1:length(myFilenamesOfUncorrected)
+        copyfile(fullfile(imagePathIn,myFilenamesOfUncorrected{i}),fullfile(imagePathOut,myFilenamesOfUncorrected{i}));
+    end
+end
 %% Save a badge to the _moviePath_
 %
 jsonStrings = {};
@@ -81,7 +98,7 @@ fclose(fid);
 %%
 %
 myjson = micrographIOT_autoIndentJson(fullfile(moviePath,'BADGE_bkgdSubtraction.txt'));
-fid = fopen(fullfile(moviePath,'BADGE_bkgdSubtraction'),'w');
+fid = fopen(fullfile(moviePath,'BADGE_bkgdSubtraction.txt'),'w');
 if fid == -1
     error('cGPSFF:badfile','Cannot open the file, preventing the export of the background subtraction badge.');
 end
@@ -159,32 +176,10 @@ else
     opts = fitoptions('gauss2');
     [FitModel, ~] = fit(x,h,ftype,opts);
     B=floor(FitModel.b1);
-    
 end
 end
 
-function [Temp] = importStackNames(dirCon_stack,fc)
-expr=['.*(?<!thumb.*)_w\d+' fc '.*'];
-Temp=cell([1,length(dirCon_stack)]); %Initialize cell array
-% ----- Identify the legitimate stacks -----
-i=1;
-for j=1:length(dirCon_stack)
-    Temp2=regexp(dirCon_stack(j).name,expr,'match','once','ignorecase');
-    if Temp2
-        Temp{i}=Temp2;
-        i=i+1;
-    end
-end
-% ----- Remove empty cells -----
-Temp(i:end)=[];
-% for j=length(Temp):-1:1
-%     if isempty(Temp{j})
-%         Temp(j)=[];
-%     end
-% end
-end
-
-function [S]=bkgdmethods(S,p)
+function [myHandle]=bkgdmethods(p)
 %S is a stack, method chooses between several different background
 %subtraction methods
 %Jared's method is a morphological approach to find the background. An
@@ -213,20 +208,17 @@ switch lower(p.met)
         switch p.mag
             %The values below have been heuristically chosen.
             case 10
-                se1Size = 10;
-                se2Size = 50;
+                se1Size = 2^3;
+                se2Size = 2^7;
             case 20
-                se1Size = 20;
-                se2Size = 100;
+                se1Size = 2^4;
+                se2Size = 2^8;
             case 40
-                se1Size = 40;           % intracellular features in pixels, such as the nucleolus
-                se2Size = 200;          % cells/cell clumps in pixels '' '' '
+                se1Size = 2^5;           % intracellular features in pixels, such as the nucleolus
+                se2Size = 2^9;          % cells/cell clumps in pixels '' '' '
             case 60
-                se1Size = 60;
-                se2Size = 300;
-            case 100
-                se1Size = 100;
-                se2Size = 500;
+                se1Size = 2^5+2^3;
+                se2Size = 2^9+2^7;
             otherwise
                 error('bkgd:Whatever','How did you get here?');
         end
@@ -239,10 +231,74 @@ switch lower(p.met)
             otherwise
                 error('bkgd:Whatever','How did you get here?');
         end
+        
         resizeMultiplier = 1/2; % Downsampling scale factor makes image processing go faster and smooths image
         se1 = strel('disk', round(se1Size*resizeMultiplier));  %Structing elements are necessary for using MATLABS image processing functions
         se2 = strel('disk',round(se2Size*resizeMultiplier));
+        myHandle = @jared;
+    case 'alex'
+        %This algorithm is more aggressive than the 'uri' algorithm. It
+        %also takes approximately 100 times longer to run then the 'uri'
+        %algorithm. I do not think this works well at large grid
+        %sizes/high-magnification
         
+        switch p.mag
+            %The values below have been heuristically chosen.
+            case 10
+                sel=2^7;
+            case 20
+                sel=2^8;
+            case 40
+                sel=2^9;
+            case 60
+                sel=2^9+2^7;
+            otherwise
+                error('bkgd:Whatever','How did you get here?');
+        end
+        switch p.bin
+            case 1
+                
+            case 2
+                sel = sel/2;
+            otherwise
+                error('bkgd:Whatever','How did you get here?');
+        end
+        myHandle = @alex;
+    case 'uri'
+        %This algorithm seems to work well when the sel value is about the
+        %size of a large nucleus. Larger senescent nuclei might prove
+        %troublesome if the sel is based on large nuclei at the start of
+        %the movie, which would be considerably smaller. The larger the sel
+        %the more conservative the estimate of the background. Between the
+        %'jared', 'alex', and 'uri' methods the 'uri' method is the fastest
+        %by at least 2 orders of magnitude.
+        %I do not think this works well at large-grid-sizes/high-magnification
+        switch p.mag
+            %The values below have been heuristically chosen for MCF7 nuclei.
+            case 10
+                sel=2^7;
+            case 20
+                sel=2^8;
+            case 40
+                sel=2^9;
+            case 60
+                sel=2^9+2^7;
+            otherwise
+                error('bkgd:Whatever','How did you get here?');
+        end
+        switch p.bin
+            case 1
+                
+            case 2
+                sel = sel/2;
+            otherwise
+                error('bkgd:Whatever','How did you get here?');
+        end
+        myHandle = @uri;
+    otherwise
+        error('Unknown method of background subtraction specified')
+end
+    function S = jared(S)
         origSize  = size(S);
         % Rescale image and compute background using closing/opening.
         I    = imresize(S, resizeMultiplier);
@@ -257,77 +313,15 @@ switch lower(p.met)
         % Subtract background!
         S = S - I;
         S(S<0)=0;
-    case 'alex'
-        %This algorithm is more aggressive than the 'uri' algorithm. It
-        %also takes approximately 100 times longer to run then the 'uri'
-        %algorithm. I do not think this works well at large grid
-        %sizes/high-magnification
-        
-        switch p.mag
-            %The values below have been heuristically chosen.
-            case 10
-                sel=50;
-            case 20
-                sel=100;
-            case 40
-                sel=200;
-            case 60
-                sel=300;
-            case 100
-                sel=500;
-            otherwise
-                error('bkgd:Whatever','How did you get here?');
-        end
-        switch p.bin
-            case 1
-                
-            case 2
-                sel = sel/2;
-            otherwise
-                error('bkgd:Whatever','How did you get here?');
-        end
-        
+    end
+    function S = alex(S)
         bkgd=gridscan(S,@gaussianthreshold,round(sel));
         S=S-bkgd;
         S(S<0)=0;
-        
-    case 'uri'
-        %This algorithm seems to work well when the sel value is about the
-        %size of a large nucleus. Larger senescent nuclei might prove
-        %troublesome if the sel is based on large nuclei at the start of
-        %the movie, which would be considerably smaller. The larger the sel
-        %the more conservative the estimate of the background. Between the
-        %'jared', 'alex', and 'uri' methods the 'uri' method is the fastest
-        %by at least 2 orders of magnitude.
-        
-        %I do not think this works well at large-grid-sizes/high-magnification
-        switch p.mag
-            %The values below have been heuristically chosen.
-            case 10
-                sel=50;
-            case 20
-                sel=100;
-            case 40
-                sel=200;
-            case 60
-                sel=300;
-            case 100
-                sel=500;
-            otherwise
-                error('bkgd:Whatever','How did you get here?');
-        end
-        switch p.bin
-            case 1
-                
-            case 2
-                sel = sel/2;
-            otherwise
-                error('bkgd:Whatever','How did you get here?');
-        end
+    end
+    function S = uri(S)
         bkgd=gridscan(S,@rankfilter,sel);
         S=S-bkgd;
         S(S<0)=0;
-    otherwise
-        error('Unknown method of background subtraction specified')
-end
+    end
 end

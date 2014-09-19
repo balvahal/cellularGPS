@@ -1,9 +1,0 @@
-{
-	"channel_names": [
-		"Cy5_5","YFP"
-	],
-	"channel_number": [
-		2,7
-	],
-	"date": "2014-09-19 10:49:36"
-}

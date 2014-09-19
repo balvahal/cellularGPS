@@ -180,6 +180,8 @@ bower_components/
 #############
 ## cellularGPS
 #############
-
-testfiles/PROCESSED_DATA/
-testfiles/SEGMENT_DATA/
+testfiles/PROCESSED_DATA/*.*
+testfiles/SEGMENT_DATA/*.*
+testfiles/SEGMENT_DATA/*
+testfiles/BADGE_flatfield.txt
+testfiles/BADGE_bkgdSubtraction.txt
