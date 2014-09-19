@@ -80,7 +80,7 @@ for k=1:length(channelNumber)
     end
 end
 dirCon_ff = dir(fullfile(moviePath,'flatfield'));
-expr='.+(?=_gain\d+.tif)';
+expr='.+(?=_gain\d+.tiff)';
 for j=1:length(dirCon_ff) %floop 2
     floop2Filename=regexp(dirCon_ff(j).name,expr,'match','once','ignorecase');
     if floop2Filename
@@ -93,7 +93,7 @@ for j=1:length(dirCon_ff) %floop 2
 end
 %%
 % create offset and gain images according to the truth table
-for i=1:length(channelNumber)
+for i=1:length(channelNumber) %floop 3
     outcome = channelTruthTable(i,1)*2 + channelTruthTable(i,2);
     switch outcome
         case 0 %No offset or gain image
@@ -108,72 +108,99 @@ for i=1:length(channelNumber)
 end
 
 %% Correct image images using gain and offset images
-%
-dirCon_ff = dir(ffpath);
-for j=1:length(channels_stacks)
-    %%
-    % Import the gain and offset image for a given fluorescent channel
-    fname = fullfile(ffpath,strcat(channels_stacks{j},'_offset'));
-    info = imfinfo(fname,'tif');
-    offset = double(imread(fname,'tif','Info',info));
-    for k=1:length(dirCon_ff)
-        temp = regexp(dirCon_ff(k).name,[channels_stacks{j} '_gain\d+'],'match','once','ignorecase');
-        if ~isempty(temp)
-            gainname = temp;
-            break
+% import the gain and offset images
+dirCon_ff = dir(fullfile(moviePath,'flatfield'));
+exprGain='flatfield_w(?<chnum>\d+).*_gain\d+.tiff';
+offsetIM = cell(size(channelNumber));
+gainIM = cell(size(channelNumber));
+for i = 1:length(channelNumber) %floop 4
+    offsetIM{i} = double(imread(fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_offset.tiff',channelNumber(i),channelName{i}))));
+    for j=1:length(dirCon_ff)
+        floop4chnum=regexp(dirCon_ff(j).name,exprGain,'names');
+        if ~isempty(floop4chnum) && str2double(floop4chnum.chnum) == channelNumber(i)
+            gainIM{i} = double(imread(fullfile(moviePath,'flatfield',dirCon_ff(j).name)));
+            floop4expr='(?<=_gain)\d+';
+            max_temp=regexp(dirCon_ff(j).name,floop4expr,'match','once');
+            max_temp=str2double(max_temp)/1000;
+            gainIM{i}=gainIM{i}*max_temp/65536;
         end
     end
-    info = imfinfo(fullfile(ffpath,gainname),'tif');
-    gain = double(imread(fullfile(ffpath,gainname),'tif','Info',info));
-    expr='(?<=_gain)\d+';
-    max_temp=regexp(gainname,expr,'match','once');
-    max_temp=str2double(max_temp)/1000;
-    gain=gain*max_temp/65536;
-    %%
+end
+%%%
+% find all the image files in the database that correspond to a flatfield
+% correction image
+smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+smdaDatabaseFFFilenames = cell(size(channelNumber));
+for i = 1:length(channelNumber) %floop 5
+    smdaDatabaseFFFilenames{i} = smdaDatabase.filename(smdaDatabase.channel_number == channelNumber(i));
+end
+%% Correct the images and save a new copy
+%
+imagePathIn = fullfile(moviePath,'RAW_DATA');
+imagePathOut = fullfile(moviePath,'PROCESSED_DATA');
+if ~isdir(imagePathOut)
+    mkdir(imagePathOut);
+end
+
+for i=1:length(channelNumber) %floop 6
+    %%%
     % Loop through all the input images for a given fluorescent channel and
     % flat field correct them.
     %
     % First match the name of the flat field images with the name of the
     % input images
     %
-    indlogical = strcmpi(channels_stacks{j},imageMetadata.wavelengthInfo(2:end,2));
-    indarray = imageMetadata.wavelengthInfo(2:end,1);
-    indarray = indarray(indlogical);
-    indarray = transpose(cell2mat(indarray));
-    for s=1:imageMetadata.numbers.howManyS
-        for w=indarray
-            for t=1:imageMetadata.numbers.howManyT
-                for z=1:imageMetadata.numbers.howManyZ
-                    if ~isempty(imageMetadata.filenames{s,w,t,z})
-                        disp(['Flatfield correcting ',imageMetadata.filenames{s,w,t,z}])
-                        Name = fullfile(path,'image',imageMetadata.filenames{s,w,t,z});
-                        IM = double(imread(Name));
-                        %verify that the input image is the correct size, otherwise no
-                        %output image will be created.
-                        if size(IM)~=size(offset)
-                            continue
-                        end
-                        %%
-                        % Here is where the actual correction takes place.
-                        IM = IM-offset; %subtract the offset
-                        IM(IM<0) = 0; %remove negative values
-                        IM = IM./gain; %compensate for biases
-                        IM = uint16(IM); %convert back to 16-bit image
-                        imwrite(IM,Name,'image','bitdepth',16); %overwrite uncorrected file
-                    end
-                end
-            end
-        end
+    floop6filenames = smdaDatabaseFFFilenames{i};
+    floop6offsetIM = offsetIM{i};
+    floop6gainIM = gainIM{i};
+    parfor j = 1:length(floop6filenames)
+        filename = floop6filenames{j};
+        fprintf('Flatfield correcting %s\n',filename)
+        IM = double(imread(fullfile(imagePathIn,filename)));
+        %%%
+        % Here is where the actual correction takes place.
+        IM = IM-floop6offsetIM; %subtract the offset
+        IM(IM<0) = 0; %remove negative values
+        IM = IM./floop6gainIM; %compensate for uneven illumination and measurement
+        IM = uint16(IM); %convert back to 16-bit image
+        imwrite(IM,fullfile(imagePathOut,filename),'tiff');
     end
 end
-%% Create or append a log file
-%
-fid = fopen(fullfile(path,'log.txt'),'a+');
-fprintf(fid,'%s: flatfieldcorrection: image images from the folder ''%s'' were flatfield corrected for the following channels:\r\n',date,path);
-for i=1:length(channels_stacks)
-    fprintf(fid,'%s\r\n',channels_stacks{i});
+%% copy over files that were not flatfiled corrected
+% copy to the _PROCESSED_DATA_ folder for consistency
+smdaDatabaseLogical = true(height(smdaDatabase),1);
+for i = 1:length(channelNumber) %floop 5
+    smdaDatabaseLogical = smdaDatabase.channel_number ~= channelNumber(i) & smdaDatabaseLogical;
 end
-fprintf(fid,'\r\n');
+smdaDatabaseFilenamesOfUncorrected = smdaDatabase.filename(smdaDatabaseLogical);
+if ~isempty(smdaDatabaseFilenamesOfUncorrected)
+    for i = 1:length(smdaDatabaseFilenamesOfUncorrected)
+        copyfile(fullfile(imagePathIn,smdaDatabaseFilenamesOfUncorrected{i}),fullfile(imagePathOut,smdaDatabaseFilenamesOfUncorrected{i}));
+    end
+end
+%% Save a badge to the _moviePath_
+%
+jsonStrings = {};
+n = 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('channel_names',channelName); n = n + 1;
+jsonStrings{n} = micrographIOT_array2json('channel_number',channelNumber); n = n + 1;
+mydate = datestr(now,31);
+jsonStrings{n} = micrographIOT_string2json('date',mydate);
+myjson = micrographIOT_jsonStrings2Object(jsonStrings);
+fid = fopen(fullfile(moviePath,'BADGE_flatfield.txt'),'w');
+if fid == -1
+    error('cGPSFF:badfile','Cannot open the file, preventing the export of the flatfield badge.');
+end
+fprintf(fid,myjson);
+fclose(fid);
+%%
+%
+myjson = micrographIOT_autoIndentJson(fullfile(moviePath,'BADGE_flatfield.txt'));
+fid = fopen(fullfile(moviePath,'BADGE_flatfield.txt'),'w');
+if fid == -1
+    error('cGPSFF:badfile','Cannot open the file, preventing the export of the flatfield badge.');
+end
+fprintf(fid,myjson);
 fclose(fid);
 end
 
