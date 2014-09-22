@@ -1,4 +1,4 @@
-%% cellularGPS_measurementsFromCentroids
+%% cellularGPS_measurementFromCentroids
 % Obtain measurments using centroids without worrying about linking.
 % Without further processing this data will yield something that resembles
 % immunofluorescence with a time component.
@@ -27,75 +27,71 @@ function [] = cellularGPS_measurementsFromCentroids(moviePath)
 if ~isdir(moviePath)
     error('cGPS_mFC:badPath1','The ''moviePath'' does not exist');
 end
-if ~isdir(fullfile(fullfile(moviePath,'SEGMENT_DATA','tables')))
+if ~isdir(fullfile(moviePath,'SEGMENT_DATA'))
     error('cGPS_mFC:badPath2','The centroid data could not be located. Has it been created yet? Make sure the folder structure within ''moviePath'' is correct.');
 end
+
 %% Initialize variables, allocate memory, and consolidate centroid tables
 % Read in the centroids tables and parse the metadata stored in the file
-% name. These metadata are important for locating the image files to take
-% measurements from. One major assumption made here is that there is no
-% z-stack data, or, in otherwords, there is only a single image plane. Only
-% a single image from a group, position, and settings (GPS) will be
-% analyzed. z-stack data must be collapsed into a single image file to be
-% analyzed.
+% name.
 %
 % The positions from the SuperMDA are always independent of the group, so
 % the group can be ignored. From the measurement perspective we want to
-% find measurements across all settings, so again the position becomes the
+% find measurement across all settings, so again the position becomes the
 % pivot point.
-myDirectory = dir(fullfile(moviePath,'SEGMENT_DATA','tables'));
-filenamesInDirectory = {myDirectory(:).name};
-centroidsTableInDirectoryLogical = cellfun(@(x) ~isempty(regexp(x,'centroidsTable.txt$','ONCE')),filenamesInDirectory);
-centroidsTableFilenames = filenamesInDirectory(centroidsTableInDirectoryLogical);
-centroidsTables = cell(length(centroidsTableFilenames),1);
-positionArray = zeros(length(centroidsTableFilenames),1);
-for i = 1:length(centroidsTables) %floop 1
-    centroidsTables{i} = readtable(fullfile(moviePath,'SEGMENT_DATA','tables',centroidsTableFilenames{i}),'Delimiter','\t');
-    %%%
-    % The centroidsTable metadata is parsed from the filename using named
-    % tokens and regular expressions.
-    floop1p1 = '(?<position>\d+)';
-    floop1expr = ['.*_s' floop1p1 '.*'];
-    floop1GPS = regexp(centroidsTableFilenames{i},floop1expr,'names');
-    positionArray(i) = str2double(floop1GPS.position);
+%
+% Load the smda_database and centroid table
+smda_database = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+cenTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'),'Delimiter','\t');
+%%%
+% find the channel Name and corresponding numbers
+channelNumber = unique(smda_database.channel_number);
+channelName = cell(size(channelNumber));
+for i = 1:length(channelNumber) %floop 1
+    myind = find(smda_database.channel_number == channelNumber(i),1,'first');
+    channelName{i} = smda_database.channel_name{myind};
 end
 %%%
-% Find the all the channel numbers for each position and the channel names.
-smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
-channelNumbers = cell(size(positionArray));
-for i = 1:length(positionArray)
-    channelNumbers{i} = unique(smdaDatabase.channel_number(smdaDatabase.position_number==positionArray(i)));
+% create a cell that holds correct set of centroids for each image
+cen2EachFile = cell(height(smda_database),1);
+for i = 1:height(smda_database) %floop 1
+    cenTableLogical = cenTable.timepoint == smda_database.timepoint(i) & cenTable.position_number == smda_database.position_number(i);
+    cen2EachFile{i} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
 end
-channelNumbersUnique = unique(vertcat(channelNumbers{:}));
-channelNames = cell(size(channelNumbersUnique));
-for i = 1:length(channelNumbersUnique)
-    myind = find(smdaDatabase.channel_number == channelNumbersUnique(i),1,'first');
-    channelNames{i} = sprintf('%s_w%d',smdaDatabase.channel_name{myind},channelNumbersUnique(i));
-end
-%% Determine which measurements to take
-% The measurements are specified in a JSON object called
-% |cGPS_measurementsProfile.txt|. Look at the list of measurement types for
+%%%
+% create arrays for the salient image file metadata
+myFileName = smda_database.filename;
+myChanNumber = smda_database.channel_number;
+myPosNumber = smda_database.position_number;
+myTimepoint = smda_database.timepoint;
+%% Determine which measurement to take
+% The measurement are specified in a JSON object called
+% |cGPS_measurementProfile.txt|. Look at the list of measurement types for
 % more information. Each measurment type is found for every settings.
-%%
+%%%
 % check for the function _loadjson_ from the MATLAB File Exchange
 if ~exist('loadjson','file')
     error('smdaITFimport:missLoadJson','The function "loadjson()" is not in the MATLAB path or has not been downloaded from the MATLAB File Exchange. Visit http://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files-in-matlab-octave');
 end
-measurementsProfile = loadjson(fullfile(moviePath,'cGPS_measurementsProfile.txt'));
-measurementsParameters = measurementsProfile.parameters;
-numberOfGPS = sum(cellfun(@numel,channelNumbers));
-measurement = cell(numberOfGPS*length(measurementsParameters),1);
-measurementName = cell(size(measurement));
+measurementProfile = loadjson(fullfile(moviePath,'cGPS_measurementProfile.txt'));
+measurementParameters = measurementProfile.parameters;
 %%%
-%
-measCounter = 0;
-for i = 1:length(measurementsParameters)
-    for j = 1:length(positionArray)
-        for k = 1:length(channelNumbers{j})
-            measCounter = measCounter + 1;
-            measurement{measCounter} = cellularGPS_getMeasurementForAGivenParameter(measurementsParameters{i},moviePath,centroidsTables{j},channelNumbers{j}(k));
-            measurementName{measCounter} = sprintf('%s_%s',measurementsParameters{i},channelNames{channelNumbers{j}(k)});
-        end
+% create a container to hold the measurement information
+myMeasurement = cell(height(smda_database),length(measurementParameters));
+myMeasurementName = cell(height(smda_database),length(measurementParameters));
+measNum = length(measurementParameters);
+fileNum = height(smda_database);
+parfor i = 1:fileNum
+    for j = 1:measNum
+        myMeasurement{i,j} = cellularGPS_getMeasurementForAGivenParameter(measurementParameters{j},moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myPosNumber(i),myTimepoint(i));
+        myMeasurementName{i,j} = sprintf('%s_%s',measurementParameters{j},channelName{myChanNumber(i)}); %#ok<PFBNS>
     end
 end
+
+%% Create a table that holds centroid information and 
+%
+end
+
+function [] = centroidRelativeTime()
+
 end

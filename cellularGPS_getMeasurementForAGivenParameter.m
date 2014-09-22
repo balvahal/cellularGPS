@@ -1,34 +1,30 @@
-function [myMeasurements] = cellularGPS_getMeasurementForAGivenParameter(measurementName,moviePath,centroidTable,channelNumber)
+
+function [myMeasurement] = cellularGPS_getMeasurementForAGivenParameter(measurementName,moviePath,myFileName,centroidTable,myChanNumber,myPosNumber,myTimepoint)
+%%
+%
 switch lower(measurementName)
+    case 'centroidnibble'
+        measFun = @cellularGPSMeasurement_centroidNibble;
     case 'meanintensity'
         measFun = @cellularGPSMeasurement_meanIntensity;
     case 'totalintensity'
         measFun = @cellularGPSMeasurement_totalIntensity;
     otherwise
         warning('cGPS:getMeas','Unknown measurement parameter or type, ''%s'', was found in measurement profile.',measurementName);
-        myMeasurements = zeros(height(centroidTable,1));
+        myMeasurement = zeros(height(centroidTable,1));
         return
 end
-myMeasurements = centroidFun(measFun,moviePath,centroidTable,channelName);
+%%
+%
+if ~isdir(fullfile(moviePath,'PROCESSED_DATA'))
+    imagePath = fullfile(moviePath,'RAW_DATA');
+else
+    imagePath = fullfile(moviePath,'PROCESSED_DATA');
 end
-
-function [myMeasurements] = centroidFun(measFun,moviePath,centroidTable,channelNumber)
+IM = imread(fullfile(imagePath,myFileName));
+myFileNameSegment = regexprep(myFileName,'.tiff$','_segment.tiff');
+ISeg = imread(fullfile(moviePath,'SEGMENT_DATA','segmentation_images',myFileNameSegment));
 %%%
-% This will not work unless all timepoints have data for the same channel.
-timepoints = unique(centroidTable.timepoint);
-myMeasurements = cell(size(timepoints));
-smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'));
-myFilenames
-myFilenamesIndices = cell(size(myFilenames));
-    indStart = 1;
-    indEnd = 2;
-parfor i = 1:length(myFilenames)
-    filename2 = regexprep(myFilenames(i),'');
-
-    IM = imread(fullfile(moviePath,'RAW_DATA',myFilenames(i)));
-    ISeg = imread(fullfile(moviePath,'SEGMENT_DATA','segmentation_images',filename2));
-    
-    myMeasurements{i} = measFun(IM,centriodMegaTable(indStart:indEnd),ISeg); %#ok<PFBNS>
-end
-myMeasurements = vertcat(myMeasurements{:});
+%
+myMeasurement = measFun(IM,centriodMegaTable(indStart:indEnd),ISeg);
 end
