@@ -41,8 +41,11 @@ end
 % pivot point.
 %
 % Load the smda_database and centroid table
+tic
+fprintf('reading centroid info\n');
 smda_database = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
 cenTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'),'Delimiter','\t');
+toc
 %%%
 % find the channel Name and corresponding numbers
 channelNumber = unique(smda_database.channel_number);
@@ -53,11 +56,14 @@ for i = 1:length(channelNumber) %floop 1
 end
 %%%
 % create a cell that holds correct set of centroids for each image
+tic
+fprintf('expanding centroids for measurement\n');
 cen2EachFile = cell(height(smda_database),1);
 for i = 1:height(smda_database) %floop 2
     cenTableLogical = cenTable.timepoint == smda_database.timepoint(i) & cenTable.position_number == smda_database.position_number(i);
     cen2EachFile{i} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
 end
+toc
 %%%
 % create arrays for the salient image file metadata
 myFileName = smda_database.filename;
@@ -65,6 +71,8 @@ myChanNumber = smda_database.channel_number;
 myChanName = smda_database.channel_name;
 myPosNumber = smda_database.position_number;
 myTimepoint = smda_database.timepoint;
+tic
+fprintf('taking measurements\n');
 %% Determine which measurement to take
 % The measurement are specified in a JSON object called
 % |cGPS_measurementProfile.txt|. Look at the list of measurement types for
@@ -124,5 +132,6 @@ masterIntensityMeasurement = vertcat(myIntensityMeasurement{:});
 masterShapeMeasurement = vertcat(myShapeMeasurement{:});
 masterMetaMeasurement = vertcat(myMetaMeasurement{:});
 masterTable = horzcat(cenTable,masterIntensityMeasurement,masterShapeMeasurement,masterMetaMeasurement);
+toc
 writetable(masterTable,fullfile(moviePath,'centroid_measurements.txt'), 'Delimiter', '\t');
 end
