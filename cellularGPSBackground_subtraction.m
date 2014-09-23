@@ -84,7 +84,7 @@ end
 %
 jsonStrings = {};
 n = 1;
-jsonStrings{n} = micrographIOT_cellStringArray2json('channel_names',channelName); n = n + 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('channel_name',channelName); n = n + 1;
 jsonStrings{n} = micrographIOT_array2json('channel_number',channelNumber); n = n + 1;
 mydate = datestr(now,31);
 jsonStrings{n} = micrographIOT_string2json('date',mydate);

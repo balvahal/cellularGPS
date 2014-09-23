@@ -1,3 +1,3 @@
-function [myMeasurements] = cellularGPSMeasurement_meanIntensity(I,centroids,ISeg)
+function [myMeasurements] = cellularGPSMeasurement_meanIntensity(I,centroidTable,ISeg)
 myMeasurements = 0;
 end

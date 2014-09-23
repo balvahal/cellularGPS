@@ -1,11 +1,15 @@
 [mfilepath,~,~] = fileparts(mfilename('fullpath')); %finds the path to this script
 
-parameters = {'meanIntensity',...
+parameters = {'centroidNibble',...
+    'meanIntensity',...
     'totalIntensity'};
-%%
-%
+
 jsonStrings = {};
 n = 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('parameters',parameters); n = n + 1;
+%% centroidNibble
+%
+
 jsonStrings{n} = micrographIOT_cellStringArray2json('parameters',parameters); n = n + 1;
 %%
 %

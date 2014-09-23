@@ -1,5 +1,5 @@
 
-function [myMeasurement] = cellularGPS_getMeasurementForAGivenParameter(measurementName,moviePath,myFileName,centroidTable,myChanNumber,myPosNumber,myTimepoint)
+function [myMeasurement] = cellularGPS_measurementFromCentroid_getMeasurement(measurementName,moviePath,myFileName,centroidTable,myChanNumber,myPosNumber,myTimepoint)
 %%
 %
 switch lower(measurementName)
@@ -22,7 +22,7 @@ else
     imagePath = fullfile(moviePath,'PROCESSED_DATA');
 end
 IM = imread(fullfile(imagePath,myFileName));
-myFileNameSegment = regexprep(myFileName,'.tiff$','_segment.tiff');
+myFileNameSegment = sprintf('iseg_s%d_t%d.tiff',myPosNumber,myTimepoint);
 ISeg = imread(fullfile(moviePath,'SEGMENT_DATA','segmentation_images',myFileNameSegment));
 %%%
 %

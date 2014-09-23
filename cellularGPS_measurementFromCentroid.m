@@ -21,7 +21,7 @@
 %
 %%% Other Notes
 %
-function [] = cellularGPS_measurementsFromCentroids(moviePath)
+function [] = cellularGPS_measurementFromCentroid(moviePath)
 %% Verify the path is valid
 %
 if ~isdir(moviePath)
@@ -68,24 +68,14 @@ myTimepoint = smda_database.timepoint;
 % The measurement are specified in a JSON object called
 % |cGPS_measurementProfile.txt|. Look at the list of measurement types for
 % more information. Each measurment type is found for every settings.
-%%%
-% check for the function _loadjson_ from the MATLAB File Exchange
-if ~exist('loadjson','file')
-    error('smdaITFimport:missLoadJson','The function "loadjson()" is not in the MATLAB path or has not been downloaded from the MATLAB File Exchange. Visit http://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files-in-matlab-octave');
-end
-measurementProfile = loadjson(fullfile(moviePath,'cGPS_measurementProfile.txt'));
-measurementParameters = measurementProfile.parameters;
+measurementParameter = cellularGPS_measurementFromCentroid_measurementParameter(moviePath);
 %%%
 % create a container to hold the measurement information
 myMeasurement = cell(height(smda_database),length(measurementParameters));
 myMeasurementName = cell(height(smda_database),length(measurementParameters));
-measNum = length(measurementParameters);
 fileNum = height(smda_database);
 parfor i = 1:fileNum
-    for j = 1:measNum
-        myMeasurement{i,j} = cellularGPS_getMeasurementForAGivenParameter(measurementParameters{j},moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myPosNumber(i),myTimepoint(i));
-        myMeasurementName{i,j} = sprintf('%s_%s',measurementParameters{j},channelName{myChanNumber(i)}); %#ok<PFBNS>
-    end
+        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myPosNumber(i),myTimepoint(i));
 end
 
 %% Create a table that holds centroid information and 

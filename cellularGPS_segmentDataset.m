@@ -32,6 +32,11 @@ else
     imagePath = fullfile(moviePath,'PROCESSED_DATA');
 end
 smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+channelName = cell(size(channelNumber));
+for i = 1:length(channelNumber) %floop 1
+    myind = find(smdaDatabase.channel_number == channelNumber(i),1,'first');
+    channelName{i} = smdaDatabase.channel_name{myind};
+end
 myFilename = smdaDatabase.filename(smdaDatabase.channel_number == channelNumber);
 myPositionNumber = smdaDatabase.position_number(smdaDatabase.channel_number == channelNumber);
 myTimepoint = smdaDatabase.timepoint(smdaDatabase.channel_number == channelNumber);
@@ -46,11 +51,35 @@ parfor i=1:length(myFilename)
     centroidTableCell{2} = Centroids(:,2);
     centroidTableCell{3} = repmat(myTimepoint(i),size(Centroids,1),1);
     centroidTableCell{4} = repmat(myPositionNumber(i),size(Centroids,1),1);
-    outputFilename = regexprep(myFilename{i}, '\.tiff', '_segment.tiff', 'ignorecase');
+    outputFilename = sprintf('iseg_s%d_t%d.tiff',myPositionNumber(i),myTimepoint(i));
     imwrite(Objects,fullfile(moviePath,'SEGMENT_DATA','segmentation_images',outputFilename),'tiff');
     centroids4AllFiles{i} = table(centroidTableCell{:}, 'VariableNames', {'centroid_col', 'centroid_row', 'timepoint','position_number'});
 end
 toc
 allCentroids = vertcat(centroids4AllFiles{:});
 writetable(allCentroids, fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'), 'Delimiter', '\t');
+%% Save a badge to the _moviePath_
+%
+jsonStrings = {};
+n = 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('channel_name',channelName); n = n + 1;
+jsonStrings{n} = micrographIOT_array2json('channel_number',channelNumber); n = n + 1;
+mydate = datestr(now,31);
+jsonStrings{n} = micrographIOT_string2json('date',mydate);
+myjson = micrographIOT_jsonStrings2Object(jsonStrings);
+fid = fopen(fullfile(moviePath,'BADGE_segmentation.txt'),'w');
+if fid == -1
+    error('cGPSSD:badfile','Cannot open the file, preventing the export of the segmentation badge.');
+end
+fprintf(fid,myjson);
+fclose(fid);
+%%
+%
+myjson = micrographIOT_autoIndentJson(fullfile(moviePath,'BADGE_segmentation.txt'));
+fid = fopen(fullfile(moviePath,'BADGE_segmentation.txt'),'w');
+if fid == -1
+    error('cGPSSD:badfile','Cannot open the file, preventing the export of the segmentation badge.');
+end
+fprintf(fid,myjson);
+fclose(fid);
 end

@@ -38,7 +38,7 @@
 %%% Other Notes
 % It is assumed that the origin is in the ULC and _x_ increases from left
 % to right and _y_ increases from top to bottom.
-function [ObjectsLabeled, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
+function [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
 %% Parse Input
 % and initilize and allocate memory for variables
 defaultMinDiameter = 25;
@@ -84,7 +84,7 @@ Objects = imopen(Objects, strel('disk',5));
 % FIRST-TIER OBJECT: Keep round objects as they are to avoid
 % over-segmenting
 ObjectsLabeled = bwlabel(Objects);
-props = regionprops(ObjectsLabeled, 'Solidity');
+props = regionprops(logical(Objects), 'Solidity');
 primarySegmentation = ismember(ObjectsLabeled, find([props.Solidity] >= p.Results.SolidityThreshold));
 
 % Optional for certain cell lines: filter out objects that look like beans
@@ -163,6 +163,6 @@ end
 props = regionprops(ObjectsLabeled, 'Area');
 ObjectsLabeled = ObjectsLabeled .* ismember(ObjectsLabeled, find([props.Area] >= p.Results.AreaThreshold));
 ObjectsLabeled = bwlabel(ObjectsLabeled);
-Centroids = regionprops(ObjectsLabeled, 'Centroid');
+Centroids = regionprops(logical(Objects), 'Centroid');
 Centroids = reshape([Centroids.Centroid],2,length(Centroids))';
 end
