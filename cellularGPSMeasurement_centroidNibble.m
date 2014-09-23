@@ -2,7 +2,7 @@ function [myHandle] = cellularGPSMeasurement_centroidNibble(myParameters)
 nibble = strel('disk',myParameters.radius);
 myHandle = @subcellularGPSMeasurement_centroidNibble;
 
-    function myMeasurement = subcellularGPSMeasurement_centroidNibble(I,centroidTable,ISeg)
+    function myMeasurement = subcellularGPSMeasurement_centroidNibble(I,centroidTable,~)
         
         mask = false(size(I));
         mask(centroidTable.row) = true;
