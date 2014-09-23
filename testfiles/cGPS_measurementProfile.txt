@@ -1,11 +1,20 @@
 {
-	"parameters": [
+	"intensityParameters": [
 		"centroidNibble","meanIntensity","totalIntensity"
 	],
+	"shapeParameters": [
+		"area","solidity"
+	],
+	"area": {
+		"comment": "This function has no parameters."
+	},
 	"centroidNibble": {
 		"radius": 5
 	},
 	"meanIntensity": {
+		"comment": "This function has no parameters."
+	},
+	"solidity": {
 		"comment": "This function has no parameters."
 	},
 	"totalIntensity": {

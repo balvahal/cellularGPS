@@ -41,6 +41,9 @@ myFilename = smdaDatabase.filename(smdaDatabase.channel_number == channelNumber)
 myPositionNumber = smdaDatabase.position_number(smdaDatabase.channel_number == channelNumber);
 myTimepoint = smdaDatabase.timepoint(smdaDatabase.channel_number == channelNumber);
 centroids4AllFiles = cell(size(myFilename));
+%%%
+% create a table for the segmentation filenames
+segFilename = cell(size(myFilename));
 tic
 parfor i=1:length(myFilename)
     fprintf('%s\n',myFilename{i});
@@ -50,14 +53,16 @@ parfor i=1:length(myFilename)
     centroidTableCell{1} = Centroids(:,1);
     centroidTableCell{2} = Centroids(:,2);
     centroidTableCell{3} = repmat(myTimepoint(i),size(Centroids,1),1);
-    centroidTableCell{4} = repmat(myPositionNumber(i),size(Centroids,1),1);
-    outputFilename = sprintf('iseg_s%d_t%d.tiff',myPositionNumber(i),myTimepoint(i));
-    imwrite(Objects,fullfile(moviePath,'SEGMENT_DATA','segmentation_images',outputFilename),'tiff');
+    centroidTableCell{4} = repmat(myPositionNumber(i),size(Centroids,1),1); 
+    segFilename{i} = sprintf('iseg_s%d_t%d.tiff',myPositionNumber(i),myTimepoint(i));
+    imwrite(Objects,fullfile(moviePath,'SEGMENT_DATA','segmentation_images',segFilename{i}),'tiff');
     centroids4AllFiles{i} = table(centroidTableCell{:}, 'VariableNames', {'centroid_col', 'centroid_row', 'timepoint','position_number'});
 end
 toc
 allCentroids = vertcat(centroids4AllFiles{:});
 writetable(allCentroids, fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'), 'Delimiter', '\t');
+segTable = table(segFilename,myTimepoint,myPositionNumber,'VariableNames',{'filename','timepoint','position_number'});
+writetable(segTable, fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'), 'Delimiter', '\t');
 %% Save a badge to the _moviePath_
 %
 jsonStrings = {};

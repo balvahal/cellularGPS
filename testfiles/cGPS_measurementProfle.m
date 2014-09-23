@@ -1,12 +1,24 @@
 [mfilepath,~,~] = fileparts(mfilename('fullpath')); %finds the path to this script
-
-parameters = {'centroidNibble',...
+%% parameters
+%
+intensityParameters = {'centroidNibble',...
     'meanIntensity',...
     'totalIntensity'};
 
 jsonStrings = {};
 n = 1;
-jsonStrings{n} = micrographIOT_cellStringArray2json('parameters',parameters); n = n + 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('intensityParameters',intensityParameters); n = n + 1;
+%% parameters
+%
+shapeParameters = {'area',...
+    'solidity'};
+jsonStrings{n} = micrographIOT_cellStringArray2json('shapeParameters',shapeParameters); n = n + 1;
+%% area
+%
+jsonStrings2 = {};
+jsonStrings2{1} = micrographIOT_string2json('comment','This function has no parameters.');
+jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
+jsonStrings{n} = micrographIOT_nestedObject2json('area',jsonStrings2); n = n + 1;
 %% centroidNibble
 %
 jsonStrings2 = {};
@@ -19,6 +31,12 @@ jsonStrings2 = {};
 jsonStrings2{1} = micrographIOT_string2json('comment','This function has no parameters.');
 jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
 jsonStrings{n} = micrographIOT_nestedObject2json('meanIntensity',jsonStrings2); n = n + 1;
+%% solidity
+%
+jsonStrings2 = {};
+jsonStrings2{1} = micrographIOT_string2json('comment','This function has no parameters.');
+jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
+jsonStrings{n} = micrographIOT_nestedObject2json('solidity',jsonStrings2); n = n + 1;
 %% totalIntensity
 %
 jsonStrings2 = {};

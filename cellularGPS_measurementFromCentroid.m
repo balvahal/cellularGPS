@@ -54,7 +54,7 @@ end
 %%%
 % create a cell that holds correct set of centroids for each image
 cen2EachFile = cell(height(smda_database),1);
-for i = 1:height(smda_database) %floop 1
+for i = 1:height(smda_database) %floop 2
     cenTableLogical = cenTable.timepoint == smda_database.timepoint(i) & cenTable.position_number == smda_database.position_number(i);
     cen2EachFile{i} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
 end
@@ -69,22 +69,60 @@ myTimepoint = smda_database.timepoint;
 % The measurement are specified in a JSON object called
 % |cGPS_measurementProfile.txt|. Look at the list of measurement types for
 % more information. Each measurment type is found for every settings.
-measurementParameter = cellularGPS_measurementFromCentroid_measurementParameter(moviePath);
-%%%
-% create a container to hold the measurement information
+measurementParameter = cellularGPS_measurementFromCentroid_intensityParameter(moviePath);
+%% measurments for intensity parameters
+% create a container to hold the intensity measurement information
 fileNum = height(smda_database);
 myMeasurement = cell(fileNum,1);
 myMeasurementName = cell(fileNum,1);
 parfor i = 1:fileNum
-        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
+        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
 end
-%% Add meta-data measurements
-%
-%% Create a table that holds centroid information and 
-%
-disp('hello');
+%%%
+% rearrange the measurements to reflect the number of positions and
+% timepoints, i.e. collapse the channel, and any other, information.
+cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
+myPosNumberCenFilename = cenFilenameTable.position_number;
+myTimepointCenFilename = cenFilenameTable.timepoint;
+myIntensityMeasurement = cell(height(cenFilenameTable),1);
+for i = 1:length(myIntensityMeasurement) %floop 3
+    floop3Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
+    floop3Measurement = myMeasurement(floop3Logical);
+    floop3MeasurementName = myMeasurementName(floop3Logical);
+    floop3Table = table;
+    for j = 1:length(floop3Measurement)
+       floop3JMeasurement = floop3Measurement{j};
+       floop3JMeasurementName = floop3MeasurementName{j};
+       floop3JTable = table(floop3JMeasurement{:},'VariableNames',floop3JMeasurementName);
+       floop3Table = horzcat(floop3Table,floop3JTable); %#ok<AGROW>
+    end
+    myIntensityMeasurement{i} = floop3Table;
 end
-
-function [] = centroidRelativeTime()
-
+%% measurements for shape parameters
+%
+measurementParameter = cellularGPS_measurementFromCentroid_shapeParameter(moviePath);
+myShapeMeasurement = cell(size(myIntensityMeasurement));
+segfileNum = length(myShapeMeasurement);
+cenFilename = cenFilenameTable.filename;
+parfor i = 1:segfileNum
+    [data] = cellularGPS_measurementFromCentroid_getShapeMeasurement(measurementParameter,moviePath,cenFilename{i});
+    myShapeMeasurement{i} = table(data{:},'VariableNames',{measurementParameter.name});
+end
+%% measurements from meta-data
+% add the relative time information
+firstTimepoint = min(smda_database.matlab_serial_date_number);
+myMetaMeasurement = cell(size(myShapeMeasurement));
+for i = 1:length(myIntensityMeasurement) %floop 4
+    floop4Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
+    floop4Times = smda_database.matlab_serial_date_number(floop4Logical);
+    floop4RelTime = (floop4Times(1) - firstTimepoint)*24*60*60; % convert the units from days to seconds
+    myMetaMeasurement{i} = table(repmat(floop4RelTime,height(myShapeMeasurement{i}),1),'VariableNames',{'relative_time'});
+end
+%% consolidate all of the centroid information
+%
+masterIntensityMeasurement = vertcat(myIntensityMeasurement{:});
+masterShapeMeasurement = vertcat(myShapeMeasurement{:});
+masterMetaMeasurement = vertcat(myMetaMeasurement{:});
+masterTable = horzcat(cenTable,masterIntensityMeasurement,masterShapeMeasurement,masterMetaMeasurement);
+writetable(masterTable,fullfile(moviePath,'centroid_measurements.txt'), 'Delimiter', '\t');
 end

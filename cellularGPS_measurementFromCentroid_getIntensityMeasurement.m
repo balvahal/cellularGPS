@@ -1,5 +1,5 @@
 
-function [myMeasurement,myMeasurementName] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName,cen2EachFile,myChanNumber,myChanName,myPosNumber,myTimepoint)
+function [myMeasurement,myMeasurementName] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName,cen2EachFile,myChanNumber,myChanName,myPosNumber,myTimepoint)
 %%
 %
 myMeasurement = cell(length(measurementParameter),1);
@@ -18,6 +18,6 @@ ISeg = imread(fullfile(moviePath,'SEGMENT_DATA','segmentation_images',myFileName
 %
 for i = 1:length(measurementParameter)
     myMeasurement{i} = measurementParameter(i).fun(IM,cen2EachFile,ISeg);
-    myMeasurementName{i} = sprintf('%s__w%d%s',measurementParameter(i).name,myChanNumber,myChanName);
+    myMeasurementName{i} = sprintf('%s_w%d%s',measurementParameter(i).name,myChanNumber,myChanName);
 end
 end
