@@ -1,5 +1,14 @@
 {
 	"parameters": [
-		"centroidNibble"
-	]
+		"centroidNibble","meanIntensity","totalIntensity"
+	],
+	"centroidNibble": {
+		"radius": 5
+	},
+	"meanIntensity": {
+		"comment": "This function has no parameters."
+	},
+	"totalIntensity": {
+		"comment": "This function has no parameters."
+	}
 }

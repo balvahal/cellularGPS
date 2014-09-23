@@ -9,8 +9,22 @@ n = 1;
 jsonStrings{n} = micrographIOT_cellStringArray2json('parameters',parameters); n = n + 1;
 %% centroidNibble
 %
-
-jsonStrings{n} = micrographIOT_cellStringArray2json('parameters',parameters); n = n + 1;
+jsonStrings2 = {};
+jsonStrings2{1} = micrographIOT_array2json('radius',5);
+jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
+jsonStrings{n} = micrographIOT_nestedObject2json('centroidNibble',jsonStrings2); n = n + 1;
+%% meanIntensity
+%
+jsonStrings2 = {};
+jsonStrings2{1} = micrographIOT_string2json('comment','This function has no parameters.');
+jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
+jsonStrings{n} = micrographIOT_nestedObject2json('meanIntensity',jsonStrings2); n = n + 1;
+%% totalIntensity
+%
+jsonStrings2 = {};
+jsonStrings2{1} = micrographIOT_string2json('comment','This function has no parameters.');
+jsonStrings2 = micrographIOT_jsonStrings2Object(jsonStrings2);
+jsonStrings{n} = micrographIOT_nestedObject2json('totalIntensity',jsonStrings2); n = n + 1;
 %%
 %
 myjson = micrographIOT_jsonStrings2Object(jsonStrings);

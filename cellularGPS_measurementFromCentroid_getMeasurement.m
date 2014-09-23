@@ -1,19 +1,9 @@
 
-function [myMeasurement] = cellularGPS_measurementFromCentroid_getMeasurement(measurementName,moviePath,myFileName,centroidTable,myChanNumber,myPosNumber,myTimepoint)
+function [myMeasurement,myMeasurementName] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName,cen2EachFile,myChanNumber,myChanName,myPosNumber,myTimepoint)
 %%
 %
-switch lower(measurementName)
-    case 'centroidnibble'
-        measFun = @cellularGPSMeasurement_centroidNibble;
-    case 'meanintensity'
-        measFun = @cellularGPSMeasurement_meanIntensity;
-    case 'totalintensity'
-        measFun = @cellularGPSMeasurement_totalIntensity;
-    otherwise
-        warning('cGPS:getMeas','Unknown measurement parameter or type, ''%s'', was found in measurement profile.',measurementName);
-        myMeasurement = zeros(height(centroidTable,1));
-        return
-end
+myMeasurement = cell(length(measurementParameter),1);
+myMeasurementName = cell(length(measurementParameter),1);
 %%
 %
 if ~isdir(fullfile(moviePath,'PROCESSED_DATA'))
@@ -24,7 +14,10 @@ end
 IM = imread(fullfile(imagePath,myFileName));
 myFileNameSegment = sprintf('iseg_s%d_t%d.tiff',myPosNumber,myTimepoint);
 ISeg = imread(fullfile(moviePath,'SEGMENT_DATA','segmentation_images',myFileNameSegment));
-%%%
+%%
 %
-myMeasurement = measFun(IM,centriodMegaTable(indStart:indEnd),ISeg);
+for i = 1:length(measurementParameter)
+    myMeasurement{i} = measurementParameter(i).fun(IM,cen2EachFile,ISeg);
+    myMeasurementName{i} = sprintf('%s__w%d%s',measurementParameter(i).name,myChanNumber,myChanName);
+end
 end

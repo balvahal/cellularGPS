@@ -164,5 +164,5 @@ props = regionprops(ObjectsLabeled, 'Area');
 ObjectsLabeled = ObjectsLabeled .* ismember(ObjectsLabeled, find([props.Area] >= p.Results.AreaThreshold));
 Objects = logical(ObjectsLabeled);
 Centroids = regionprops(Objects, 'Centroid');
-Centroids = reshape([Centroids.Centroid],2,length(Centroids))';
+Centroids = round(reshape([Centroids.Centroid],2,length(Centroids))');
 end

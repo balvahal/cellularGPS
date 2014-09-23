@@ -1,9 +1,8 @@
-function [myMeasurements] = cellularGPSMeasurement_totalIntensity(I,centroidTable,ISeg)
-        
-        mask = zeros(I);
-        mask(centroids.) = validCells;
-        mask = imdilate(mask, strel('disk', 15));
-        measurements = regionprops(mask, YFP_background, 'MeanIntensity');
-        
-        measuredCells = ~isnan([measurements.MeanIntensity]);
+function [myHandle] = cellularGPSMeasurement_totalIntensity(~)
+myHandle = @subcellularGPSMeasurement_totalIntensity;
+    function myMeasurement = subcellularGPSMeasurement_totalIntensity(I,~,ISeg)
+        myMeasurement = regionprops(ISeg, I, 'PixelValue');
+        myMeasurement = transpose(struct2cell(myMeasurement));
+        myMeasurement = cellfun(@sum,myMeasurement);
+    end
 end

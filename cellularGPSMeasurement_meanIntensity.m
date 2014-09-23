@@ -1,13 +1,7 @@
 function [myHandle] = cellularGPSMeasurement_meanIntensity(~)
-myHandle = @subcellularGPSMeasurement_centroidNibble;
-
-    function myMeasurement = subcellularGPSMeasurement_centroidNibble(I,centroidTable,ISeg)
-        
-        mask = false(size(I));
-        mask(centroidTable.row) = true;
-        mask = imdilate(mask, nibble);
-        measurements = regionprops(mask, YFP_background, 'MeanIntensity');
-        
-        measuredCells = ~isnan([measurements.MeanIntensity]);
+myHandle = @subcellularGPSMeasurement_meanIntensity;
+    function myMeasurement = subcellularGPSMeasurement_meanIntensity(I,~,ISeg)
+        myMeasurement = regionprops(ISeg, I, 'MeanIntensity');
+        myMeasurement = transpose([myMeasurement.MeanIntensity]);
     end
 end

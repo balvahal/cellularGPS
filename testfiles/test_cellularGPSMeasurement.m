@@ -12,12 +12,12 @@ p.radius = 5;
 cGPSM_centroidNibble = cellularGPSMeasurement_centroidNibble(p);
 %%%
 %
-%cGPSM_meanIntensity= cellularGPSMeasurement_meanIntensity(I,centroidTable,ISeg);
+cGPSM_meanIntensity= cellularGPSMeasurement_meanIntensity(p);
 %%%
 %
-%cGPSM_totalIntensity = cellularGPSMeasurement_totalIntensity(I,centroidTable,ISeg);
+cGPSM_totalIntensity = cellularGPSMeasurement_totalIntensity(p);
 %%
 % a file to test
 myMeasurement1 = cGPSM_centroidNibble(I,centroidTable,ISeg);
-%myMeasurement2 = cGPSM_meanIntensity(I,centroidTable,ISeg);
-%myMeasurement3 = cGPSM_totalIntensity(I,centroidTable,ISeg);
+myMeasurement2 = cGPSM_meanIntensity(I,centroidTable,ISeg);
+myMeasurement3 = cGPSM_totalIntensity(I,centroidTable,ISeg);

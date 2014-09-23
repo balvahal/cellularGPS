@@ -62,6 +62,7 @@ end
 % create arrays for the salient image file metadata
 myFileName = smda_database.filename;
 myChanNumber = smda_database.channel_number;
+myChanName = smda_database.channel_name;
 myPosNumber = smda_database.position_number;
 myTimepoint = smda_database.timepoint;
 %% Determine which measurement to take
@@ -71,15 +72,17 @@ myTimepoint = smda_database.timepoint;
 measurementParameter = cellularGPS_measurementFromCentroid_measurementParameter(moviePath);
 %%%
 % create a container to hold the measurement information
-myMeasurement = cell(height(smda_database),length(measurementParameters));
-myMeasurementName = cell(height(smda_database),length(measurementParameters));
 fileNum = height(smda_database);
+myMeasurement = cell(fileNum,1);
+myMeasurementName = cell(fileNum,1);
 parfor i = 1:fileNum
-        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myPosNumber(i),myTimepoint(i));
+        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
 end
-
+%% Add meta-data measurements
+%
 %% Create a table that holds centroid information and 
 %
+disp('hello');
 end
 
 function [] = centroidRelativeTime()
