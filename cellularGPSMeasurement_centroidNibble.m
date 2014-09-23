@@ -14,6 +14,18 @@ myHandle = @subcellularGPSMeasurement_centroidNibble;
         Iseg2 = bwlabel(Iseg);
         myMeasurement2 = regionprops(mask,Iseg2,'PixelValues');
         myMeasurement3 = transpose(cellfun(@median,{myMeasurement2.PixelValues}));
+        numberOfCen = max(max(Iseg2));
+        if numel(myMeasurement3) ~= numberOfCen
+            %%%
+            % this can throw and error and we can live with one bad
+            % centroid measurement
+            myDiff = numel(myMeasurement3) - numberOfCen;
+            if myDiff < 0
+                myMeasurement3(end+1:end+myDiff) = myMeasurement3(1);
+            else
+                myMeasurement3(end-myDiff+1:end) = [];
+            end
+        end
         myMeasurement = myMeasurement(myMeasurement3);
     end
 end
