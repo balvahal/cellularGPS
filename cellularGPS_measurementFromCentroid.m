@@ -58,11 +58,20 @@ end
 % create a cell that holds correct set of centroids for each image
 tic
 fprintf('expanding centroids for measurement\n');
-cen2EachFile = cell(height(smda_database),1);
-for i = 1:height(smda_database) %floop 2
-    cenTableLogical = cenTable.timepoint == smda_database.timepoint(i) & cenTable.position_number == smda_database.position_number(i);
-    cen2EachFile{i} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
+cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
+myPosNumberCenFilename = cenFilenameTable.position_number;
+myTimepointCenFilename = cenFilenameTable.timepoint;
+cen2EachFile = cell(max(myPosNumberCenFilename),max(myTimepointCenFilename));
+for i = 1:height(cenFilenameTable)
+    cenTableLogical = cenTable.timepoint == myTimepointCenFilename(i) & cenTable.position_number == myPosNumberCenFilename(i);
+    cen2EachFile{myPosNumberCenFilename(i),myTimepointCenFilename(i)} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
 end
+
+% cen2EachFile = cell();
+% for i = 1:height(smda_database) %floop 2
+%     cenTableLogical = cenTable.timepoint == smda_database.timepoint(i) & cenTable.position_number == smda_database.position_number(i);
+%     cen2EachFile{i} = cenTable(cenTableLogical,1:2); %the row and column information of each centroid
+% end
 toc
 %%%
 % create arrays for the salient image file metadata
@@ -84,14 +93,12 @@ fileNum = height(smda_database);
 myMeasurement = cell(fileNum,1);
 myMeasurementName = cell(fileNum,1);
 parfor i = 1:fileNum
-        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{i},myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
+    fprintf('%s\n',myFileName{i});
+        [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile{myPosNumber(i),myTimepoint(i)},myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i)); %#ok<PFBNS>
 end
 %%%
 % rearrange the measurements to reflect the number of positions and
 % timepoints, i.e. collapse the channel, and any other, information.
-cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
-myPosNumberCenFilename = cenFilenameTable.position_number;
-myTimepointCenFilename = cenFilenameTable.timepoint;
 myIntensityMeasurement = cell(height(cenFilenameTable),1);
 for i = 1:length(myIntensityMeasurement) %floop 3
     floop3Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
