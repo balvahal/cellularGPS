@@ -75,7 +75,7 @@ end
 %% copy uncorrected files from _RAW_DATA_ (if reading from _RAW_DATA_)
 % if RAW_DATA is the source file then the uncorrected images need to be
 % copied over
-if ~isempty(myFilenamesOfUncorrected) && (imagePathIn == fullfile(moviePath,'RAW_DATA'))
+if ~isempty(myFilenamesOfUncorrected) && strcmp(imagePathIn,fullfile(moviePath,'RAW_DATA'))
     for i = 1:length(myFilenamesOfUncorrected)
         copyfile(fullfile(imagePathIn,myFilenamesOfUncorrected{i}),fullfile(imagePathOut,myFilenamesOfUncorrected{i}));
     end
