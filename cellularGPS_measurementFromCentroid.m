@@ -45,6 +45,7 @@ tic
 fprintf('reading centroid info\n');
 smda_database = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
 cenTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'),'Delimiter','\t');
+cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
 toc
 %%%
 % find the channel Name and corresponding numbers
@@ -56,6 +57,20 @@ for i = 1:length(channelNumber) %floop 1
 end
 %%%
 % create arrays for the salient image file metadata
+myPosNumberCenFilename = cenFilenameTable.position_number;
+myTimepointCenFilename = cenFilenameTable.timepoint;
+SegFilesLogical = false(height(smda_database),1);
+myPosNumber = smda_database.position_number;
+myTimepoint = smda_database.timepoint;
+for i = 1:length(myPosNumberCenFilename)
+    SegFilesLogical = SegFilesLogical | (myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i));
+end
+smda_database = smda_database(SegFilesLogical,:);
+%%%
+% only take measurements from images that have segmentation files
+
+%%%
+%
 myFileName = smda_database.filename;
 myChanNumber = smda_database.channel_number;
 myChanName = smda_database.channel_name;
@@ -82,9 +97,6 @@ end
 %%%
 % rearrange the measurements to reflect the number of positions and
 % timepoints, i.e. collapse the channel, and any other, information.
-cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
-myPosNumberCenFilename = cenFilenameTable.position_number;
-myTimepointCenFilename = cenFilenameTable.timepoint;
 myIntensityMeasurement = cell(height(cenFilenameTable),1);
 for i = 1:length(myIntensityMeasurement) %floop 3
     floop3Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
