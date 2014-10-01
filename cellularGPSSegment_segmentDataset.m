@@ -1,7 +1,7 @@
-%% cellularGPS_segmentDataset
+%% cellularGPSSegment_segmentDataset
 % Find centroids for cells based upon a nuclear marker or signal.
 %
-%   [] = cellularGPS_segmentDataset(database, rawDataPath, segmentDataPath, channel)
+%   [] = cellularGPSSegment_segmentDataset(database, rawDataPath, segmentDataPath, channel)
 %
 %%% Input
 % * smdaDatabase: database table of SuperMDA format.
@@ -19,7 +19,7 @@
 %
 %%% Other Notes
 % z-stack information is ignored.
-function [] = cellularGPS_segmentDataset(moviePath, channelNumber)
+function [] = cellularGPSSegment_segmentDataset(moviePath, channelNumber)
 if ~isdir(fullfile(moviePath,'SEGMENT_DATA'))
     mkdir(fullfile(moviePath,'SEGMENT_DATA'));
 end
@@ -48,7 +48,7 @@ tic
 parfor i=1:length(myFilename)
     fprintf('%s\n',myFilename{i});
     IM = imread(fullfile(imagePath,myFilename{i}));
-    [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
+    [Objects, Centroids] = cellularGPSSegment_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
     centroidTableCell = cell(1,4);
     centroidTableCell{1} = Centroids(:,1);
     centroidTableCell{2} = Centroids(:,2);

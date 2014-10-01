@@ -1,9 +1,9 @@
-%% cellularGPS_TriangleMethod
+%% cellularGPSSegment_TriangleMethod
 % a threhold method that works particularly well when the image consists of
 % mostly background and a foreground, or a large peak (background) and a
 % long tail (foreground).
 %
-%   [trithresh] = cellularGPS_TriangleMethod(I)
+%   [trithresh] = cellularGPSSegment_TriangleMethod(I)
 %
 %%% Input
 % * I: A grayscale image.
@@ -16,7 +16,7 @@
 %
 %%% Other Notes
 % 
-function [trithresh] = cellularGPS_TriangleMethod(I, outlierQuantile)
+function [trithresh] = cellularGPSSegment_TriangleMethod(I, outlierQuantile)
 %% Approximate histogram as triangle
 %%%
 % Create the histogram

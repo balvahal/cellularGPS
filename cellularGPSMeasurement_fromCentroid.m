@@ -1,4 +1,4 @@
-%% cellularGPS_measurementFromCentroids
+%% cellularGPSMeasurement_fromCentroid
 % Obtain measurments using centroids without worrying about linking.
 % Without further processing this data will yield something that resembles
 % immunofluorescence with a time component.
@@ -21,7 +21,7 @@
 %
 %%% Other Notes
 %
-function [] = cellularGPS_measurementFromCentroid(moviePath)
+function [] = cellularGPSMeasurement_fromCentroid(moviePath)
 %% Verify the path is valid
 %
 if ~isdir(moviePath)
@@ -82,7 +82,7 @@ fprintf('taking intensity measurements\n');
 % The measurement are specified in a JSON object called
 % |cGPS_measurementProfile.txt|. Look at the list of measurement types for
 % more information. Each measurment type is found for every settings.
-measurementParameter = cellularGPS_measurementFromCentroid_intensityParameter(moviePath);
+measurementParameter = cellularGPSMeasurement_fromCentroid_intensityParameter(moviePath);
 %% measurments for intensity parameters
 % create a container to hold the intensity measurement information
 fileNum = height(smda_database);
@@ -92,7 +92,7 @@ parfor i = 1:fileNum
     fprintf('%s\n',myFileName{i});
     cenTableLogical = cenTable.timepoint == myTimepoint(i) & cenTable.position_number == myPosNumber(i); %#ok<PFBNS>
     cen2EachFile = cenTable(cenTableLogical,1:2);
-    [myMeasurement{i},myMeasurementName{i}] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile,myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
+    [myMeasurement{i},myMeasurementName{i}] = cellularGPSMeasurement_fromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName{i},cen2EachFile,myChanNumber(i),myChanName{i},myPosNumber(i),myTimepoint(i));
 end
 %%%
 % rearrange the measurements to reflect the number of positions and
@@ -116,13 +116,13 @@ toc
 %
 tic
 fprintf('taking shape measurements\n');
-measurementParameter = cellularGPS_measurementFromCentroid_shapeParameter(moviePath);
+measurementParameter = cellularGPSMeasurement_fromCentroid_shapeParameter(moviePath);
 myShapeMeasurement = cell(size(myIntensityMeasurement));
 segfileNum = length(myShapeMeasurement);
 cenFilename = cenFilenameTable.filename;
 parfor i = 1:segfileNum
     fprintf('%s\n',cenFilename{i});
-    [data] = cellularGPS_measurementFromCentroid_getShapeMeasurement(measurementParameter,moviePath,cenFilename{i});
+    [data] = cellularGPSMeasurement_fromCentroid_getShapeMeasurement(measurementParameter,moviePath,cenFilename{i});
     myShapeMeasurement{i} = table(data{:},'VariableNames',{measurementParameter.name});
 end
 toc

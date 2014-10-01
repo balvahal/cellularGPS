@@ -38,7 +38,7 @@
 %%% Other Notes
 % It is assumed that the origin is in the ULC and _x_ increases from left
 % to right and _y_ increases from top to bottom.
-function [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
+function [Objects, Centroids] = cellularGPSSegment_identifyPrimaryObjectsGeneral(OriginalImage, varargin)
 %% Parse Input
 % and initilize and allocate memory for variables
 defaultMinDiameter = 25;
@@ -77,7 +77,7 @@ BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(Siz
 edgeImage = imfill(edge(BlurredImage, 'canny'), 'holes');
 edgeImage = imopen(edgeImage, strel('disk',5));
 %protectImage = imdilate(edgeImage);
-Objects = imfill(edgeImage + (BlurredImage > 1.25*cellularGPS_TriangleMethod(BlurredImage, 0.95)), 'holes');%& ThresholdedImage;
+Objects = imfill(edgeImage + (BlurredImage > 1.25*cellularGPSSegment_TriangleMethod(BlurredImage, 0.95)), 'holes');%& ThresholdedImage;
 Objects = imopen(Objects, strel('disk',5));
 % Objects = imclearborder(Objects);
 

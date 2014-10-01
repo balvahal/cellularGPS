@@ -1,5 +1,5 @@
 
-function [myMeasurement,myMeasurementName] = cellularGPS_measurementFromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName,cen2EachFile,myChanNumber,myChanName,myPosNumber,myTimepoint)
+function [myMeasurement,myMeasurementName] = cellularGPSMeasurement_fromCentroid_getIntensityMeasurement(measurementParameter,moviePath,myFileName,cen2EachFile,myChanNumber,myChanName,myPosNumber,myTimepoint)
 %%
 %
 myMeasurement = cell(length(measurementParameter),1);

@@ -1,5 +1,5 @@
 
-function [myMeasurement] = cellularGPS_measurementFromCentroid_getShapeMeasurement(measurementParameter,moviePath,myFileName)
+function [myMeasurement] = cellularGPSMeasurement_fromCentroid_getShapeMeasurement(measurementParameter,moviePath,myFileName)
 %%
 %
 myMeasurement = cell(length(measurementParameter),1);

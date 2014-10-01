@@ -1,5 +1,5 @@
 
-function [myMeasurement] = cellularGPS_measurementFromCentroid_shapeParameter(moviePath)
+function [myMeasurement] = cellularGPSMeasurement_fromCentroid_shapeParameter(moviePath)
 %%
 %
 %%%
