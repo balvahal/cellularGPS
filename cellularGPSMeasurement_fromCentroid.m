@@ -128,24 +128,25 @@ end
 toc
 %% measurements from meta-data
 % add the relative time information
-tic
-fprintf('taking meta measurements\n');
-firstTimepoint = min(smda_database.matlab_serial_date_number);
-myMetaMeasurement = cell(size(myShapeMeasurement));
-for i = 1:length(myIntensityMeasurement) %floop 4
-    floop4Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
-    floop4Times = smda_database.matlab_serial_date_number(floop4Logical);
-    floop4RelTime = (floop4Times(1) - firstTimepoint)*24*60*60; % convert the units from days to seconds
-    myMetaMeasurement{i} = table(repmat(floop4RelTime,height(myShapeMeasurement{i}),1),'VariableNames',{'relative_time'});
-end
-toc
+% tic
+% fprintf('taking meta measurements\n');
+% firstTimepoint = min(smda_database.matlab_serial_date_number);
+% myMetaMeasurement = cell(size(myShapeMeasurement));
+% for i = 1:length(myIntensityMeasurement) %floop 4
+%     floop4Logical = myPosNumber == myPosNumberCenFilename(i) & myTimepoint == myTimepointCenFilename(i);
+%     floop4Times = smda_database.matlab_serial_date_number(floop4Logical);
+%     floop4RelTime = (floop4Times(1) - firstTimepoint)*24*60*60; % convert the units from days to seconds
+%     myMetaMeasurement{i} = table(repmat(floop4RelTime,height(myShapeMeasurement{i}),1),'VariableNames',{'relative_time'});
+% end
+% toc
 %% consolidate all of the centroid information
 %
 tic
 masterIntensityMeasurement = vertcat(myIntensityMeasurement{:});
 masterShapeMeasurement = vertcat(myShapeMeasurement{:});
-masterMetaMeasurement = vertcat(myMetaMeasurement{:});
-masterTable = horzcat(cenTable,masterIntensityMeasurement,masterShapeMeasurement,masterMetaMeasurement);
+% masterMetaMeasurement = vertcat(myMetaMeasurement{:});
+% masterTable = horzcat(cenTable,masterIntensityMeasurement,masterShapeMeasurement,masterMetaMeasurement);
+masterTable = horzcat(cenTable,masterIntensityMeasurement,masterShapeMeasurement);
 toc
 writetable(masterTable,fullfile(moviePath,'centroid_measurements.txt'), 'Delimiter', '\t');
 end

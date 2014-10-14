@@ -75,7 +75,7 @@ channelTruthTable = zeros(length(channelNumber),2);
 % Check for existence of correction images. First, identify offset and gain
 % images and their channel
 for k=1:length(channelNumber)
-    if exist(fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_offset.tiff',channelNumber(k),channelName{k})),'file')
+    if exist(fullfile(moviePath,'flatfield',sprintf('flatfield_w%d_%s_offset.tiff',channelNumber(k),channelName{k})),'file')
         channelTruthTable(k,1) = 1;
     end
 end
@@ -85,7 +85,7 @@ for j=1:length(dirCon_ff) %floop 2
     floop2Filename=regexp(dirCon_ff(j).name,expr,'match','once','ignorecase');
     if floop2Filename
         for k=1:length(channelNumber)
-            if strcmpi(floop2Filename,sprintf('flatfield_w%d%s',channelNumber(k),channelName{k}))
+            if strcmpi(floop2Filename,sprintf('flatfield_w%d_%s',channelNumber(k),channelName{k}))
                 channelTruthTable(k,2) = 1;
             end
         end
@@ -114,7 +114,7 @@ exprGain='flatfield_w(?<chnum>\d+).*_gain\d+.tiff';
 offsetIM = cell(size(channelNumber));
 gainIM = cell(size(channelNumber));
 for i = 1:length(channelNumber) %floop 4
-    offsetIM{i} = double(imread(fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_offset.tiff',channelNumber(i),channelName{i}))));
+    offsetIM{i} = double(imread(fullfile(moviePath,'flatfield',sprintf('flatfield_w%d_%s_offset.tiff',channelNumber(i),channelName{i}))));
     for j=1:length(dirCon_ff)
         floop4chnum=regexp(dirCon_ff(j).name,exprGain,'names');
         if ~isempty(floop4chnum) && str2double(floop4chnum.chnum) == channelNumber(i)
@@ -176,6 +176,7 @@ smdaDatabaseFilenamesOfUncorrected = smdaDatabase.filename(smdaDatabaseLogical);
 if ~isempty(smdaDatabaseFilenamesOfUncorrected)
     for i = 1:length(smdaDatabaseFilenamesOfUncorrected)
         copyfile(fullfile(imagePathIn,smdaDatabaseFilenamesOfUncorrected{i}),fullfile(imagePathOut,smdaDatabaseFilenamesOfUncorrected{i}));
+		fprintf('Copying uncorrected image %s\n',smdaDatabaseFilenamesOfUncorrected{i})
     end
 end
 %% Save a badge to the _moviePath_
