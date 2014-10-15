@@ -67,7 +67,7 @@ MaximaSuppressionSize = p.Results.MaximaSuppressionSize;
 MinimumThreshold = p.Results.MinimumThreshold;
 
 OriginalImage_medianFilter = medfilt2(OriginalImage, [2,2]);
-OriginalImage_normalized = cellularGPSSegment_imnormalize(double(OriginalImage_medianFilter));
+OriginalImage_normalized = cellularGPSSegment_imnormalizeUINT16(double(OriginalImage_medianFilter));
 SizeOfSmoothingFilter=MinDiameter;
 BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
 
