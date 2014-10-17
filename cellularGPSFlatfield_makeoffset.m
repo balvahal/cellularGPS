@@ -48,5 +48,5 @@ else
     IM = medfilt2(IM,[9,9],'symmetric');
 end
 IM=uint16(IM);
-imwrite(IM,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_offset.tiff',channelNumber,channelName)),'tif','Compression','none');
+imwrite(IM,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d_%s_offset.tiff',channelNumber,channelName)),'tif','Compression','none');
 end

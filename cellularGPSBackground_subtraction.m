@@ -67,7 +67,7 @@ bkgdFun = bkgdmethods(p2);
 %% subtract background from each image
 %
 parfor i = 1:length(myFilenames)
-    fprintf('Analyzing position %s\n', myFilenames{i});
+    fprintf('%s\n', myFilenames{i});
     imageIn = double(imread(fullfile(imagePathIn,myFilenames{i})));
     imageOut = bkgdFun(imageIn); %#ok<PFBNS>
     imwrite(uint16(imageOut),fullfile(imagePathOut,myFilenames{i}),'tiff');
@@ -75,7 +75,7 @@ end
 %% copy uncorrected files from _RAW_DATA_ (if reading from _RAW_DATA_)
 % if RAW_DATA is the source file then the uncorrected images need to be
 % copied over
-if ~isempty(myFilenamesOfUncorrected) && (imagePathIn == fullfile(moviePath,'RAW_DATA'))
+if ~isempty(myFilenamesOfUncorrected) && strcmp(imagePathIn,fullfile(moviePath,'RAW_DATA'))
     for i = 1:length(myFilenamesOfUncorrected)
         copyfile(fullfile(imagePathIn,myFilenamesOfUncorrected{i}),fullfile(imagePathOut,myFilenamesOfUncorrected{i}));
     end
@@ -84,7 +84,7 @@ end
 %
 jsonStrings = {};
 n = 1;
-jsonStrings{n} = micrographIOT_cellStringArray2json('channel_names',channelName); n = n + 1;
+jsonStrings{n} = micrographIOT_cellStringArray2json('channel_name',channelName); n = n + 1;
 jsonStrings{n} = micrographIOT_array2json('channel_number',channelNumber); n = n + 1;
 mydate = datestr(now,31);
 jsonStrings{n} = micrographIOT_string2json('date',mydate);

@@ -84,5 +84,5 @@ max_temp=round(max_temp*1000)/1000;
 im_temp=gainIM*65536/max_temp;
 im_temp=uint16(im_temp);
 max_temp=sprintf('%d',max_temp*1000);
-imwrite(im_temp,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d%s_gain%s.tiff',channelNumber,channelName,max_temp)),'tif','Compression','none');
+imwrite(im_temp,fullfile(moviePath,'flatfield',sprintf('flatfield_w%d_%s_gain%s.tiff',channelNumber,channelName,max_temp)),'tif','Compression','none');
 end
