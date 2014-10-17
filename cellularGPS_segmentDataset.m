@@ -49,7 +49,7 @@ fprintf('Analyzing position %d\n', uniquePosition(i));
         centroidTable = zeros(2^8,3);
             IM = imread(fullfile(imagePath, smdaDatabase.filename{files(k)}));
             IM = imbackground(IM, 10, 100);
-            [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
+            [Objects, Centroids] = cellularGPS_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.01);
             centroidNumber(k) = size(Centroids,1);
             centroidTable{k}(1:centroidNumber(k),1:2) = Centroids;
             centroidTable{k}(1:centroidNumber(k),3) = timepoint;
