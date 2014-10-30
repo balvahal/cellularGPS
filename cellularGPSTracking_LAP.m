@@ -4,15 +4,14 @@ winningMatrix = LAPmatrix;
 cost = Inf;
 for j=1:length(validColumns)
     tempLAPMatrix = LAPmatrix;
-    tempLAPMatrix(i,j) = 1;
-    
-    tempCostMatrix = costMatrix;
-    tempCostMatrix(:,j) = -1;
-    
-    if(i==size(costMatrix,1))
+    tempLAPMatrix(i,validColumns(j)) = 1;
+    if(i==50)
+        %fprintf('%d\t%d\n', i, length(validColumns));
         competingMatrix = tempLAPMatrix;
-        competingCost = sum(tempCostMatrix(competingMatrix));
+        competingCost = sum(costMatrix(logical(competingMatrix)));
     else
+        tempCostMatrix = costMatrix;
+        tempCostMatrix((i+1):end,validColumns(j)) = -1;
         [competingMatrix, competingCost] = cellularGPSTracking_LAP(tempCostMatrix, i+1, tempLAPMatrix);
     end
     if(competingCost < cost)
