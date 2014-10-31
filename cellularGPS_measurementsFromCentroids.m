@@ -76,11 +76,6 @@ end
 % The measurements are specified in a JSON object called
 % |cGPS_measurementsProfile.txt|. Look at the list of measurement types for
 % more information. Each measurment type is found for every settings.
-%%
-% check for the function _loadjson_ from the MATLAB File Exchange
-if ~exist('loadjson','file')
-    error('smdaITFimport:missLoadJson','The function "loadjson()" is not in the MATLAB path or has not been downloaded from the MATLAB File Exchange. Visit http://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files-in-matlab-octave');
-end
 measurementsProfile = loadjson(fullfile(moviePath,'cGPS_measurementsProfile.txt'));
 measurementsParameters = measurementsProfile.parameters;
 numberOfGPS = sum(cellfun(@numel,channelNumbers));
