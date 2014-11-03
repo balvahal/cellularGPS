@@ -2,7 +2,7 @@
 %
 %% generate random data for tracking
 %
-nx = [10,20,40,80,160,320,640];
+nx = [10,20,40,80,160,320];
 t = zeros(size(nx));
 for j = 1:length(nx)
     n = nx(j);
@@ -168,9 +168,32 @@ for j = 1:length(nx)
     hold off
 end
 tMunk2 = t;
+%% fit exponential curves
+% and predict how long it would take to compute LAP for 200 positions with
+% 200 timepoints and a 1000 x 1000 cost matrix.
+expmodel = @(b,x) b(1)*x.^(b(2));
+beta0 = [.00001,3];
+dataLAPjv = table(nx',tLAPjv','VariableNames',{'dim','time'});
+dataMunk = table(nx',tMunk','VariableNames',{'dim','time'});
+dataMunk2 = table(nx',tMunk2','VariableNames',{'dim','time'});
+mdlLAPjv = fitnlm(dataLAPjv,expmodel,beta0);
+mdlMunk = fitnlm(dataMunk,expmodel,beta0);
+mdlMunk2 = fitnlm(dataMunk2,expmodel,beta0);
+%% plot results
 figure
-plot(nx,tLAPjv,'g');
+plot(nx,tLAPjv,'go');
 hold on
-plot(nx,tMunk,'r');
-plot(nx,tMunk2,'k');
-legend({'LAPjv','Munk','Munk with no Inf'});
+plot(nx,tMunk,'ro');
+plot(nx,tMunk2,'ko');
+legend({sprintf('LAPjv %1.2f',mdlLAPjv.Coefficients.Estimate(2)),...
+    sprintf('Munk %1.2f',mdlMunk.Coefficients.Estimate(2)),...
+    sprintf('Munk no Inf %1.2f',mdlMunk2.Coefficients.Estimate(2))});
+plot(nx,expmodel(mdlLAPjv.Coefficients.Estimate,nx),'g');
+plot(nx,expmodel(mdlMunk.Coefficients.Estimate,nx),'r');
+plot(nx,expmodel(mdlMunk2.Coefficients.Estimate,nx),'k');
+%% fit exponential curves
+% and predict how long it would take to compute LAP for 200 positions with
+% 200 timepoints and a 1000 x 1000 cost matrix.
+expmodel = @(b,x) b(1)*exp(b(2)*x);
+beta0 = [1,1];
+dataLAPjv = table(tLAPjv',nx');
