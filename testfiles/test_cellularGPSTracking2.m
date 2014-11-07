@@ -24,6 +24,19 @@ myCentroid.trackID = trackID;
 myCentroid.trackCost = zeros(height(myCentroid),1);
 myCentroid.displacement = zeros(height(myCentroid),1);
 centroidCell{1} = myCentroid;
+%%
+% kalman filter variables
+    s.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
+    s.R = eye(4);
+    s.P = eye(4);
+    s.u = 0;
+    s.B = 0;
+    s.Q = zeros(4);
+    s.H = eye(4);
+    x0
+    vx0
+    y0
+    vy0
 %% cost matrix
 % the cost matrix for the first timepoint cannot take into account any
 % prior tracking or position information
@@ -32,13 +45,19 @@ for i = 2:length(mytime) %loop 1
     Mlp1 = centroid1lp1{:,{'centroid_col','centroid_row'}};
     centroid2lp1 = centroidCell{i};
     Nlp1 = centroid2lp1{:,{'centroid_col','centroid_row'}};
+    %%% Kalman filter: linear motion
+    %
+
+    for i = 1:length(track
+    s.x
+    
+    
     distM = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
     %%% particle specific distance thresholds
-    % * track specific movement threshold is 3x the standard deviation of previous
-    % links
+    % * track specific movement threshold is 3x the standard deviation of
+    % previous links
     % * local density threshold is half the distance to its nearest
     % neighbor
-    masterCentroidlp1 = vertcat(centroidCell{1:i-1});
     distM2 = cellularGPSTracking_distanceMatrix(Mlp1,Mlp1);
     for j = 1:size(Mlp1,1)
         displacementlp1 = masterCentroidlp1.displacement(masterCentroidlp1.trackID == trackID(j));
@@ -124,18 +143,21 @@ i = 0;
 for j = 1:length(trackID)
     mylogical = masterCentroid.trackID == trackID(j);
     tracklength(j) = sum(mylogical);
-        if tracklength(j) == 1
-            myrow = masterCentroid.centroid_row(mylogical);
-            mycol = masterCentroid.centroid_col(mylogical);
-            mytime = masterCentroid.timepoint(mylogical);
-            output = sortrows([mytime,mycol,myrow]);
-            plot(output(:,2),output(:,3),'o','Color',[rand rand rand],'LineWidth',1.5);
-            continue
-        end
+    if tracklength(j) == 1
+        myrow = masterCentroid.centroid_row(mylogical);
+        mycol = masterCentroid.centroid_col(mylogical);
+        mytime = masterCentroid.timepoint(mylogical);
+        output = sortrows([mytime,mycol,myrow]);
+        plot(output(:,2),output(:,3),'o','Color',[rand rand rand],'LineWidth',1.5);
+        continue
+    end
     myrow = masterCentroid.centroid_row(mylogical);
     mycol = masterCentroid.centroid_col(mylogical);
     mytime = masterCentroid.timepoint(mylogical);
     output = sortrows([mytime,mycol,myrow]);
+    if tracklength(j) > 50
+        disp(tracklength(j));
+    end
     plot(output(:,2),output(:,3),'Color',[rand rand rand],'LineWidth',1.5);
 end
 hold off
