@@ -23,22 +23,25 @@ trackCostMax = 0;
 myCentroid.trackID = trackID;
 myCentroid.trackCost = zeros(height(myCentroid),1);
 myCentroid.displacement = zeros(height(myCentroid),1);
+myCentroid.speed = zeros(height(myCentroid),1);
 centroidCell{1} = myCentroid;
 %%
 % kalman filter variables
-clear s
-s.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
-s.R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
-s.P = eye(4); % a random starting point
-s.u = 0; % there is no input
-s.B = 0; % there is no input
-s.Q = eye(4); % assume measurement error of centroid is 1 pixel
-s.H = eye(4); % measurement is the same a process
-s.x0 = zeros(4,1);
-s.x1 = zeros(4,1);
-s = repmat(s,height(myCentroid),1);
-predictionap = zeros(4,size(myCentroid,1));
-predictionp = zeros(4,size(myCentroid,1));
+kf.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
+kf.R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
+kf.P = eye(4); % a random starting point
+kf.U = 0; % there is no input
+kf.B = 0; % there is no input
+kf.Q = eye(4); % assume measurement error of centroid is 1 pixel
+kf.H = eye(4); % measurement is the same a process
+kf.I = eye(4);
+kf.Ppri = [2,1,0,0;1,2,0,0;0,0,2,1;0,0,1,2]; % estimated from applying Kalman filter to a test track
+kfcellM = repmat({kf},height(myCentroid),1);
+ for i = 1:size(myCentroid,1)
+     mykf = kfcellM{i};
+     mykf.Xpri = [myCentroid.centroid_col(i);0;myCentroid.centroid_row(i);0];
+     kfcellM{i} = mykf;
+ end
 %% cost matrix
 % the cost matrix for the first timepoint cannot take into account any
 % prior tracking or position information
@@ -50,14 +53,16 @@ for i = 2:length(mytime) %loop 1
     masterCentroidlp1 = vertcat(centroidCell{1:i-1});
     %%% Kalman filter: linear motion
     % time update, predict
+    predictlp1 = zeros(size(Mlp1));
     for j = 1:size(Mlp1,1)
-        s(j).x0(1) = Mlp1(j,1);
-        s(j).x0(3) = Mlp1(j,2);
-        predictionap(:,j) = s(j).A*s(j).x0;
-        s(j).P = s(j).A*s(j).P*transpose(s(j).A) + s(j).Q;
+        mykf = kfcellM{j};
+        mykf = cellularGPSTracking_Kalman_Predict(mykf);
+        predictlp1(j,1) = mykf.Xpredict(1);
+        predictlp1(j,2) = mykf.Xpredict(3);
+        kfcellM{j} = mykf;
     end
-    
-    distM = cellularGPSTracking_distanceMatrix(transpose(predictionap([1,3],:)),Nlp1);
+    %distM = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
+    distM = cellularGPSTracking_distanceMatrix(predictlp1,Nlp1);
     %%% particle specific distance thresholds
     % * track specific movement threshold is 3x the standard deviation of
     % previous links
@@ -115,26 +120,26 @@ for i = 2:length(mytime) %loop 1
     trackID = zeros(size(Nlp1,1),1);
     trackCost = zeros(size(Nlp1,1),1);
     trackDisplacement = zeros(size(Nlp1,1),1);
+    trackSpeed = zeros(size(Nlp1,1),1);
+    kfcellN = cell(size(Nlp1,1),1);
+    distM3 = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
     for j = 1:size(Mlp1,1)
         if ROWSOL(j) <= size(Nlp1,1)
             trackID(ROWSOL(j)) = centroid1lp1.trackID(j);
             trackCost(ROWSOL(j)) = costM11(j,ROWSOL(j));
-            trackDisplacement(ROWSOL(j)) = distM(j,ROWSOL(j));
+            trackDisplacement(ROWSOL(j)) = distM3(j,ROWSOL(j));
             %%% kalman filter
             % measurement update, correct
-            s(j).K = s(j).P*transpose(s(j).H)\(s(j).H*s(j).P*transpose(s(j).H)+s(j).R);
-            z = [Nlp1(ROWSOL(j),1);Nlp1(ROWSOL(j),1)-Mlp1(j,1);Nlp1(ROWSOL(j),2);Nlp1(ROWSOL(j),2)-Mlp1(j,2)];
-                    s(ROWSOL(j)).A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
-        s(ROWSOL(j)).R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
-        s(ROWSOL(j)).u = 0; % there is no input
-        s(ROWSOL(j)).B = 0; % there is no input
-        s(ROWSOL(j)).Q = eye(4); % assume measurement error of centroid is 1 pixel
-        s(ROWSOL(j)).H = eye(4); % measurement is the same a process
-            s(ROWSOL(j)).x1 = predictionap(:,j) + s(j).K*(z-s(j).H*predictionap(:,j));
-            s(ROWSOL(j)).P1 = (eye(4)-s(j).K*s(j).H)*s(j).P;
+            mykf = kfcellM{j};
+            mykf.Z = [Nlp1(ROWSOL(j),1);Nlp1(ROWSOL(j),1)-Mlp1(j,1);Nlp1(ROWSOL(j),2);Nlp1(ROWSOL(j),2)-Mlp1(j,2)];
+            mykf = cellularGPSTracking_Kalman_Correct(mykf);
+            mykf = cellularGPSTracking_Kalman_Predict_update(mykf);
+            %mykf.Xpri(1) = Nlp1(ROWSOL(j),1);
+            %mykf.Xpri(3) = Nlp1(ROWSOL(j),2);
+            kfcellN{ROWSOL(j)} = mykf;
+            trackSpeed(ROWSOL(j)) = norm([mykf.Xpost(2),mykf.Xpost(4)]);
         end
     end
-    predictionap = zeros(4,size(Nlp1,1));
     if max(trackCost) > trackCostMax
         trackCostMax = max(trackCost);
     end
@@ -145,25 +150,15 @@ for i = 2:length(mytime) %loop 1
         trackDisplacement(j) = 0;
         %%% kalman filter
         % measurement update, correct
-        s(j).A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
-        s(j).R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
-        s(j).P = eye(4); % a random starting point
-        s(j).u = 0; % there is no input
-        s(j).B = 0; % there is no input
-        s(j).Q = eye(4); % assume measurement error of centroid is 1 pixel
-        s(j).H = eye(4); % measurement is the same a process
-        s(j).x0 = zeros(4,1);
-        s(j).x1 = [Nlp1(j,1);0;Nlp1(j,2);0];
-        s(j).P1 = eye(4);
-    end
-    for j = 1:size(Nlp1,1)
-        s(j).x0 = s(j).x1;
-        s(j).P = s(j).P1;
+        kf.Xpri = [Nlp1(j,1);0;Nlp1(j,2);0];
+        kfcellN{j} = kf;
     end
     centroid2lp1.trackID = trackID;
     centroid2lp1.trackCost = trackCost;
     centroid2lp1.displacement = trackDisplacement;
+    centroid2lp1.speed = trackSpeed;
     centroidCell{i} = centroid2lp1;
+    kfcellM = kfcellN;
 end
 %% plot solution
 %
@@ -202,7 +197,8 @@ for j = 1:length(trackID) % loop2
         % the process noise is the fluctuation of accelerations, because a
         % change in velocity is acceleration and a change in position is a
         % fluctuation in velocity.
-        i = i+1
+        i = i+1;
+        trackID(j)
         alp2{i} = output(3:end,2:3)-2*output(2:end-1,2:3)+output(1:end-2,2:3);
         vlp2 = mean(diff(output(:,2:3)));
         xlp2{i} = output(2:end,2:3) - (output(1:end-1,2:3)+repmat(vlp2,size(output,1)-1,1));
