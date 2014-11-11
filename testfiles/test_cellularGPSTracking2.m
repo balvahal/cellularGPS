@@ -26,13 +26,19 @@ myCentroid.displacement = zeros(height(myCentroid),1);
 centroidCell{1} = myCentroid;
 %%
 % kalman filter variables
-    s.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
-    s.R = eye(4);
-    s.P = eye(4);
-    s.u = 0;
-    s.B = 0;
-    s.Q = zeros(4);
-    s.H = eye(4);
+clear s
+s.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
+s.R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
+s.P = eye(4); % a random starting point
+s.u = 0; % there is no input
+s.B = 0; % there is no input
+s.Q = eye(4); % assume measurement error of centroid is 1 pixel
+s.H = eye(4); % measurement is the same a process
+s.x0 = zeros(4,1);
+s.x1 = zeros(4,1);
+s = repmat(s,height(myCentroid),1);
+predictionap = zeros(4,size(myCentroid,1));
+predictionp = zeros(4,size(myCentroid,1));
 %% cost matrix
 % the cost matrix for the first timepoint cannot take into account any
 % prior tracking or position information
@@ -43,10 +49,15 @@ for i = 2:length(mytime) %loop 1
     Nlp1 = centroid2lp1{:,{'centroid_col','centroid_row'}};
     masterCentroidlp1 = vertcat(centroidCell{1:i-1});
     %%% Kalman filter: linear motion
-    %
+    % time update, predict
+    for j = 1:size(Mlp1,1)
+        s(j).x0(1) = Mlp1(j,1);
+        s(j).x0(3) = Mlp1(j,2);
+        predictionap(:,j) = s(j).A*s(j).x0;
+        s(j).P = s(j).A*s(j).P*transpose(s(j).A) + s(j).Q;
+    end
     
-    
-    distM = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
+    distM = cellularGPSTracking_distanceMatrix(transpose(predictionap([1,3],:)),Nlp1);
     %%% particle specific distance thresholds
     % * track specific movement threshold is 3x the standard deviation of
     % previous links
@@ -109,8 +120,21 @@ for i = 2:length(mytime) %loop 1
             trackID(ROWSOL(j)) = centroid1lp1.trackID(j);
             trackCost(ROWSOL(j)) = costM11(j,ROWSOL(j));
             trackDisplacement(ROWSOL(j)) = distM(j,ROWSOL(j));
+            %%% kalman filter
+            % measurement update, correct
+            s(j).K = s(j).P*transpose(s(j).H)\(s(j).H*s(j).P*transpose(s(j).H)+s(j).R);
+            z = [Nlp1(ROWSOL(j),1);Nlp1(ROWSOL(j),1)-Mlp1(j,1);Nlp1(ROWSOL(j),2);Nlp1(ROWSOL(j),2)-Mlp1(j,2)];
+                    s(ROWSOL(j)).A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
+        s(ROWSOL(j)).R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
+        s(ROWSOL(j)).u = 0; % there is no input
+        s(ROWSOL(j)).B = 0; % there is no input
+        s(ROWSOL(j)).Q = eye(4); % assume measurement error of centroid is 1 pixel
+        s(ROWSOL(j)).H = eye(4); % measurement is the same a process
+            s(ROWSOL(j)).x1 = predictionap(:,j) + s(j).K*(z-s(j).H*predictionap(:,j));
+            s(ROWSOL(j)).P1 = (eye(4)-s(j).K*s(j).H)*s(j).P;
         end
     end
+    predictionap = zeros(4,size(Nlp1,1));
     if max(trackCost) > trackCostMax
         trackCostMax = max(trackCost);
     end
@@ -119,6 +143,22 @@ for i = 2:length(mytime) %loop 1
         trackCounter = trackCounter + 1;
         trackCost(j) = costM21(j,j);
         trackDisplacement(j) = 0;
+        %%% kalman filter
+        % measurement update, correct
+        s(j).A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
+        s(j).R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
+        s(j).P = eye(4); % a random starting point
+        s(j).u = 0; % there is no input
+        s(j).B = 0; % there is no input
+        s(j).Q = eye(4); % assume measurement error of centroid is 1 pixel
+        s(j).H = eye(4); % measurement is the same a process
+        s(j).x0 = zeros(4,1);
+        s(j).x1 = [Nlp1(j,1);0;Nlp1(j,2);0];
+        s(j).P1 = eye(4);
+    end
+    for j = 1:size(Nlp1,1)
+        s(j).x0 = s(j).x1;
+        s(j).P = s(j).P1;
     end
     centroid2lp1.trackID = trackID;
     centroid2lp1.trackCost = trackCost;
@@ -134,7 +174,7 @@ trackID = unique(masterCentroid.trackID);
 mycolors = colormap(parula(length(trackID)));
 tracklength = zeros(size(trackID));
 vlp2 = {};
-xlp2 = {}
+xlp2 = {};
 i = 0;
 for j = 1:length(trackID) % loop2
     mylogical = masterCentroid.trackID == trackID(j);
@@ -152,6 +192,12 @@ for j = 1:length(trackID) % loop2
     mytime = masterCentroid.timepoint(mylogical);
     output = sortrows([mytime,mycol,myrow]);
     if tracklength(j) > 50
+        %%% persistence length
+        % what is the length/time scale that cells travel in the same
+        % direction? cos = exp(-t/P). P is the persistence length. The
+        % persistence length is important when estimating the velocity, for
+        % choosing the start point and end point might not be accurate if
+        % the time between is > persistence length.
         %%% estimate the process noise
         % the process noise is the fluctuation of accelerations, because a
         % change in velocity is acceleration and a change in position is a
@@ -167,3 +213,17 @@ hold off
 myax = gca;
 set(myax,'ydir','reverse')
 sum(tracklength > 50)
+
+%%%
+% looking at the mean and standard deviation of alp2 and xlp2
+% reveals zero mean, but the distributions from this test case are not
+% gaussian, as the noise does not have as much spread. The x noise is also
+% dependent on the cells not changing directions throughout the trace. By
+% eyeballing the data it looks like cells might change direction, although
+% not randomly, 2 to 3 times, so the noise in x is likely an overestimate.
+a = vertcat(alp2{:});
+x = vertcat(xlp2{:});
+x = x(:);
+a = a(:);
+[ha,pa] = kstest(a/std(a))
+[hx,px] = kstest(x/std(x))
