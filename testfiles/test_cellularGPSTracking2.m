@@ -33,10 +33,6 @@ centroidCell{1} = myCentroid;
     s.B = 0;
     s.Q = zeros(4);
     s.H = eye(4);
-    x0
-    vx0
-    y0
-    vy0
 %% cost matrix
 % the cost matrix for the first timepoint cannot take into account any
 % prior tracking or position information
@@ -45,11 +41,9 @@ for i = 2:length(mytime) %loop 1
     Mlp1 = centroid1lp1{:,{'centroid_col','centroid_row'}};
     centroid2lp1 = centroidCell{i};
     Nlp1 = centroid2lp1{:,{'centroid_col','centroid_row'}};
+    masterCentroidlp1 = vertcat(centroidCell{1:i-1});
     %%% Kalman filter: linear motion
     %
-
-    for i = 1:length(track
-    s.x
     
     
     distM = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
@@ -139,8 +133,10 @@ masterCentroid = vertcat(centroidCell{:});
 trackID = unique(masterCentroid.trackID);
 mycolors = colormap(parula(length(trackID)));
 tracklength = zeros(size(trackID));
+vlp2 = {};
+xlp2 = {}
 i = 0;
-for j = 1:length(trackID)
+for j = 1:length(trackID) % loop2
     mylogical = masterCentroid.trackID == trackID(j);
     tracklength(j) = sum(mylogical);
     if tracklength(j) == 1
@@ -156,7 +152,14 @@ for j = 1:length(trackID)
     mytime = masterCentroid.timepoint(mylogical);
     output = sortrows([mytime,mycol,myrow]);
     if tracklength(j) > 50
-        disp(tracklength(j));
+        %%% estimate the process noise
+        % the process noise is the fluctuation of accelerations, because a
+        % change in velocity is acceleration and a change in position is a
+        % fluctuation in velocity.
+        i = i+1
+        alp2{i} = output(3:end,2:3)-2*output(2:end-1,2:3)+output(1:end-2,2:3);
+        vlp2 = mean(diff(output(:,2:3)));
+        xlp2{i} = output(2:end,2:3) - (output(1:end-1,2:3)+repmat(vlp2,size(output,1)-1,1));
     end
     plot(output(:,2),output(:,3),'Color',[rand rand rand],'LineWidth',1.5);
 end
