@@ -23,10 +23,10 @@ function [] = cellularGPSBackground_subtraction(moviePath,varargin)
 %
 p = inputParser;
 p.addRequired('moviePath', @(x)isdir(x));
-p.addParamValue('method','Jared',@(x) any(strcmpi(x,{'Jared','Alex','Uri'})));
-p.addParamValue('magnification',20,@(x)any(bsxfun(@eq,x,[10,20,40,60])));
-p.addParamValue('binning',1,@(x)any(bsxfun(@eq,x,[1,2])));
-p.addParamValue('channelNumber',0,@(x)isnumeric(x));
+p.addParameter('method','Jared',@(x) any(strcmpi(x,{'Jared','Alex','Uri'})));
+p.addParameter('magnification',20,@(x)any(bsxfun(@eq,x,[10,20,40,60])));
+p.addParameter('binning',1,@(x)any(bsxfun(@eq,x,[1,2])));
+p.addParameter('channelNumber',0,@(x)isnumeric(x));
 p.parse(moviePath, varargin{:});
 p2.met = p.Results.method;
 p2.mag = p.Results.magnification;
