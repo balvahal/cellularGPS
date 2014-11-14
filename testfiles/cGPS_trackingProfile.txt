@@ -1,0 +1,49 @@
+{
+	"comment": {
+	"1": "This profile is appropriate for use with images of MCF7 cells with a pixel edge of approximately 0.6 um. This translates to 20x magnification with a binning of 2 as of the 2014 microscope setup."
+	},
+	"distance": {
+		"movementThresholdMax": 30,
+		"movementThresholdMaxMin": 10
+	},
+	"kalmanFilter": {
+		"A": [
+		[1,1,0,0],
+		[0,1,0,0],
+		[0,0,1,1],
+		[0,0,0,1]
+		],
+		"B": 0,
+		"H": [
+		[1,0,0,0],
+		[0,1,0,0],
+		[0,0,1,0],
+		[0,0,0,1]
+		],
+		"I": [
+		[1,0,0,0],
+		[0,1,0,0],
+		[0,0,1,0],
+		[0,0,0,1]
+		],
+		"Ppri": [
+		[2,1,0,0],
+		[1,2,0,0],
+		[0,0,2,1],
+		[0,0,1,2]
+		],
+		"Q": [
+		[1,0,0,0],
+		[0,1,0,0],
+		[0,0,1,0],
+		[0,0,0,1]
+		],
+		"R": [
+		[4,0,0,0],
+		[0,9,0,0],
+		[0,0,4,0],
+		[0,0,0,9]
+		],
+		"U": 0
+	}
+}

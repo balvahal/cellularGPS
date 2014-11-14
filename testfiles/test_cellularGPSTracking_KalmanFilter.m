@@ -29,7 +29,6 @@ centroidCell{1} = myCentroid;
 % kalman filter variables
 kf.A = [1,1,0,0;0,1,0,0;0,0,1,1;0,0,0,1];
 kf.R = diag([4,9,4,9]); % estimated from tracking data without Kalman filter
-kf.P = eye(4); % a random starting point
 kf.U = 0; % there is no input
 kf.B = 0; % there is no input
 kf.Q = eye(4); % assume measurement error of centroid is 1 pixel
@@ -46,10 +45,10 @@ kfcellM = repmat({kf},height(myCentroid),1);
 % the cost matrix for the first timepoint cannot take into account any
 % prior tracking or position information
 for i = 2:length(mytime) %loop 1
-    centroid1lp1 = centroidCell{i-1};
-    Mlp1 = centroid1lp1{:,{'centroid_col','centroid_row'}};
-    centroid2lp1 = centroidCell{i};
-    Nlp1 = centroid2lp1{:,{'centroid_col','centroid_row'}};
+    centroidM = centroidCell{i-1};
+    Mlp1 = centroidM{:,{'centroid_col','centroid_row'}};
+    centroidN = centroidCell{i};
+    Nlp1 = centroidN{:,{'centroid_col','centroid_row'}};
     masterCentroidlp1 = vertcat(centroidCell{1:i-1});
     %%% Kalman filter: linear motion
     % time update, predict
@@ -125,7 +124,7 @@ for i = 2:length(mytime) %loop 1
     distM3 = cellularGPSTracking_distanceMatrix(Mlp1,Nlp1);
     for j = 1:size(Mlp1,1)
         if ROWSOL(j) <= size(Nlp1,1)
-            trackID(ROWSOL(j)) = centroid1lp1.trackID(j);
+            trackID(ROWSOL(j)) = centroidM.trackID(j);
             trackCost(ROWSOL(j)) = costM11(j,ROWSOL(j));
             trackDisplacement(ROWSOL(j)) = distM3(j,ROWSOL(j));
             %%% kalman filter
@@ -153,11 +152,11 @@ for i = 2:length(mytime) %loop 1
         kf.Xpri = [Nlp1(j,1);0;Nlp1(j,2);0];
         kfcellN{j} = kf;
     end
-    centroid2lp1.trackID = trackID;
-    centroid2lp1.trackCost = trackCost;
-    centroid2lp1.displacement = trackDisplacement;
-    centroid2lp1.speed = trackSpeed;
-    centroidCell{i} = centroid2lp1;
+    centroidN.trackID = trackID;
+    centroidN.trackCost = trackCost;
+    centroidN.displacement = trackDisplacement;
+    centroidN.speed = trackSpeed;
+    centroidCell{i} = centroidN;
     kfcellM = kfcellN;
 end
 %% plot solution
