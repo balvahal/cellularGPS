@@ -65,23 +65,24 @@ function [f] = cellularGPSTrackingManual_gui_imageViewer(trackman)
                 end
             end
             
-f = figure('Visible','on','Units','characters','MenuBar','none',...
+            fwidth = fwidth/ppChar(1);
+            fheight = fheight/ppChar(2);
+            
+f = figure('Visible','off','Units','characters','MenuBar','none',...
     'Resize','off','Name','Image Viewer',...
-    'Renderer','OpenGL','Position',[0 0 fwidth fheight],...
-    'CloseRequestFcn',{@fCloseRequestFcn},...
+    'Renderer','OpenGL','Position',[(Char_SS(3)-fwidth)/2 (Char_SS(4)-fheight)/2 fwidth fheight],...
+    'CloseRequestFcn',{@fDeleteFcn},...
     'KeyPressFcn',{@fKeyPressFcn},...
     'WindowButtonDownFcn',{@fWindowButtonDownFcn},...
     'WindowButtonMotionFcn',{@fHover},...
     'WindowScrollWheelFcn',{@fWindowScrollWheelFcn});
 
-hx = 0; hy = 0;
-
 %hwidth = master.obj_imageViewer.image_width/master.ppChar(1);
 %hheight = master.obj_imageViewer.image_height/master.ppChar(2);
 %hx = (fwidth-hwidth)/2;
 %hy = (fheight-hheight-100/master.ppChar(2))/2+100/master.ppChar(2);
-haxesImageViewer = axes('Units','characters','DrawMode','fast',...
-    'Position',[hx hy fwidth  fheight],'YDir','reverse','Visible','on',...
+haxesImageViewer = axes('Parent',f,'Units','characters','DrawMode','fast',...
+    'Position',[0 0 fwidth  fheight],'YDir','reverse','Visible','on',...
     'XLim',[1-0.5,size(I,2)+0.5],'YLim',[1-0.5,size(I,1)+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
 %% Create an axes
 % highlighted cell with hover haxesHighlight =
@@ -179,6 +180,15 @@ set(f,'Visible','on');
 %         %do nothing. This means only the master object can close this
 %         %window.
 %     end
+%%
+%
+%%
+% 
+    function fDeleteFcn(~,~)
+        %do nothing. This means only the master object can close this
+        %window.
+        delete(f);
+    end
 %%
 %
     function fKeyPressFcn(~,keyInfo)
@@ -344,18 +354,18 @@ set(f,'Visible','on');
 %%
 % Translate the mouse position into the pixel location in the source image
     function fHover(~,~)
-        set(f, 'HandleVisibility', 'on');
-        set(0, 'currentfigure', f);
-        % This function is redundant with the setImage function
-        currentPoint = master.obj_imageViewer.getPixelxy;
-        if(isempty(currentPoint))
-            return;
-        end
-        
-        if(~master.obj_fileManager.preprocessMode)
-            return;
-        end
-        master.obj_imageViewer.setImage;
+%         set(f, 'HandleVisibility', 'on');
+%         set(0, 'currentfigure', f);
+%         % This function is redundant with the setImage function
+%         currentPoint = master.obj_imageViewer.getPixelxy;
+%         if(isempty(currentPoint))
+%             return;
+%         end
+%         
+%         if(~master.obj_fileManager.preprocessMode)
+%             return;
+%         end
+%         master.obj_imageViewer.setImage;
     end
 %%
 %

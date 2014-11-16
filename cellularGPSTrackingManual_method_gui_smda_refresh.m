@@ -1,6 +1,6 @@
 %%
 %
-function trackman = cellularGPSTrackingManual_method_refresh_gui_smda(trackman)
+function trackman = cellularGPSTrackingManual_method_gui_smda_refresh(trackman)
 handles = guidata(trackman.gui_smda);
 %% Region 1
 %

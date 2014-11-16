@@ -431,413 +431,10 @@ set(f,'Visible','on');
 %
 %%
 % 
-%     function fDeleteFcn(~,~)
-%         %do nothing. This means only the master object can close this
-%         %window.
-%     end
-
-%%
-%
-    function editFundamentalPeriod_Callback(~,~)
-        myValue = str2double(get(heditFundamentalPeriod,'String'))*trackman.uot_conversion;
-        trackman.itinerary.newFundamentalPeriod(myValue);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function editDuration_Callback(~,~)
-        myValue = str2double(get(heditDuration,'String'))*trackman.uot_conversion;
-        trackman.itinerary.newDuration(myValue);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function editNumberOfTimepoints_Callback(~,~)
-        myValue = str2double(get(heditNumberOfTimepoints,'String'));
-        trackman.itinerary.newNumberOfTimepoints(myValue);
-        trackman.refresh_gui_main;
-    end
-
-%%
-%
-    function editOutputDirectory_Callback(~,~)
-        folder_name = get(heditOutputDirectory,'String');
-        if exist(folder_name,'dir')
-            trackman.itinerary.output_directory = folder_name;
-        else
-            str = sprintf('''%s'' is not a directory',folder_name);
-            disp(str);
-        end
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function popupmenuUnitsOfTime_Callback(~,~)
-        seconds2array = [1,60,3600,86400];
-        trackman.uot_conversion = seconds2array(get(hpopupmenuUnitsOfTime,'Value'));
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonGroupAdd_Callback(~,~)
-        trackman.addGroup;
-        trackman.pointerGroup = trackman.itinerary.numberOfGroup;
-        trackman.refresh_gui_main;
-    end
-
-%%
-%
-    function pushbuttonGroupDown_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved down 1.
-        if max(trackman.pointerGroup) == trackman.itinerary.numberOfGroup
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfGroup; % what the table looks like now
-        movingGroup = trackman.pointerGroup+1; % where the selected rows want to go
-        reactingGroup = setdiff(currentOrder,trackman.pointerGroup); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingGroup) = trackman.pointerGroup; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingGroup; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the groups
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        myGroupOrder = myGroupOrder(fillmeinArray);
-        % use the new group order to rearrange the orderVector
-        groupGPS = trackman.itinerary.gps(:,1);
-        groupGPS = groupGPS(trackman.itinerary.gps_logical);
-        newInds = zeros(2,trackman.itinerary.numberOfGroup);
-        newInds(1,1) = 1;
-        newInds(2,1) = sum(groupGPS == myGroupOrder(1));
-        for i = 2:length(newInds)
-            newInds(1,i) = newInds(1,i-1)+sum(groupGPS == myGroupOrder(i-1));
-            newInds(2,i) = newInds(2,i-1)+sum(groupGPS == myGroupOrder(i));
-        end
-        newOrderVector = zeros(size(trackman.itinerary.orderVector));
-        for i = 1:trackman.itinerary.numberOfGroup
-            newOrderLogical = (trackman.itinerary.gps(:,1) == myGroupOrder(i)) & transpose(trackman.itinerary.gps_logical);
-            newOrderLogical = newOrderLogical(trackman.itinerary.orderVector);
-            newOrderSegment = trackman.itinerary.orderVector(newOrderLogical);
-            newOrderVector(newInds(1,i):newInds(2,i)) = newOrderSegment;
-        end
-        trackman.itinerary.orderVector = newOrderVector;
-        %
-        trackman.pointerGroup = movingGroup;
-        trackman.itinerary.find_ind_last_group;
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonGroupDrop_Callback(~,~)
-        if trackman.itinerary.numberOfGroup==1
-            return
-        elseif length(trackman.pointerGroup) == trackman.itinerary.numberOfGroup
-            trackman.pointerGroup(1) = [];
-        end
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInds = myGroupOrder(trackman.pointerGroup);
-        for i = 1:length(gInds)
-            trackman.dropGroup(gInds(i));
-        end
-        trackman.pointerGroup = trackman.itinerary.numberOfGroup;
-        trackman.itinerary.find_ind_last_group;
-        trackman.refresh_gui_main;
-    end
-
-%%
-%
-    function pushbuttonGroupFunctionAfter_Callback(~,~)
-        myGroupInd = trackman.itinerary.indOfGroup;
-        mypwd = pwd;
-        cd(trackman.itinerary.output_directory);
-        [filename,pathname] = uigetfile({'*.m'},'Choose the group-function-after');
-        if exist(fullfile(pathname,filename),'file')
-            [trackman.itinerary.group_function_after{myGroupInd}] = deal(char(regexp(filename,'.*(?=\.m)','match')));
-        else
-            disp('The group-function-after selection was invalid.');
-        end
-        cd(mypwd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonGroupFunctionBefore_Callback(~,~)
-        myGroupInd = trackman.itinerary.indOfGroup;
-        mypwd = pwd;
-        cd(trackman.itinerary.output_directory);
-        [filename,pathname] = uigetfile({'*.m'},'Choose the group-function-before');
-        if exist(fullfile(pathname,filename),'file')
-            [trackman.itinerary.group_function_before{myGroupInd}] = deal(char(regexp(filename,'.*(?=\.m)','match')));
-        else
-            disp('The group-function-before selection was invalid.');
-        end
-        cd(mypwd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonGroupUp_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved up 1.
-        if min(trackman.pointerGroup) == 1
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfGroup; % what the table looks like now
-        movingGroup = trackman.pointerGroup-1; % where the selected rows want to go
-        reactingGroup = setdiff(currentOrder,trackman.pointerGroup); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingGroup) = trackman.pointerGroup; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingGroup; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the groups
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        myGroupOrder = myGroupOrder(fillmeinArray);
-        % use the new group order to rearrange the orderVector
-        groupGPS = trackman.itinerary.gps(:,1);
-        groupGPS = groupGPS(trackman.itinerary.gps_logical);
-        newInds = zeros(2,trackman.itinerary.numberOfGroup);
-        newInds(1,1) = 1;
-        newInds(2,1) = sum(groupGPS == myGroupOrder(1));
-        for i = 2:length(newInds)
-            newInds(1,i) = newInds(1,i-1)+sum(groupGPS == myGroupOrder(i-1));
-            newInds(2,i) = newInds(2,i-1)+sum(groupGPS == myGroupOrder(i));
-        end
-        newOrderVector = zeros(size(trackman.itinerary.orderVector));
-        for i = 1:trackman.itinerary.numberOfGroup
-            newOrderLogical = (trackman.itinerary.gps(:,1) == myGroupOrder(i)) & transpose(trackman.itinerary.gps_logical);
-            newOrderLogical = newOrderLogical(trackman.itinerary.orderVector);
-            newOrderSegment = trackman.itinerary.orderVector(newOrderLogical);
-            newOrderVector(newInds(1,i):newInds(2,i)) = newOrderSegment;
-        end
-        trackman.itinerary.orderVector = newOrderVector;
-        %
-        trackman.pointerGroup = movingGroup;
-        trackman.itinerary.find_ind_last_group;
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionAdd_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        trackman.addPosition(gInd);
-        trackman.pointerPosition = trackman.itinerary.numberOfPosition(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionDown_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved down 1.
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        if max(trackman.pointerPosition) == trackman.itinerary.numberOfPosition(gInd)
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfPosition(gInd); % what the table looks like now
-        movingPosition = trackman.pointerPosition+1; % where the selected rows want to go
-        reactingPosition = setdiff(currentOrder,trackman.pointerPosition); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingPosition) = trackman.pointerPosition; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingPosition; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the positions
-        myPositionOrder = trackman.itinerary.orderOfPosition(gInd);
-        myPositionOrder = myPositionOrder(fillmeinArray);
-        % find the location of the group within the orderVector
-        newOrderLogical2 = (trackman.itinerary.gps(:,1) == gInd) & transpose(trackman.itinerary.gps_logical);
-        newOrderLogical2 = newOrderLogical2(trackman.itinerary.orderVector);
-        myGInd(1) = find(newOrderLogical2,1,'first');
-        myGInd(2) = find(newOrderLogical2,1,'last');
-        if (myGInd(2) - myGInd(1) + 1) ~= sum(newOrderLogical2)
-            error('trackman:orderVpMove','The orderVector is corrupt. Please start over.');
-        end
-        % use the new position order to rearrange the orderVector
-        positionGPS = trackman.itinerary.gps(:,2);
-        positionGPS = positionGPS(trackman.itinerary.gps_logical);
-        newInds = zeros(2,trackman.itinerary.numberOfPosition(gInd));
-        newInds(1,1) = 1;
-        newInds(2,1) = sum(positionGPS == myPositionOrder(1));
-        for i = 2:length(newInds)
-            newInds(1,i) = newInds(1,i-1)+sum(positionGPS == myPositionOrder(i-1));
-            newInds(2,i) = newInds(2,i-1)+sum(positionGPS == myPositionOrder(i));
-        end
-        newOrderVector = zeros(1,(myGInd(2) - myGInd(1) + 1));
-        for i = 1:trackman.itinerary.numberOfPosition(gInd)
-            newOrderLogical = (trackman.itinerary.gps(:,2) == myPositionOrder(i)) & transpose(trackman.itinerary.gps_logical);
-            newOrderLogical = newOrderLogical(trackman.itinerary.orderVector);
-            newOrderSegment = trackman.itinerary.orderVector(newOrderLogical);
-            newOrderVector(newInds(1,i):newInds(2,i)) = newOrderSegment;
-        end
-        trackman.itinerary.orderVector(myGInd(1):myGInd(2)) = newOrderVector;
-        %
-        trackman.pointerPosition = movingPosition;
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionDrop_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        if trackman.itinerary.numberOfPosition(gInd)==1
-            return
-        elseif length(trackman.pointerPosition) == trackman.itinerary.numberOfPosition(gInd)
-            trackman.pointerPosition(1) = [];
-        end
-        myPositionInd = trackman.itinerary.orderOfPosition(gInd);
-        for i = 1:length(trackman.pointerPosition)
-            trackman.itinerary.dropPosition(myPositionInd(trackman.pointerPosition(i)));
-        end
-        trackman.pointerPosition = trackman.itinerary.numberOfPosition(gInd);
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSetAllZ_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        myPInd = trackman.itinerary.indOfPosition(gInd);
-        trackman.itinerary.position_continuous_focus_offset(myPInd) = str2double(trackman.mm.core.getProperty(trackman.mm.AutoFocusDevice,'Position'));
-        xyz = trackman.mm.getXYZ;
-        trackman.itinerary.position_xyz(myPInd,3) = xyz(3);
-        fprintf('positions in group %d have Z postions updated!\n',gInd);
-    end
-%%
-%
-    function pushbuttonPositionFunctionAfter_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        mypwd = pwd;
-        myPositionInd = trackman.itinerary.indOfPosition(gInd);
-        cd(trackman.itinerary.output_directory);
-        [filename,pathname] = uigetfile({'*.m'},'Choose the position-function-after');
-        if exist(fullfile(pathname,filename),'file')
-            [trackman.itinerary.position_function_after{myPositionInd}] = deal(char(regexp(filename,'.*(?=\.m)','match')));
-        else
-            disp('The position-function-before selection was invalid.');
-        end
-        cd(mypwd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionFunctionBefore_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        mypwd = pwd;
-        myPositionInd = trackman.itinerary.indOfPosition(gInd);
-        cd(trackman.itinerary.output_directory);
-        [filename,pathname] = uigetfile({'*.m'},'Choose the position-function-before');
-        if exist(fullfile(pathname,filename),'file')
-            [trackman.itinerary.position_function_before{myPositionInd}] = deal(char(regexp(filename,'.*(?=\.m)','match')));
-        else
-            disp('The position-function-before selection was invalid.');
-        end
-        cd(mypwd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionMove_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.orderOfPosition(gInd);
-        pInd = pInd(trackman.pointerPosition(1));
-        xyz = trackman.itinerary.position_xyz(pInd,:);
-        if trackman.itinerary.position_continuous_focus_bool(pInd)
-            %% PFS lock-on will be attempted
-            %
-            trackman.mm.setXYZ(xyz(1:2)); % setting the z through the focus device will disable the PFS. Therefore, the stage is moved in the XY direction before assessing the status of the PFS system.
-            trackman.mm.core.waitForDevice(trackman.mm.xyStageDevice);
-            if strcmp(trackman.mm.core.getProperty(trackman.mm.AutoFocusStatusDevice,'State'),'Off')
-                %%
-                % If the PFS is |OFF|, then the scope is moved to an
-                % absolute z that will give the system the best chance of
-                % locking onto the correct z.
-                trackman.mm.setXYZ(xyz(3),'direction','z');
-                trackman.mm.core.waitForDevice(trackman.mm.FocusDevice);
-                trackman.mm.core.setProperty(trackman.mm.AutoFocusDevice,'Position',trackman.itinerary.position_continuous_focus_offset(pInd));
-                trackman.mm.core.fullFocus(); % PFS will return to |OFF|
-            else
-                %%
-                % If the PFS system is already on, then changing the offset
-                % will adjust the z-position. fullFocus() will have the
-                % system wait until the new z-position has been reached.
-                trackman.mm.core.setProperty(trackman.mm.AutoFocusDevice,'Position',trackman.itinerary.position_continuous_focus_offset(pInd));
-                trackman.mm.core.fullFocus(); % PFS will remain |ON|
-            end
-        else
-            %% PFS will not be utilized
-            %
-            trackman.mm.setXYZ(xyz);
-            trackman.mm.core.waitForDevice(trackman.mm.FocusDevice);
-            trackman.mm.core.waitForDevice(trackman.mm.xyStageDevice);
-        end
-    end
-%%
-%
-    function pushbuttonPositionSet_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.orderOfPosition(gInd);
-        pInd = pInd(trackman.pointerPosition(1));
-        trackman.mm.getXYZ;
-        trackman.itinerary.position_xyz(pInd,:) = trackman.mm.pos;
-        trackman.itinerary.position_continuous_focus_offset(pInd) = str2double(trackman.mm.core.getProperty(trackman.mm.AutoFocusDevice,'Position'));
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonPositionUp_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved up 1.
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        if min(trackman.pointerPosition) == 1
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfPosition(gInd); % what the table looks like now
-        movingPosition = trackman.pointerPosition-1; % where the selected rows want to go
-        reactingPosition = setdiff(currentOrder,trackman.pointerPosition); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingPosition) = trackman.pointerPosition; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingPosition; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the positions
-        myPositionOrder = trackman.itinerary.orderOfPosition(gInd);
-        myPositionOrder = myPositionOrder(fillmeinArray);
-        % find the location of the group within the orderVector
-        newOrderLogical2 = (trackman.itinerary.gps(:,1) == gInd) & transpose(trackman.itinerary.gps_logical);
-        newOrderLogical2 = newOrderLogical2(trackman.itinerary.orderVector);
-        myGInd(1) = find(newOrderLogical2,1,'first');
-        myGInd(2) = find(newOrderLogical2,1,'last');
-        if (myGInd(2) - myGInd(1) + 1) ~= sum(newOrderLogical2)
-            error('trackman:orderVpMove','The orderVector is corrupt. Please start over.');
-        end
-        % use the new position order to rearrange the orderVector
-        positionGPS = trackman.itinerary.gps(:,2);
-        positionGPS = positionGPS(trackman.itinerary.gps_logical);
-        newInds = zeros(2,trackman.itinerary.numberOfPosition(gInd));
-        newInds(1,1) = 1;
-        newInds(2,1) = sum(positionGPS == myPositionOrder(1));
-        for i = 2:length(newInds)
-            newInds(1,i) = newInds(1,i-1)+sum(positionGPS == myPositionOrder(i-1));
-            newInds(2,i) = newInds(2,i-1)+sum(positionGPS == myPositionOrder(i));
-        end
-        newOrderVector = zeros(1,(myGInd(2) - myGInd(1) + 1));
-        for i = 1:trackman.itinerary.numberOfPosition(gInd)
-            newOrderLogical = (trackman.itinerary.gps(:,2) == myPositionOrder(i)) & transpose(trackman.itinerary.gps_logical);
-            newOrderLogical = newOrderLogical(trackman.itinerary.orderVector);
-            newOrderSegment = trackman.itinerary.orderVector(newOrderLogical);
-            newOrderVector(newInds(1,i):newInds(2,i)) = newOrderSegment;
-        end
-        trackman.itinerary.orderVector(myGInd(1):myGInd(2)) = newOrderVector;
-        %
-        trackman.pointerPosition = movingPosition;
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
+    function fDeleteFcn(~,~)
+        %do nothing. This means only the master object can close this
+        %window.
+        delete(f);
     end
 %%
 %
@@ -852,7 +449,7 @@ set(f,'Visible','on');
         else
             disp('The SuperMDAItinerary file selected was invalid.');
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
@@ -866,186 +463,12 @@ set(f,'Visible','on');
             str = sprintf('''%s'' is not a directory',folder_name);
             disp(str);
         end
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSave_Callback(~,~)
-        trackman.itinerary.export;
-    end
-%%
-%
-    function pushbuttonSettingsAdd_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(1);
-        trackman.addSettings(gInd);
-        trackman.pointerSettings = trackman.itinerary.numberOfSettings(gInd,pInd);
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-        %        trackman.pushSettings(gInd);
-    end
-%%
-%
-    function pushbuttonSettingsDown_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved down 1.
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(1);
-        if max(trackman.pointerSettings) == trackman.itinerary.numberOfSettings(gInd,pInd);
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfSettings(gInd,pInd); % what the table looks like now
-        movingSettings = trackman.pointerSettings+1; % where the selected rows want to go
-        reactingSettings = setdiff(currentOrder,trackman.pointerSettings); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingSettings) = trackman.pointerSettings; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingSettings; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the settings
-        mySettingsOrderPrior = trackman.itinerary.orderOfSettings(gInd,pInd);
-        mySettingsOrder = mySettingsOrderPrior(fillmeinArray);
-        % change the order of the settings to rearrange the order of the
-        trackman.itinerary.settings_binning(mySettingsOrderPrior) = trackman.itinerary.settings_binning(mySettingsOrder);
-        trackman.itinerary.settings_channel(mySettingsOrderPrior) = trackman.itinerary.settings_channel(mySettingsOrder);
-        trackman.itinerary.settings_exposure(mySettingsOrderPrior) = trackman.itinerary.settings_exposure(mySettingsOrder);
-        trackman.itinerary.settings_function(mySettingsOrderPrior) = trackman.itinerary.settings_function(mySettingsOrder);
-        trackman.itinerary.settings_gain(mySettingsOrderPrior) = trackman.itinerary.settings_gain(mySettingsOrder);
-        trackman.itinerary.settings_period_multiplier(mySettingsOrderPrior) = trackman.itinerary.settings_period_multiplier(mySettingsOrder);
-        trackman.itinerary.settings_timepoints(mySettingsOrderPrior) = trackman.itinerary.settings_timepoints(mySettingsOrder);
-        trackman.itinerary.settings_z_origin_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_origin_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_stack_lower_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_stack_lower_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_stack_upper_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_stack_upper_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_step_size(mySettingsOrderPrior) = trackman.itinerary.settings_z_step_size(mySettingsOrder);
-        %
-        trackman.pointerSettings = movingSettings;
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSettingsDrop_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(1);
-        if trackman.itinerary.numberOfSettings(gInd,pInd) == 1
-            return
-        elseif length(trackman.pointerSettings) == trackman.itinerary.numberOfSettings(gInd,pInd)
-            trackman.pointerSettings(1) = [];
-        end
-        mySettingsInd = trackman.itinerary.orderOfSettings(gInd,pInd);
-        for i = 1:length(trackman.pointerSettings)
-            trackman.itinerary.dropSettings(mySettingsInd(trackman.pointerSettings(i)));
-        end
-        trackman.pointerSettings = trackman.itinerary.numberOfSettings(gInd,pInd);
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSettingsFunction_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(1);
-        sInds = trackman.itinerary.indOfSettings(gInd,pInd);
-        mypwd = pwd;
-        cd(trackman.itinerary.output_directory);
-        [filename,pathname] = uigetfile({'*.m'},'Choose the settings-function');
-        if exist(fullfile(pathname,filename),'file')
-            [trackman.itinerary.settings_function{sInds}] = deal(char(regexp(filename,'.*(?=\.m)','match')));
-        else
-            disp('The settings-function selection was invalid.');
-        end
-        cd(mypwd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSettingsUp_Callback(~,~)
-        %%
-        % What follows below might have a more elegant solution.
-        % essentially all selected rows are moved up 1. This will only work
-        % if all positions have the same settings
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(trackman.pointerPosition(1));
-        if min(trackman.pointerSettings) == 1
-            return
-        end
-        currentOrder = 1:trackman.itinerary.numberOfSettings(gInd,pInd); % what the table looks like now
-        movingSettings = trackman.pointerSettings-1; % where the selected rows want to go
-        reactingSettings = setdiff(currentOrder,trackman.pointerSettings); % the rows that are not moving
-        fillmeinArray = zeros(1,length(currentOrder)); % a vector to store the new order
-        fillmeinArray(movingSettings) = trackman.pointerSettings; % the selected rows are moved
-        fillmeinArray(fillmeinArray==0) = reactingSettings; % the remaining rows are moved
-        % use the fillmeinArray to rearrange the settings
-        mySettingsOrderPrior = trackman.itinerary.orderOfSettings(gInd,pInd);
-        mySettingsOrder = mySettingsOrderPrior(fillmeinArray);
-        % change the order of the settings to rearrange the order of the
-        trackman.itinerary.settings_binning(mySettingsOrderPrior) = trackman.itinerary.settings_binning(mySettingsOrder);
-        trackman.itinerary.settings_channel(mySettingsOrderPrior) = trackman.itinerary.settings_channel(mySettingsOrder);
-        trackman.itinerary.settings_exposure(mySettingsOrderPrior) = trackman.itinerary.settings_exposure(mySettingsOrder);
-        trackman.itinerary.settings_function(mySettingsOrderPrior) = trackman.itinerary.settings_function(mySettingsOrder);
-        trackman.itinerary.settings_gain(mySettingsOrderPrior) = trackman.itinerary.settings_gain(mySettingsOrder);
-        trackman.itinerary.settings_period_multiplier(mySettingsOrderPrior) = trackman.itinerary.settings_period_multiplier(mySettingsOrder);
-        trackman.itinerary.settings_timepoints(mySettingsOrderPrior) = trackman.itinerary.settings_timepoints(mySettingsOrder);
-        trackman.itinerary.settings_z_origin_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_origin_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_stack_lower_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_stack_lower_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_stack_upper_offset(mySettingsOrderPrior) = trackman.itinerary.settings_z_stack_upper_offset(mySettingsOrder);
-        trackman.itinerary.settings_z_step_size(mySettingsOrderPrior) = trackman.itinerary.settings_z_step_size(mySettingsOrder);
-        %
-        trackman.pointerSettings = movingSettings;
-        trackman.itinerary.find_ind_last_group(gInd);
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSettingsZLower_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(trackman.pointerPosition(1));
-        mySettingsOrder = trackman.itinerary.indOfSettings(gInd,pInd);
-        sInd = mySettingsOrder(trackman.pointerSettings);
-        trackman.mm.getXYZ;
-        xyz = trackman.mm.pos;
-        offset = trackman.itinerary.position_xyz(pInd,3)-xyz(3);
-        if offset <0
-            trackman.itinerary.settings_z_stack_lower_offset(sInd) = 0;
-        else
-            trackman.itinerary.settings_z_stack_lower_offset(sInd) = -offset;
-        end
-        trackman.refresh_gui_main;
-    end
-%%
-%
-    function pushbuttonSettingsZUpper_Callback(~,~)
-        myGroupOrder = trackman.itinerary.orderOfGroup;
-        gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
-        pInd = pInd(trackman.pointerPosition(1));
-        mySettingsOrder = trackman.itinerary.indOfSettings(gInd,pInd);
-        sInd = mySettingsOrder(trackman.pointerSettings);
-        trackman.mm.getXYZ;
-        xyz = trackman.mm.pos;
-        offset = xyz(3)-trackman.itinerary.position_xyz(pInd,3);
-        if offset <0
-            trackman.itinerary.settings_z_stack_upper_offset(sInd) = 0;
-        else
-            trackman.itinerary.settings_z_stack_upper_offset(sInd) = offset;
-        end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
     function tableGroup_CellEditCallback(~, eventdata)
-        %%
+        %%%
         % |trackman.pointerGroup| should always be a singleton in this case
         myCol = eventdata.Indices(2);
         myGroupOrder = trackman.itinerary.orderOfGroup;
@@ -1058,12 +481,12 @@ set(f,'Visible','on');
                     trackman.itinerary.group_label{myRow} = eventdata.NewData;
                 end
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
     function tableGroup_CellSelectionCallback(~, eventdata)
-        %%
+        %%%
         % The main purpose of this function is to keep the information
         % displayed in the table consistent with the Itinerary object.
         % Changes to the object either through the command line or the gui
@@ -1084,12 +507,12 @@ set(f,'Visible','on');
         else
             trackman.pointerGroup = sort(unique(eventdata.Indices(:,1)));
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
     function tablePosition_CellEditCallback(~, eventdata)
-        %%
+        %%%
         % |trackman.pointerPosition| should always be a singleton in this
         % case
         myGroupOrder = trackman.itinerary.orderOfGroup;
@@ -1120,12 +543,12 @@ set(f,'Visible','on');
             case 7 %PFS offset
                 trackman.itinerary.position_continuous_focus_offset(myRow) = eventdata.NewData;
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
     function tablePosition_CellSelectionCallback(~, eventdata)
-        %%
+        %%%
         % The main purpose of this function is to keep the information
         % displayed in the table consistent with the Itinerary object.
         % Changes to the object either through the command line or the gui
@@ -1148,12 +571,12 @@ set(f,'Visible','on');
         else
             trackman.pointerPosition = sort(unique(eventdata.Indices(:,1)));
         end
-        %trackman.refresh_gui_main;
+        %trackman.gui_smda_refresh;
     end
 %%
 %
     function tableSettings_CellEditCallback(~, eventdata)
-        %%
+        %%%
         % |trackman.pointerSettings| should always be a singleton in this
         % case
         myGroupOrder = trackman.itinerary.orderOfGroup;
@@ -1183,12 +606,12 @@ set(f,'Visible','on');
             case 10 %period multiplier
                 trackman.itinerary.settings_period_multiplier(myRow) = eventdata.NewData;
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 %%
 %
     function tableSettings_CellSelectionCallback(~, eventdata)
-        %%
+        %%%
         % The |Travel Agent| aims to recreate the experience that
         % microscope users expect from a multi-dimensional acquistion tool.
         % Therefore, most of the customizability is masked by the
@@ -1212,6 +635,6 @@ set(f,'Visible','on');
         else
             trackman.pointerSettings = sort(unique(eventdata.Indices(:,1)));
         end
-        trackman.refresh_gui_main;
+        trackman.gui_smda_refresh;
     end
 end

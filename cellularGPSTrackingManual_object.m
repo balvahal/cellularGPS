@@ -28,7 +28,7 @@ classdef cellularGPSTrackingManual_object < handle
             %% Launch gui
             %
             obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
-            obj.refresh_gui_smda;
+            obj.gui_smda_refresh;
             obj.gui_imageViewer = cellularGPSTrackingManual_gui_imageViewer(obj);
         end
         %%
@@ -47,8 +47,8 @@ classdef cellularGPSTrackingManual_object < handle
         end
         %%
         %
-        function obj = refresh_gui_smda(obj)
-            cellularGPSTrackingManual_method_refresh_gui_smda(obj);
+        function obj = gui_smda_refresh(obj)
+            cellularGPSTrackingManual_method_gui_smda_refresh(obj);
         end
     end
 end
