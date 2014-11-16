@@ -16,7 +16,7 @@ for i = positionNumber
     mytime = sort(unique(cenTablePosition.timepoint),'descend');
     centroidCell = cell(size(mytime));
     for j = 1:length(mytime)
-        centroidCell{j} = sortrows(cenTable(cenTable.timepoint == mytime(j),:),{'centroid_col','centroid_row'},{'ascend','ascend'});
+        centroidCell{j} = sortrows(cenTablePosition(cenTablePosition.timepoint == mytime(j),:),{'centroid_col','centroid_row'},{'ascend','ascend'});
     end
     %% initialize the tracking variables with the first set of centroids
     %
@@ -166,7 +166,7 @@ for i = positionNumber
     end
     positionCentroid = vertcat(centroidCell{:});
     positionCentroid2 = positionCentroid(:,{'trackID','timepoint','centroid_row','centroid_col'});
-    positionCentroid2 = horzcat(positionCentroid2,table(zeros(height(positionCentroid2),1),'VariableNames',{'value'})); %#ok<AGROW>
+    positionCentroid2 = horzcat(positionCentroid2,table(zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),'VariableNames',{'value','parent','division_start','division_end'})); %#ok<AGROW>
     tablename = sprintf('trackingPosition_%d.txt',i);
     writetable(positionCentroid2,fullfile(tablePathOut,tablename),'Delimiter','\t');
     %% plot data for feedback purposes
