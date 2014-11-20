@@ -48,7 +48,7 @@ tic
 parfor i=1:length(myFilename)
     fprintf('%s\n',myFilename{i});
     IM = imread(fullfile(imagePath,myFilename{i}));
-    [Objects, Centroids] = cellularGPSSegment_identifyPrimaryObjectsGeneral(IM, 'MinimumThreshold', 0.05);
+    [Objects, Centroids] = cellularGPSSegment_identifyPrimaryObjectsGeneral_twoPass(IM);
     centroidTableCell = cell(1,4);
     centroidTableCell{1} = Centroids(:,1);
     centroidTableCell{2} = Centroids(:,2);
