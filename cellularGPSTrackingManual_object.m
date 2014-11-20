@@ -12,6 +12,7 @@ classdef cellularGPSTrackingManual_object < handle
         %
         gui_imageViewer
         gui_smda
+        gui_control
         %%% INDICES AND POINTERS
         % state information about the gui and the information being
         % displayed
@@ -45,6 +46,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
             obj.gui_smda_refresh;
             obj.gui_imageViewer = cellularGPSTrackingManual_gui_imageViewer(obj);
+            obj.gui_control = cellularGPSTrackingManual_gui_control(obj);
         end
         %%
         %
@@ -60,6 +62,7 @@ classdef cellularGPSTrackingManual_object < handle
         function delete(obj)
             delete(obj.gui_smda);
             delete(obj.gui_imageViewer);
+            delete(obj.gui_control);
         end
 
         %%
