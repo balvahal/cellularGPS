@@ -6,7 +6,8 @@ classdef cellularGPSTrackingManual_object < handle
         itinerary
         moviePath
         smda_database
-        filenameListImage
+        smda_databaseLogical
+        smda_databaseSubset
         %%% GUIS
         %
         gui_imageViewer
@@ -22,6 +23,7 @@ classdef cellularGPSTrackingManual_object < handle
         pointerGroup = 1;
         pointerPosition = 1;
         pointerSettings = 1;
+        indImage = 1;
     end
 %     properties (SetAccess = private)
 %     end
@@ -59,15 +61,43 @@ classdef cellularGPSTrackingManual_object < handle
             delete(obj.gui_smda);
             delete(obj.gui_imageViewer);
         end
-        %%
-        %
-        function obj = gui_smda_refresh(obj)
-            cellularGPSTrackingManual_method_gui_smda_refresh(obj);
-        end
+
         %%
         %
         function obj = updateFilenameListImage(obj)
             cellularGPSTrackingManual_method_updateFilenameListImage(obj);
+        end
+        %% GUI_IMAGEVIEWER
+        % Methods specific to the *GUI_SMDA*
+        %%
+        %
+        function obj = gui_imageViewer_nextImage(obj)
+            obj.indImage = obj.indImage + 1;
+            if obj.indImage > height(obj.smda_databaseSubset)
+                obj.indImage = height(obj.smda_databaseSubset);
+            end
+            obj.gui_imageViewer_refresh;
+        end
+        %%
+        %
+        function obj = gui_imageViewer_previousImage(obj)
+            obj.indImage = obj.indImage - 1;
+            if obj.indImage < 1
+                obj.indImage = 1;
+            end
+            obj.gui_imageViewer_refresh;
+        end
+        %%
+        %
+        function obj = gui_imageViewer_refresh(obj)
+            cellularGPSTrackingManual_method_gui_imageViewer_refresh(obj);
+        end
+        %% GUI_SMDA
+        % Methods specific to the *GUI_SMDA*
+        %%
+        %
+        function obj = gui_smda_refresh(obj)
+            cellularGPSTrackingManual_method_gui_smda_refresh(obj);
         end
     end
 end

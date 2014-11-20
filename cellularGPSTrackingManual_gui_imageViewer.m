@@ -6,9 +6,9 @@ function [f] = cellularGPSTrackingManual_gui_imageViewer(trackman)
 % the aspect ratio of the input image.
 %%
 % get pixels to character info
-I = imread(fullfile(trackman.moviePath,'PROCESSED_DATA',trackman.smda_database.filename{1}));
-handles.image_width = size(I,2);
-handles.image_height = size(I,1);
+handles.image = imread(fullfile(trackman.moviePath,'PROCESSED_DATA',trackman.smda_databaseSubset.filename{trackman.indImage}));
+handles.image_width = size(handles.image,2);
+handles.image_height = size(handles.image,1);
 myunits = get(0,'units');
 set(0,'units','pixels');
 Pix_SS = get(0,'screensize');
@@ -53,9 +53,13 @@ f = figure('Visible','off','Units','characters','MenuBar','none',...
 %hheight = master.obj_imageViewer.image_height/master.ppChar(2);
 %hx = (fwidth-hwidth)/2;
 %hy = (fheight-hheight-100/master.ppChar(2))/2+100/master.ppChar(2);
-haxesImageViewer = axes('Parent',f,'Units','characters',...
-    'Position',[0 0 fwidth  fheight],'YDir','reverse','Visible','on',...
-    'XLim',[1-0.5,handles.image_width+0.5],'YLim',[1-0.5,handles.image_height+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
+handles.haxesImageViewer = axes('Parent',f,...
+    'Units','characters',...
+    'Position',[0 0 fwidth  fheight],...
+    'YDir','reverse',...
+    'Visible','on',...
+    'XLim',[0.5,handles.image_width+0.5],...
+    'YLim',[0.5,handles.image_height+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
 %% Create an axes
 % highlighted cell with hover haxesHighlight =
 % axes('Units','characters','DrawMode','fast','color','none',...
@@ -68,7 +72,8 @@ haxesImageViewer = axes('Parent',f,'Units','characters',...
 % # highlight
 % # selected cell
 % colormap(haxesImageViewer,gray(255));
-% sourceImage = image('Parent',haxesImageViewer,'CData',master.obj_imageViewer.currentImage);
+handles.displayedImage = image('Parent',handles.haxesImageViewer,...
+    'CData',handles.image);
 % hold(haxesImageViewer, 'on');
 % cellFateEventPatch = patch('XData',[],'YData',[],...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',20,...
@@ -128,14 +133,12 @@ haxesImageViewer = axes('Parent',f,'Units','characters',...
 %     'Callback',{@pushbuttonLastImage_Callback});
 %%
 % store the uicontrol handles in the figure handles via guidata()
-handles.axesImageViewer = haxesImageViewer;
 % handles.cmapHighlight = cmapHighlight;
 % handles.cellFateEventPatch = cellFateEventPatch;
 % handles.trackedCellsPatch = trackedCellsPatch;
 % handles.selectedCellPatch = selectedCellPatch;
 % handles.cellsInRangePatch = cellsInRangePatch;
 % handles.closestCellPatch = closestCellPatch;
-% handles.sourceImage = sourceImage;
 guidata(f,handles);
 %%
 % make the gui visible
@@ -163,9 +166,9 @@ set(f,'Visible','on');
     function fKeyPressFcn(~,keyInfo)
         switch keyInfo.Key
             case 'period'
-                master.obj_imageViewer.nextFrame;
+                trackman.gui_imageViewer_nextImage;
             case 'comma'
-                master.obj_imageViewer.previousFrame;
+                trackman.gui_imageViewer_previousImage;
             case 'rightarrow'
                 breakpoints = getTrackBreakpoints(master.obj_imageViewer.obj_cellTracker.centroidsTracks);
                 if(~isempty(breakpoints))
