@@ -121,45 +121,43 @@ end
 MaximaMask = getnhood(strel('disk', MaximaSuppressionSize));
 
 Objects = Objects & ~primarySegmentation;
-BlurredImage(~Objects) = 0;
 
 if(sum(logical(Objects(:))) > 0)
-    %%% IDENTIFY LOCAL MAXIMA IN THE INTENSITY OF DISTANCE TRANSFORMED IMAGE
-    %
-    if strcmp(p.Results.LocalMaximaType, 'Intensity')
-        BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
-        BlurredImage(~Objects) = 0;
-        
-        ResizedBlurredImage = imresize(BlurredImage,ImageResizeFactor,'bilinear');
-        MaximaImage = ResizedBlurredImage;
-        MaximaImage(ResizedBlurredImage < ordfilt2(ResizedBlurredImage,sum(MaximaMask(:)),MaximaMask)) = 0;
-        MaximaImage = imresize(MaximaImage,size(BlurredImage),'bilinear');
-        MaximaImage(~Objects) = 0;
-        MaximaImage = bwmorph(MaximaImage,'shrink',inf);
-    else
-        DistanceTransformedImage = bwdist(~Objects, 'euclidean');
-        DistanceTransformedImage = DistanceTransformedImage + 0.001*rand(size(DistanceTransformedImage));
-        ResizedDistanceTransformedImage = imresize(DistanceTransformedImage,ImageResizeFactor,'bilinear');
-        MaximaImage = ones(size(ResizedDistanceTransformedImage));
-        MaximaImage(ResizedDistanceTransformedImage < ordfilt2(ResizedDistanceTransformedImage,sum(MaximaMask(:)),MaximaMask)) = 0;
-        MaximaImage = imresize(MaximaImage,size(Objects),'bilinear');
-        MaximaImage(~Objects) = 0;
-        MaximaImage = bwmorph(MaximaImage,'shrink',inf);
-    end
+    DistanceTransformedImage = bwdist(~Objects, 'euclidean');
+    DistanceTransformedImage = DistanceTransformedImage + 0.001*rand(size(DistanceTransformedImage));
+    ResizedDistanceTransformedImage = imresize(DistanceTransformedImage,ImageResizeFactor,'bilinear');
+    MaximaImage = ones(size(ResizedDistanceTransformedImage));
+    MaximaImage(ResizedDistanceTransformedImage < ordfilt2(ResizedDistanceTransformedImage,sum(MaximaMask(:)),MaximaMask)) = 0;
+    MaximaImage = imresize(MaximaImage,size(Objects),'bilinear');
+    MaximaImage(~Objects) = 0;
+    MaximaImage = bwmorph(MaximaImage,'shrink',inf);
     
-    %%% GENERATE WATERSHEDS TO SEPARATE TOUCHING NUCLEI
-    %
-    if strcmp(p.Results.WatershedTransformImageType,'Intensity')
-        %%% Overlays the objects markers (maxima) on the inverted original
-        %%% image so there are black dots on top of each dark object on a
-        %%% white background.
-        Overlaid = imimposemin(-BlurredImage,MaximaImage);
-    else
-        if ~exist('DistanceTransformedImage','var')
-            DistanceTransformedImage = bwdist(~Objects);
-        end
-        Overlaid = imimposemin(-DistanceTransformedImage,MaximaImage);
-    end
+    Overlaid = imimposemin(-DistanceTransformedImage,MaximaImage);
+    
+    WatershedBoundaries = watershed(Overlaid) > 0;
+    Objects = Objects.*WatershedBoundaries | logical(primarySegmentation);
+    ObjectsLabeled = bwlabel(Objects);
+    ObjectsLabeled = imfill(ObjectsLabeled, 'holes');
+else
+    ObjectsLabeled = bwlabel(primarySegmentation);
+end
+
+props = regionprops(logical(Objects), 'Solidity');
+primarySegmentation = ismember(ObjectsLabeled, find([props.Solidity] >= p.Results.SolidityThreshold));
+Objects = Objects & ~primarySegmentation;
+
+if(sum(logical(Objects(:))) > 0)
+    BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(SizeOfSmoothingFilter), round(SizeOfSmoothingFilter/3.5)));
+    BlurredImage(~Objects) = 0;
+    
+    ResizedBlurredImage = imresize(BlurredImage,ImageResizeFactor,'bilinear');
+    MaximaImage = ResizedBlurredImage;
+    MaximaImage(ResizedBlurredImage < ordfilt2(ResizedBlurredImage,sum(MaximaMask(:)),MaximaMask)) = 0;
+    MaximaImage = imresize(MaximaImage,size(BlurredImage),'bilinear');
+    MaximaImage(~Objects) = 0;
+    MaximaImage = bwmorph(MaximaImage,'shrink',inf);
+    
+    Overlaid = imimposemin(-BlurredImage,MaximaImage);
     
     WatershedBoundaries = watershed(Overlaid) > 0;
     Objects = Objects.*WatershedBoundaries | logical(primarySegmentation);
