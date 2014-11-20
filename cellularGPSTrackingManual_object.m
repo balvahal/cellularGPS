@@ -1,14 +1,27 @@
 classdef cellularGPSTrackingManual_object < handle
     properties
+        %%% DATA
+        %
         centroid_measurements
-        gui_imageViewer
-        gui_smda
         itinerary
         moviePath
+        smda_database
+        filenameListImage
+        %%% GUIS
+        %
+        gui_imageViewer
+        gui_smda
+        %%% INDICES AND POINTERS
+        % state information about the gui and the information being
+        % displayed
+        indG = 1;
+        indP = 1;
+        indS = 1;
+        indT = 1;
+        indZ = 1;
         pointerGroup = 1;
         pointerPosition = 1;
         pointerSettings = 1;
-        smda_database
     end
 %     properties (SetAccess = private)
 %     end
@@ -43,12 +56,18 @@ classdef cellularGPSTrackingManual_object < handle
         %%
         %
         function delete(obj)
+            delete(obj.gui_smda);
             delete(obj.gui_imageViewer);
         end
         %%
         %
         function obj = gui_smda_refresh(obj)
             cellularGPSTrackingManual_method_gui_smda_refresh(obj);
+        end
+        %%
+        %
+        function obj = updateFilenameListImage(obj)
+            cellularGPSTrackingManual_method_updateFilenameListImage(obj);
         end
     end
 end

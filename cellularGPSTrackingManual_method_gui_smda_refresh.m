@@ -59,4 +59,12 @@ for i = mySettingsOrder
     n = n + 1;
 end
 set(handles.tableSettings,'Data',tableSettingsData);
+%% Trackman indices
+myGroupOrder = trackman.itinerary.orderOfGroup;
+trackman.indG = myGroupOrder(trackman.pointerGroup(1));
+myPositionOrder = trackman.itinerary.indOfPosition(gInd);
+trackman.indP = myPositionOrder(trackman.pointerPosition(1));
+mySettingsOrder = trackman.itinerary.indOfSettings(gInd,pInd);
+trackman.indS = mySettingsOrder(trackman.pointerSettings(1));
+trackman.updateFilenameListImage;
 end
