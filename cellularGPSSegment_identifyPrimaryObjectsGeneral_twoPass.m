@@ -80,14 +80,14 @@ BlurredImage = imfilter(OriginalImage_normalized, fspecial('gaussian', round(Siz
 edgeImage = imfill(edge(OriginalImage_medianFilter, 'canny'), 'holes');
 ObjectsLabeled = bwlabel(edgeImage);
 props = regionprops(ObjectsLabeled, 'Area', 'Solidity');
-highConfidenceObjects = ismember(ObjectsLabeled, find([props.Area] > 100 & [props.Solidity] > 0.8));
+highConfidenceObjects = ismember(ObjectsLabeled, find([props.Area] > p.Results.AreaThreshold & [props.Solidity] > 0.8));
 %edgeImage = imopen(edgeImage, strel('disk',5));
 protectImage = imdilate(highConfidenceObjects, strel('disk', 2));
 
 % 
 %Objects = imfill(edgeImage + (BlurredImage > 1.25*cellularGPSSegment_TriangleMethod(BlurredImage, 0.95)), 'holes');%& ThresholdedImage;
-Objects = imfill(OriginalImage > 1.25*cellularGPSSegment_TriangleMethod(OriginalImage, 1), 'holes') & ~logical(protectImage);
-Objects = imopen(Objects, strel('disk',5)) + highConfidenceObjects;
+Objects = imfill(OriginalImage > 1.1*cellularGPSSegment_TriangleMethod(OriginalImage, 1), 'holes') & ~logical(protectImage);
+Objects = imopen(Objects, strel('disk',2)) + highConfidenceObjects;
 % Objects = imclearborder(Objects);
 
 % FIRST-TIER OBJECT: Keep round objects as they are to avoid
