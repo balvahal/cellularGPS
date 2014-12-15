@@ -106,6 +106,7 @@ for i = 1:length(myIntensityMeasurement) %floop 3
     for j = 1:length(floop3Measurement)
        floop3JMeasurement = floop3Measurement{j};
        floop3JMeasurementName = floop3MeasurementName{j};
+       floop3JMeasurementName = regexprep(floop3JMeasurementName,'\s','');
        floop3JTable = table(floop3JMeasurement{:},'VariableNames',floop3JMeasurementName);
        floop3Table = horzcat(floop3Table,floop3JTable); %#ok<AGROW>
     end
