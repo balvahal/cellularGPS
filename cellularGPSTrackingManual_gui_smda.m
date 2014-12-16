@@ -482,6 +482,7 @@ set(f,'Visible','on');
                 end
         end
         trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 %%
 %
@@ -508,6 +509,7 @@ set(f,'Visible','on');
             trackman.pointerGroup = sort(unique(eventdata.Indices(:,1)));
         end
         trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 %%
 %
@@ -544,6 +546,7 @@ set(f,'Visible','on');
                 trackman.itinerary.position_continuous_focus_offset(myRow) = eventdata.NewData;
         end
         trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 %%
 %
@@ -571,7 +574,8 @@ set(f,'Visible','on');
         else
             trackman.pointerPosition = sort(unique(eventdata.Indices(:,1)));
         end
-        %trackman.gui_smda_refresh;
+        trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 %%
 %
@@ -607,6 +611,7 @@ set(f,'Visible','on');
                 trackman.itinerary.settings_period_multiplier(myRow) = eventdata.NewData;
         end
         trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 %%
 %
@@ -636,5 +641,6 @@ set(f,'Visible','on');
             trackman.pointerSettings = sort(unique(eventdata.Indices(:,1)));
         end
         trackman.gui_smda_refresh;
+        trackman.gui_imageViewer_refresh;
     end
 end

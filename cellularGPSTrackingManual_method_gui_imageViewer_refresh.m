@@ -4,5 +4,6 @@ function trackman = cellularGPSTrackingManual_method_gui_imageViewer_refresh(tra
 handles = guidata(trackman.gui_imageViewer);
 handles.image = imread(fullfile(trackman.moviePath,'PROCESSED_DATA',trackman.smda_databaseSubset.filename{trackman.indImage}));
 handles.displayedImage.CData = handles.image;
+drawnow;
 guidata(trackman.gui_imageViewer,handles);
 end
