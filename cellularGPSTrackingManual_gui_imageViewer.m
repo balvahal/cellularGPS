@@ -6,7 +6,7 @@ function [f] = cellularGPSTrackingManual_gui_imageViewer(trackman)
 % the aspect ratio of the input image.
 %%
 % get pixels to character info
-handles.image = imread(fullfile(trackman.moviePath,'PROCESSED_DATA',trackman.smda_databaseSubset.filename{trackman.indImage}));
+handles.image = imread(fullfile(trackman.moviePath,'.thumb',trackman.smda_databaseSubset.filename{trackman.indImage}));
 handles.image_width = size(handles.image,2);
 handles.image_height = size(handles.image,1);
 myunits = get(0,'units');
@@ -139,6 +139,7 @@ handles.displayedImage = image('Parent',handles.haxesImageViewer,...
 % handles.selectedCellPatch = selectedCellPatch;
 % handles.cellsInRangePatch = cellsInRangePatch;
 % handles.closestCellPatch = closestCellPatch;
+handles.f = f;
 guidata(f,handles);
 %%
 % make the gui visible

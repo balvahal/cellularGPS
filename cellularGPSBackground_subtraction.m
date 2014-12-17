@@ -95,7 +95,7 @@ if fid == -1
 end
 fprintf(fid,myjson);
 fclose(fid);
-%%
+%%%
 %
 myjson = micrographIOT_autoIndentJson(fullfile(moviePath,'BADGE_bkgdSubtraction.txt'));
 fid = fopen(fullfile(moviePath,'BADGE_bkgdSubtraction.txt'),'w');
