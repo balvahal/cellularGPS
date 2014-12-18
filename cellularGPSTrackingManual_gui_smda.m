@@ -422,6 +422,8 @@ uicontrol('Style','text','Units','characters','String','Drop a settings',...
  handles.tableGroup = htableGroup;
  handles.tablePosition = htablePosition;
  handles.tableSettings = htableSettings;
+ 
+             trackman.gui_smda_refresh();
  guidata(f,handles);
 %%
 % make the gui visible
@@ -576,6 +578,8 @@ set(f,'Visible','on');
         end
         trackman.gui_smda_refresh;
         trackman.gui_imageViewer_refresh;
+        handles_imageViewer = guidata(trackman.gui_imageViewer);
+        handles_imageViewer.axesTracks_loadNewTracks();
     end
 %%
 %

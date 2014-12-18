@@ -33,7 +33,7 @@ tablePositionData = cell(length(myPositionOrder),...
     length(get(handles.tablePosition,'ColumnName')));
 n=0;
 for i = myPositionOrder
-        n = n + 1;
+    n = n + 1;
     tablePositionData{n,1} = trackman.itinerary.position_label{i};
     tablePositionData{n,2} = i;
     tablePositionData{n,3} = trackman.itinerary.position_xyz(i,1);

@@ -2,9 +2,14 @@
 % a simple gui to pause, stop, and resume a running MDA
 function [f] = cellularGPSTrackingManual_gui_imageViewer(trackman)
 %% Create the figure
-% % The size of the figure will fill 90% of the primary screen and respect
+%   ___ _                   
+%  | __(_)__ _ _  _ _ _ ___ 
+%  | _|| / _` | || | '_/ -_)
+%  |_| |_\__, |\_,_|_| \___|
+%        |___/              
+% The size of the figure will fill 90% of the primary screen and respect
 % the aspect ratio of the input image.
-%%
+%
 % get pixels to character info
 handles.image = imread(fullfile(trackman.moviePath,'.thumb',trackman.smda_databaseSubset.filename{trackman.indImage}));
 handles.image_width = size(handles.image,2);
@@ -49,30 +54,41 @@ f = figure('Visible','off','Units','characters','MenuBar','none',...
     'WindowButtonMotionFcn',{@fHover},...
     'WindowScrollWheelFcn',{@fWindowScrollWheelFcn});
 
-%hwidth = master.obj_imageViewer.image_width/master.ppChar(1);
-%hheight = master.obj_imageViewer.image_height/master.ppChar(2);
-%hx = (fwidth-hwidth)/2;
-%hy = (fheight-hheight-100/master.ppChar(2))/2+100/master.ppChar(2);
-handles.haxesImageViewer = axes('Parent',f,...
+axesImageViewer = axes('Parent',f,...
     'Units','characters',...
     'Position',[0 0 fwidth  fheight],...
     'YDir','reverse',...
     'Visible','on',...
     'XLim',[0.5,handles.image_width+0.5],...
     'YLim',[0.5,handles.image_height+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
-%% Create an axes
+%% Visuals for Tracks
+%  __   ___              _      _ _  
+%  \ \ / (_)____  _ __ _| |___ | | | 
+%   \ V /| (_-< || / _` | (_-< |_  _|
+%   _\_/_|_/__/\_,_\__,_|_/__/   |_| 
+%  |_   _| _ __ _ __| |__ ___        
+%    | || '_/ _` / _| / /(_-<        
+%    |_||_| \__,_\__|_\_\/__/        
+%                                    
+%% Create an axes to hold these visuals
 % highlighted cell with hover haxesHighlight =
 % axes('Units','characters','DrawMode','fast','color','none',...
 %     'Position',[hx hy hwidth hheight],...
 %     'XLim',[1,master.image_width],'YLim',[1,master.image_height]);
 % cmapHighlight = colormap(haxesImageViewer,jet(16)); %63 matches the number of elements in ang
+axesTracks = axes('Parent',f,'Units','characters',...
+    'Position',[0 0 fwidth  fheight]);
+axesTracks.NextPlot = 'add';
+axesTracks.Visible = 'off';
+axesTracks_lines = {};
+axesTracks_circles = {};
 %% object order
 % # image
 % # annotation layer
 % # highlight
 % # selected cell
 % colormap(haxesImageViewer,gray(255));
-handles.displayedImage = image('Parent',handles.haxesImageViewer,...
+handles.displayedImage = image('Parent',axesImageViewer,...
     'CData',handles.image);
 % hold(haxesImageViewer, 'on');
 % cellFateEventPatch = patch('XData',[],'YData',[],...
@@ -131,7 +147,12 @@ handles.displayedImage = image('Parent',handles.haxesImageViewer,...
 %     'FontSize',10,'FontName','Arial','BackgroundColor',[60 179 113]/255,...
 %     'String','Last Image','Position',[hx hy hwidth hheight],...
 %     'Callback',{@pushbuttonLastImage_Callback});
-%%
+%% Handles
+%   _  _              _ _        
+%  | || |__ _ _ _  __| | |___ ___
+%  | __ / _` | ' \/ _` | / -_|_-<
+%  |_||_\__,_|_||_\__,_|_\___/__/
+%                               
 % store the uicontrol handles in the figure handles via guidata()
 % handles.cmapHighlight = cmapHighlight;
 % handles.cellFateEventPatch = cellFateEventPatch;
@@ -139,14 +160,48 @@ handles.displayedImage = image('Parent',handles.haxesImageViewer,...
 % handles.selectedCellPatch = selectedCellPatch;
 % handles.cellsInRangePatch = cellsInRangePatch;
 % handles.closestCellPatch = closestCellPatch;
+handles.axesTracks = axesTracks;
+handles.axesTracks_updateLimits = @axesTracks_updateLimits;
+handles.axesTracks_lines = axesTracks_lines;
+handles.axesTracks_circles = axesTracks_circles;
+handles.axesTracks_loadNewTracks = @axesTracks_loadNewTracks;
+handles.axesImageViewer = axesImageViewer;
 handles.f = f;
+%% Execute just before the figure becomes visible
+%      _         _     ___ _ _  
+%   _ | |_  _ __| |_  | _ ) | | 
+%  | || | || (_-<  _| | _ \_  _|
+%  _\__/_\_,_/__/\__| |___/ |_| 
+%  \ \ / (_)__(_) |__| |___     
+%   \ V /| (_-< | '_ \ / -_)    
+%    \_/ |_/__/_|_.__/_\___|    
+%                               
+% The code above organizes and specifies the elements of the figure and
+% gui. The code below may simple store these elements into the handles
+% struct and make the gui visible for the first time. Other commands or
+% functions can also be executed here if certain variables or parameters
+% need to be computed and set.
+handles.axesTracks_updateLimits();
+handles.loadNewTracks();
+%%%
+% send the handles struct to the guidata.
 guidata(f,handles);
-%%
+%%%
 % make the gui visible
 set(f,'Visible','on');
 
-%% Callbacks
-%
+%% Callbacks and functions
+%    ___      _ _ _             _       
+%   / __|__ _| | | |__  __ _ __| |__ ___
+%  | (__/ _` | | | '_ \/ _` / _| / /(_-<
+%   \___\__,_|_|_|_.__/\__,_\__|_\_\/__/
+%    /_\ | \| |   \                     
+%   / _ \| .` | |) |                    
+%  /_/_\_\_|\_|___/ _   _               
+%  | __|  _ _ _  __| |_(_)___ _ _  ___  
+%  | _| || | ' \/ _|  _| / _ \ ' \(_-<  
+%  |_| \_,_|_||_\__|\__|_\___/_||_/__/  
+%          
 %%
 %
 %     function fCloseRequestFcn(~,~)
@@ -357,5 +412,21 @@ set(f,'Visible','on');
 %
     function pushbuttonLastImage_Callback(~,~)
         master.obj_imageViewer.setFrame(length(master.obj_fileManager.currentImageFilenames));
+    end
+%%
+%
+    function axesTracks_updateLimits()
+        axesTracks.YLim = [1,trackman.itinerary.imageHeightNoBin/...
+            trackman.itinerary.settings_binning(trackman.indS)];
+        axesTracks.XLim = [1,trackman.itinerary.imageWidthNoBin/...
+            trackman.itinerary.settings_binning(trackman.indS)];
+    end
+%%
+%
+    function axesTracks_loadNewTracks()
+        %% Recalculate tracks
+        % Assumes image size remains the same for this settings
+        trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)));
+        axesTracks_lines = 1;
     end
 end

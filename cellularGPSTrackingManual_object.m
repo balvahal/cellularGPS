@@ -8,6 +8,7 @@ classdef cellularGPSTrackingManual_object < handle
         smda_database
         smda_databaseLogical
         smda_databaseSubset
+        track_database
         %%% GUIS
         %
         gui_imageViewer
@@ -41,10 +42,10 @@ classdef cellularGPSTrackingManual_object < handle
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.itinerary = cellularGPSTrackingManual_object_itinerary;
             obj.itinerary.import(fullfile(moviePath,'smdaITF.txt'));
+            obj.track_database = readtable(fullfile(moviePath,'TRACKING_DATA','trackingPosition_1.txt'));
             %% Launch gui
             %
             obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
-            obj.gui_smda_refresh;
             obj.gui_imageViewer = cellularGPSTrackingManual_gui_imageViewer(obj);
             obj.gui_control = cellularGPSTrackingManual_gui_control(obj);
         end
