@@ -80,6 +80,7 @@ axesTracks = axes('Parent',f,'Units','characters',...
     'Position',[0 0 fwidth  fheight]);
 axesTracks.NextPlot = 'add';
 axesTracks.Visible = 'off';
+axesTracks.YDir = 'reverse';
 axesTracks_lines = {};
 axesTracks_circles = {};
 %% object order
@@ -182,7 +183,7 @@ handles.f = f;
 % functions can also be executed here if certain variables or parameters
 % need to be computed and set.
 handles.axesTracks_updateLimits();
-handles.loadNewTracks();
+handles.axesTracks_loadNewTracks();
 %%%
 % send the handles struct to the guidata.
 guidata(f,handles);
@@ -426,7 +427,27 @@ set(f,'Visible','on');
     function axesTracks_loadNewTracks()
         %% Recalculate tracks
         % Assumes image size remains the same for this settings
-        trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)));
-        axesTracks_lines = 1;
+        cellfun(@delete,axesTracks_circles);
+        cellfun(@delete,axesTracks_lines);
+        trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)),'Delimiter','\t');
+        axesTracks_lines = cell(max(trackman.track_database.trackID),1);
+        axesTracks_circles = cell(max(trackman.track_database.trackID),1);
+        for i = 1:length(axesTracks_lines)
+            myline = line;
+            myline.Parent = axesTracks;
+            myline.Color = [rand rand rand];
+            myline.LineWidth = 1;
+            mylogical = trackman.track_database.trackID == i;
+            myline.YData = trackman.track_database.centroid_row(mylogical);
+            myline.XData = trackman.track_database.centroid_col(mylogical);
+            axesTracks_lines{i} = myline;
+            
+            myrec = rectangle;
+            myrec.Parent = axesTracks;
+            myrec.Curvature = [1,1];
+            myrec.FaceColor = myline.Color;
+            myrec.Position = [myline.XData(1),myline.YData(1),10,10];
+            axesTracks_circles{i} = myrec;
+        end
     end
 end

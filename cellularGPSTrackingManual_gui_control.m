@@ -106,12 +106,12 @@ tabContrast_lineMin.Parent = tabContrast_haxesLine;
 tabContrast_lineMin.Color = [29 97 175]/255;
 tabContrast_lineMin.LineWidth = 3;
 tabContrast_lineMin.LineStyle = ':';
+tabContrast_lineMin.YData = [0,1];
 tabContrast_lineMax = line;
 tabContrast_lineMax.Parent = tabContrast_haxesLine;
 tabContrast_lineMax.Color = [255 103 97]/255;
 tabContrast_lineMax.LineWidth = 3;
 tabContrast_lineMax.LineStyle = ':';
-tabContrast_lineMin.YData = [0,1];
 tabContrast_lineMax.YData = [0,1];
 %% Handles
 %   _  _              _ _
