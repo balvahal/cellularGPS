@@ -108,6 +108,14 @@ end
 axesTracks_lines = {};
 axesTracks_circles = {};
 axesTracks_circlesSize = 11; %must be an odd number
+%% String Together Cells from Tracks
+%   __  __      _        ___     _ _    
+%  |  \/  |__ _| |_____ / __|___| | |___
+%  | |\/| / _` | / / -_) (__/ -_) | (_-<
+%  |_|  |_\__,_|_\_\___|\___\___|_|_/__/
+%                                       
+makeCells = cell(numOfPosition,1);
+
 %% object order
 % # image
 % # annotation layer
