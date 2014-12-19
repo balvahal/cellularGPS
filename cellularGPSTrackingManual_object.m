@@ -42,7 +42,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.itinerary = cellularGPSTrackingManual_object_itinerary;
             obj.itinerary.import(fullfile(moviePath,'smdaITF.txt'));
-            obj.track_database = readtable(fullfile(moviePath,'TRACKING_DATA','trackingPosition_1.txt'));
+            obj.loadTrackData;
             %% Launch gui
             %
             obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
@@ -70,6 +70,18 @@ classdef cellularGPSTrackingManual_object < handle
         %
         function obj = updateFilenameListImage(obj)
             cellularGPSTrackingManual_method_updateFilenameListImage(obj);
+        end
+        %%
+        %
+        function obj = loadTrackData(obj)
+            numOfPosition = sum(obj.itinerary.number_position);
+            obj.track_database = cell(numOfPosition,1);
+            positionInd = horzcat(obj.itinerary.ind_position{:});
+            for i = positionInd
+                obj.track_database{i} = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
+                    sprintf('trackingPosition_%d.txt',i)),...
+                    'Delimiter','\t');
+            end
         end
         %% GUI_IMAGEVIEWER
         % Methods specific to the *GUI_SMDA*

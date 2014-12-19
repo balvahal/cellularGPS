@@ -2,11 +2,11 @@
 % a simple gui to pause, stop, and resume a running MDA
 function [f] = cellularGPSTrackingManual_gui_imageViewer(trackman)
 %% Create the figure
-%   ___ _                   
-%  | __(_)__ _ _  _ _ _ ___ 
+%   ___ _
+%  | __(_)__ _ _  _ _ _ ___
 %  | _|| / _` | || | '_/ -_)
 %  |_| |_\__, |\_,_|_| \___|
-%        |___/              
+%        |___/
 % The size of the figure will fill 90% of the primary screen and respect
 % the aspect ratio of the input image.
 %
@@ -62,14 +62,14 @@ axesImageViewer = axes('Parent',f,...
     'XLim',[0.5,handles.image_width+0.5],...
     'YLim',[0.5,handles.image_height+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
 %% Visuals for Tracks
-%  __   ___              _      _ _  
-%  \ \ / (_)____  _ __ _| |___ | | | 
+%  __   ___              _      _ _
+%  \ \ / (_)____  _ __ _| |___ | | |
 %   \ V /| (_-< || / _` | (_-< |_  _|
-%   _\_/_|_/__/\_,_\__,_|_/__/   |_| 
-%  |_   _| _ __ _ __| |__ ___        
-%    | || '_/ _` / _| / /(_-<        
-%    |_||_| \__,_\__|_\_\/__/        
-%                                    
+%   _\_/_|_/__/\_,_\__,_|_/__/   |_|
+%  |_   _| _ __ _ __| |__ ___
+%    | || '_/ _` / _| / /(_-<
+%    |_||_| \__,_\__|_\_\/__/
+%
 %% Create an axes to hold these visuals
 % highlighted cell with hover haxesHighlight =
 % axes('Units','characters','DrawMode','fast','color','none',...
@@ -81,8 +81,33 @@ axesTracks = axes('Parent',f,'Units','characters',...
 axesTracks.NextPlot = 'add';
 axesTracks.Visible = 'off';
 axesTracks.YDir = 'reverse';
+numOfPosition = sum(trackman.itinerary.number_position);
+positionInd = horzcat(trackman.itinerary.ind_position{:});
+axesTracks_centroidRow = cell(numOfPosition,1);
+axesTracks_centroidCol = cell(numOfPosition,1);
+axesTracks_centroidLogical = cell(numOfPosition,1);
+alldatabase = trackman.track_database;
+numOfT = trackman.itinerary.number_of_timepoints;
+parfor u = positionInd
+    mydatabase = alldatabase{u};
+    myCenRow = zeros(max(mydatabase.trackID),numOfT);
+    myCenCol = zeros(max(mydatabase.trackID),numOfT);
+    myCenLogical = false(size(myCenRow));
+    disp(u)
+    for v = 1:height(mydatabase)
+        mytimepoint = mydatabase.timepoint(v);
+        mytrackID = mydatabase.trackID(v);
+        myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
+        myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
+        myCenLogical(mytrackID,mytimepoint) = true;
+    end
+    axesTracks_centroidRow{u} = myCenRow;
+    axesTracks_centroidCol{u} = myCenCol;
+    axesTracks_centroidLogical{u} = myCenLogical;
+end
 axesTracks_lines = {};
 axesTracks_circles = {};
+axesTracks_circlesSize = 11; %must be an odd number
 %% object order
 % # image
 % # annotation layer
@@ -96,22 +121,22 @@ handles.displayedImage = image('Parent',axesImageViewer,...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',20,...
 %     'Marker','o','MarkerEdgeColor',[0.7,0.6,0],'MarkerFaceColor',[1,0.9,0],...
 %     'Parent',haxesImageViewer,'LineSmoothing', 'off');
-% 
+%
 % trackedCellsPatch = patch('XData',[],'YData',[],...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',10,...
 %     'Marker','o','MarkerEdgeColor',[0,0.75,1],'MarkerFaceColor',[0,0.25,1],...
 %     'Parent',haxesImageViewer,'LineSmoothing', 'off');
-% 
+%
 % selectedCellPatch = patch('XData',[],'YData',[],...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',10,...
 %     'Marker','o','MarkerEdgeColor',[1,0.75,0],'MarkerFaceColor',[1,0,0],...
 %     'Parent',haxesImageViewer,'LineSmoothing', 'off');
-% 
+%
 % cellsInRangePatch = patch('XData',[],'YData',[],...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',1,...
 %     'Marker','o','MarkerEdgeColor',[1,0.75,0],'MarkerFaceColor',[1,0,0],...
 %     'Parent',haxesImageViewer,'LineSmoothing', 'off');
-% 
+%
 % closestCellPatch = patch('XData',[],'YData',[],...
 %     'EdgeColor','none','FaceColor','none','MarkerSize',5,...
 %     'Marker','o','MarkerEdgeColor',[0,0.75,0.24],'MarkerFaceColor',[0,1,0],...
@@ -124,7 +149,7 @@ handles.displayedImage = image('Parent',axesImageViewer,...
 % hheight = 20/master.ppChar(2);
 % hx = 0;
 % hy = 0;
-% 
+%
 % sliderStep = 1/(master.obj_fileManager.numImages - 1);
 % hsliderExploreStack = uicontrol('Style','slider','Units','characters',...
 %     'Min',0,'Max',1,'BackgroundColor',[255 215 0]/255,...
@@ -132,28 +157,28 @@ handles.displayedImage = image('Parent',axesImageViewer,...
 %     'Callback',{@sliderExploreStack_Callback});
 % hListener = handle.listener(hsliderExploreStack,'ActionEvent',@sliderExploreStack_Callback);
 % setappdata(hsliderExploreStack,'sliderListener',hListener);
-% 
+%
 % hx = 0;
 % hy = hy + hheight + 1;
 % hwidth = 60/master.ppChar(1);
 % hheight = 30/master.ppChar(2);
-% 
+%
 % hpushbuttonFirstImage = uicontrol('Style','pushbutton','Units','characters',...
 %     'FontSize',10,'FontName','Arial','BackgroundColor',[255 215 0]/255,...
 %     'String','First Image','Position',[hx hy hwidth hheight],...
 %     'Callback',{@pushbuttonFirstImage_Callback});
-% 
+%
 % hx = fwidth - hwidth;
 % hpushbuttonLastImage = uicontrol('Style','pushbutton','Units','characters',...
 %     'FontSize',10,'FontName','Arial','BackgroundColor',[60 179 113]/255,...
 %     'String','Last Image','Position',[hx hy hwidth hheight],...
 %     'Callback',{@pushbuttonLastImage_Callback});
 %% Handles
-%   _  _              _ _        
+%   _  _              _ _
 %  | || |__ _ _ _  __| | |___ ___
 %  | __ / _` | ' \/ _` | / -_|_-<
 %  |_||_\__,_|_||_\__,_|_\___/__/
-%                               
+%
 % store the uicontrol handles in the figure handles via guidata()
 % handles.cmapHighlight = cmapHighlight;
 % handles.cellFateEventPatch = cellFateEventPatch;
@@ -169,14 +194,14 @@ handles.axesTracks_loadNewTracks = @axesTracks_loadNewTracks;
 handles.axesImageViewer = axesImageViewer;
 handles.f = f;
 %% Execute just before the figure becomes visible
-%      _         _     ___ _ _  
-%   _ | |_  _ __| |_  | _ ) | | 
+%      _         _     ___ _ _
+%   _ | |_  _ __| |_  | _ ) | |
 %  | || | || (_-<  _| | _ \_  _|
-%  _\__/_\_,_/__/\__| |___/ |_| 
-%  \ \ / (_)__(_) |__| |___     
-%   \ V /| (_-< | '_ \ / -_)    
-%    \_/ |_/__/_|_.__/_\___|    
-%                               
+%  _\__/_\_,_/__/\__| |___/ |_|
+%  \ \ / (_)__(_) |__| |___
+%   \ V /| (_-< | '_ \ / -_)
+%    \_/ |_/__/_|_.__/_\___|
+%
 % The code above organizes and specifies the elements of the figure and
 % gui. The code below may simple store these elements into the handles
 % struct and make the gui visible for the first time. Other commands or
@@ -192,17 +217,17 @@ guidata(f,handles);
 set(f,'Visible','on');
 
 %% Callbacks and functions
-%    ___      _ _ _             _       
+%    ___      _ _ _             _
 %   / __|__ _| | | |__  __ _ __| |__ ___
 %  | (__/ _` | | | '_ \/ _` / _| / /(_-<
 %   \___\__,_|_|_|_.__/\__,_\__|_\_\/__/
-%    /_\ | \| |   \                     
-%   / _ \| .` | |) |                    
-%  /_/_\_\_|\_|___/ _   _               
-%  | __|  _ _ _  __| |_(_)___ _ _  ___  
-%  | _| || | ' \/ _|  _| / _ \ ' \(_-<  
-%  |_| \_,_|_||_\__|\__|_\___/_||_/__/  
-%          
+%    /_\ | \| |   \
+%   / _ \| .` | |) |
+%  /_/_\_\_|\_|___/ _   _
+%  | __|  _ _ _  __| |_(_)___ _ _  ___
+%  | _| || | ' \/ _|  _| / _ \ ' \(_-<
+%  |_| \_,_|_||_\__|\__|_\___/_||_/__/
+%
 %%
 %
 %     function fCloseRequestFcn(~,~)
@@ -223,9 +248,17 @@ set(f,'Visible','on');
     function fKeyPressFcn(~,keyInfo)
         switch keyInfo.Key
             case 'period'
-                trackman.gui_imageViewer_nextImage;
+                trackman.indImage = trackman.indImage + 1;
+                if trackman.indImage > height(trackman.smda_databaseSubset)
+                    trackman.indImage = height(trackman.smda_databaseSubset);
+                end
+                gui_imageViewer_refresh()
             case 'comma'
-                trackman.gui_imageViewer_previousImage;
+                trackman.indImage = trackman.indImage - 1;
+                if trackman.indImage < 1
+                    trackman.indImage = 1;
+                end
+                gui_imageViewer_refresh();
             case 'rightarrow'
                 breakpoints = getTrackBreakpoints(master.obj_imageViewer.obj_cellTracker.centroidsTracks);
                 if(~isempty(breakpoints))
@@ -287,7 +320,30 @@ set(f,'Visible','on');
             breakpoints = [];
         end
     end
-
+%%
+%
+%%
+% Update the gui_imageViewer to reflect the current state.
+    function [] = gui_imageViewer_refresh()
+        handles.image = imread(fullfile(trackman.moviePath,'.thumb',trackman.smda_databaseSubset.filename{trackman.indImage}));
+        handles.displayedImage.CData = handles.image;
+        handles.axesTracks_updateLimits();
+        drawnow;
+        %% tracks
+        %
+        for i = 1:length(axesTracks_circles)
+            myrec = axesTracks_circles{i};
+            if myCenLogical(i,trackman.indImage)
+                myrec.Visible = 'on';
+                myrec.Position = [myCenCol(i,trackman.indImage)-(axesTracks_circlesSize-1)/2,...
+                    myCenRow(i,trackman.indImage)-(axesTracks_circlesSize-1)/2,...
+                    axesTracks_circlesSize,axesTracks_circlesSize];
+                axesTracks_circles{i} = myrec;
+            else
+                myrec.Visible = 'off';
+            end
+        end
+    end
 %%
 %
     function fWindowButtonDownFcn(~,~)
@@ -432,21 +488,24 @@ set(f,'Visible','on');
         trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)),'Delimiter','\t');
         axesTracks_lines = cell(max(trackman.track_database.trackID),1);
         axesTracks_circles = cell(max(trackman.track_database.trackID),1);
+        myCenRow = axesTracks_centroidRow{trackman.indP};
+        myCenCol = axesTracks_centroidCol{trackman.indP};
+        myCenLogical = axesTracks_centroidLogical{trackman.indP};
         for i = 1:length(axesTracks_lines)
             myline = line;
             myline.Parent = axesTracks;
             myline.Color = [rand rand rand];
             myline.LineWidth = 1;
-            mylogical = trackman.track_database.trackID == i;
-            myline.YData = trackman.track_database.centroid_row(mylogical);
-            myline.XData = trackman.track_database.centroid_col(mylogical);
+            mylogical = myCenLogical(i,:);
+            myline.YData = myCenRow(i,mylogical);
+            myline.XData = myCenCol(i,mylogical);
             axesTracks_lines{i} = myline;
             
             myrec = rectangle;
             myrec.Parent = axesTracks;
             myrec.Curvature = [1,1];
             myrec.FaceColor = myline.Color;
-            myrec.Position = [myline.XData(1),myline.YData(1),10,10];
+            myrec.Position = [myline.XData(1)-(axesTracks_circlesSize-1)/2,myline.YData(1)-(axesTracks_circlesSize-1)/2,axesTracks_circlesSize,axesTracks_circlesSize];
             axesTracks_circles{i} = myrec;
         end
     end
