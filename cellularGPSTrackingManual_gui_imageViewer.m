@@ -493,15 +493,15 @@ set(f,'Visible','on');
         % Assumes image size remains the same for this settings
         cellfun(@delete,axesTracks_circles);
         cellfun(@delete,axesTracks_lines);
-        trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)),'Delimiter','\t');
-        axesTracks_lines = cell(max(trackman.track_database.trackID),1);
-        axesTracks_circles = cell(max(trackman.track_database.trackID),1);
+        mydatabase1 = trackman.track_database{trackman.indP};
+        %trackman.track_database = readtable(fullfile(trackman.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',trackman.indP)),'Delimiter','\t');
+        axesTracks_lines = cell(max(mydatabase1.trackID),1);
+        axesTracks_circles = cell(max(mydatabase1.trackID),1);
         myCenRow = axesTracks_centroidRow{trackman.indP};
         myCenCol = axesTracks_centroidCol{trackman.indP};
         myCenLogical = axesTracks_centroidLogical{trackman.indP};
         for i = 1:length(axesTracks_lines)
-            myline = line;
-            myline.Parent = axesTracks;
+            myline = line('Parent',axesTracks);
             myline.Color = [rand rand rand];
             myline.LineWidth = 1;
             mylogical = myCenLogical(i,:);
@@ -509,8 +509,7 @@ set(f,'Visible','on');
             myline.XData = myCenCol(i,mylogical);
             axesTracks_lines{i} = myline;
             
-            myrec = rectangle;
-            myrec.Parent = axesTracks;
+            myrec = rectangle('Parent',axesTracks);
             myrec.Curvature = [1,1];
             myrec.FaceColor = myline.Color;
             myrec.Position = [myline.XData(1)-(axesTracks_circlesSize-1)/2,myline.YData(1)-(axesTracks_circlesSize-1)/2,axesTracks_circlesSize,axesTracks_circlesSize];

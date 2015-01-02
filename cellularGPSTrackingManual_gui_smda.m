@@ -563,14 +563,14 @@ set(f,'Visible','on');
         %
         % The pointer of the TravelAgent should always point to a valid
         % position from the the position_order in a given group.
-        myGroupOrder = trackman.itinerary.orderOfGroup;
+        myGroupOrder = trackman.itinerary.order_group;
         gInd = myGroupOrder(trackman.pointerGroup(1));
         if isempty(eventdata.Indices)
             % if nothing is selected, which triggers after deleting data,
             % make sure the pointer is still valid
-            if any(trackman.pointerPosition > trackman.itinerary.numberOfPosition(gInd))
+            if any(trackman.pointerPosition > trackman.itinerary.number_position(gInd))
                 % move pointer to last entry
-                trackman.pointerPosition = trackman.itinerary.numberOfPosition(gInd);
+                trackman.pointerPosition = trackman.itinerary.number_position(gInd);
             end
             return
         else
@@ -629,16 +629,16 @@ set(f,'Visible','on');
         % tables, which edit the itinerary directly, the settings table
         % will modify the the prototype, which will then be pushed to all
         % positions in a group.
-        myGroupOrder = trackman.itinerary.orderOfGroup;
+        myGroupOrder = trackman.itinerary.order_group;
         gInd = myGroupOrder(trackman.pointerGroup(1));
-        pInd = trackman.itinerary.indOfPosition(gInd);
+        pInd = trackman.itinerary.ind_position{gInd};
         pInd = pInd(1);
         if isempty(eventdata.Indices)
             % if nothing is selected, which triggers after deleting data,
             % make sure the pointer is still valid
-            if any(trackman.pointerSettings > trackman.itinerary.numberOfSettings(gInd,pInd))
+            if any(trackman.pointerSettings > trackman.itinerary.number_settings{pInd})
                 % move pointer to last entry
-                trackman.pointerSettings = trackman.itinerary.numberOfSettings(gInd,pInd);
+                trackman.pointerSettings = trackman.itinerary.numberOfSettings{pInd};
             end
             return
         else
@@ -660,14 +660,14 @@ set(f,'Visible','on');
         %
         %% Group Table
         % Show the data in the itinerary |group_order| property
-        tableGroupData = cell(trackman.itinerary.numberOfGroup,...
+        tableGroupData = cell(trackman.itinerary.number_group,...
             length(get(handles.tableGroup,'ColumnName')));
         n=0;
-        for i = trackman.itinerary.orderOfGroup
+        for i = trackman.itinerary.order_group
             n = n + 1;
             tableGroupData{n,1} = trackman.itinerary.group_label{i};
             tableGroupData{n,2} = i;
-            tableGroupData{n,3} = trackman.itinerary.numberOfPosition(i);
+            tableGroupData{n,3} = trackman.itinerary.number_position(i);
         end
         set(handles.tableGroup,'Data',tableGroupData);
         %% Region 3
@@ -675,9 +675,9 @@ set(f,'Visible','on');
         %% Position Table
         % Show the data in the itinerary |position_order| property for a given
         % group
-        myGroupOrder = trackman.itinerary.orderOfGroup;
+        myGroupOrder = trackman.itinerary.order_group;
         gInd = myGroupOrder(trackman.pointerGroup(1));
-        myPositionOrder = trackman.itinerary.orderOfPosition(gInd);
+        myPositionOrder = trackman.itinerary.order_position{gInd};
         tablePositionData = cell(length(myPositionOrder),...
             length(get(handles.tablePosition,'ColumnName')));
         n=0;
@@ -688,16 +688,16 @@ set(f,'Visible','on');
             tablePositionData{n,3} = trackman.itinerary.position_xyz(i,1);
             tablePositionData{n,4} = trackman.itinerary.position_xyz(i,2);
             tablePositionData{n,5} = trackman.itinerary.position_xyz(i,3);
-            tablePositionData{n,6} = trackman.itinerary.numberOfSettings(gInd,i);
+            tablePositionData{n,6} = trackman.itinerary.number_settings(i);
         end
         set(handles.tablePosition,'Data',tablePositionData);
         %% Region 4
         %
         %% Settings Table
         % Show the prototype_settings
-        pInd = trackman.itinerary.indOfPosition(gInd);
+        pInd = trackman.itinerary.ind_position{gInd};
         pInd = pInd(1);
-        mySettingsOrder = trackman.itinerary.orderOfSettings(gInd,pInd);
+        mySettingsOrder = trackman.itinerary.order_settings{pInd};
         tableSettingsData = cell(length(mySettingsOrder),...
             length(get(handles.tableSettings,'ColumnName')));
         n=1;
@@ -709,11 +709,11 @@ set(f,'Visible','on');
         end
         set(handles.tableSettings,'Data',tableSettingsData);
         %% Trackman indices
-        myGroupOrder = trackman.itinerary.orderOfGroup;
+        myGroupOrder = trackman.itinerary.order_group;
         trackman.indG = myGroupOrder(trackman.pointerGroup(1));
-        myPositionOrder = trackman.itinerary.indOfPosition(gInd);
+        myPositionOrder = trackman.itinerary.ind_position{gInd};
         trackman.indP = myPositionOrder(trackman.pointerPosition(1));
-        mySettingsOrder = trackman.itinerary.indOfSettings(gInd,pInd);
+        mySettingsOrder = trackman.itinerary.ind_settings{pInd};
         trackman.indS = mySettingsOrder(trackman.pointerSettings(1));
         trackman.updateFilenameListImage;
     end
