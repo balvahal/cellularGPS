@@ -3,7 +3,7 @@ classdef cellularGPSTrackingManual_object < handle
         %%% DATA
         %
         centroid_measurements
-        itinerary
+        ity
         moviePath
         smda_database
         smda_databaseLogical
@@ -12,7 +12,6 @@ classdef cellularGPSTrackingManual_object < handle
         %%% GUIS
         %
         gui_imageViewer
-        gui_smda
         gui_control
         %%% INDICES AND POINTERS
         % state information about the gui and the information being
@@ -40,14 +39,14 @@ classdef cellularGPSTrackingManual_object < handle
             %
             obj.smda_database = readtable(fullfile(moviePath,'thumb_database.txt'),'Delimiter','\t');
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
-            obj.itinerary = cellularGPSTrackingManual_object_itinerary;
-            obj.itinerary.import(fullfile(moviePath,'smdaITF.txt'));
+            obj.ity = cellularGPSTrackingManual_object_itinerary;
+            obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
             obj.loadTrackData;
+            obj.updateFilenameListImage;
             %% Launch gui
             %
-            obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
-            obj.gui_imageViewer = cellularGPSTrackingManual_gui_imageViewer(obj);
-            obj.gui_control = cellularGPSTrackingManual_gui_control(obj);
+            obj.gui_imageViewer = cellularGPSTrackingManual_object_imageViewer(obj);
+            obj.gui_control = cellularGPSTrackingManual_object_control(obj);
         end
         %%
         %
@@ -61,7 +60,6 @@ classdef cellularGPSTrackingManual_object < handle
         %%
         %
         function delete(obj)
-            delete(obj.gui_smda);
             delete(obj.gui_imageViewer);
             delete(obj.gui_control);
         end
@@ -69,44 +67,23 @@ classdef cellularGPSTrackingManual_object < handle
         %%
         %
         function obj = updateFilenameListImage(obj)
-            cellularGPSTrackingManual_method_updateFilenameListImage(obj);
+            obj.smda_databaseLogical = obj.smda_database.group_number == obj.indG &...
+                obj.smda_database.position_number == obj.indP &...
+                obj.smda_database.settings_number == obj.indS;
+            mytable = obj.smda_database(obj.smda_databaseLogical,:);
+            obj.smda_databaseSubset = sortrows(mytable,{'timepoint'});
         end
         %%
         %
         function obj = loadTrackData(obj)
-            numOfPosition = sum(obj.itinerary.number_position);
+            numOfPosition = sum(obj.ity.number_position);
             obj.track_database = cell(numOfPosition,1);
-            positionInd = horzcat(obj.itinerary.ind_position{:});
+            positionInd = horzcat(obj.ity.ind_position{:});
             for i = positionInd
                 obj.track_database{i} = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
                     sprintf('trackingPosition_%d.txt',i)),...
                     'Delimiter','\t');
             end
-        end
-        %% GUI_IMAGEVIEWER
-        % Methods specific to the *GUI_SMDA*
-        %%
-        %
-        function obj = gui_imageViewer_nextImage(obj)
-            obj.indImage = obj.indImage + 1;
-            if obj.indImage > height(obj.smda_databaseSubset)
-                obj.indImage = height(obj.smda_databaseSubset);
-            end
-            obj.gui_imageViewer_refresh;
-        end
-        %%
-        %
-        function obj = gui_imageViewer_previousImage(obj)
-            obj.indImage = obj.indImage - 1;
-            if obj.indImage < 1
-                obj.indImage = 1;
-            end
-            obj.gui_imageViewer_refresh;
-        end
-        %%
-        %
-        function obj = gui_imageViewer_refresh(obj)
-            cellularGPSTrackingManual_method_gui_imageViewer_refresh(obj);
         end
         %% GUI_SMDA
         % Methods specific to the *GUI_SMDA*

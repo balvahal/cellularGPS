@@ -3,7 +3,7 @@ classdef cellularGPSTrackingManual_object < handle
         %%% DATA
         %
         centroid_measurements
-        ity
+        itinerary
         moviePath
         smda_database
         smda_databaseLogical
@@ -40,13 +40,14 @@ classdef cellularGPSTrackingManual_object < handle
             %
             obj.smda_database = readtable(fullfile(moviePath,'thumb_database.txt'),'Delimiter','\t');
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
-            obj.ity = cellularGPSTrackingManual_object_ity;
-            obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
+            obj.itinerary = cellularGPSTrackingManual_object_itinerary;
+            obj.itinerary.import(fullfile(moviePath,'smdaITF.txt'));
             obj.loadTrackData;
             %% Launch gui
             %
-            obj.gui_imageViewer = cellularGPSTrackingManual_object_imageViewer(obj);
-            obj.gui_control = cellularGPSTrackingManual_object_control(obj);
+            obj.gui_smda = cellularGPSTrackingManual_gui_smda(obj);
+            obj.gui_imageViewer = cellularGPSTrackingManual_gui_imageViewer(obj);
+            obj.gui_control = cellularGPSTrackingManual_gui_control(obj);
         end
         %%
         %
@@ -73,9 +74,9 @@ classdef cellularGPSTrackingManual_object < handle
         %%
         %
         function obj = loadTrackData(obj)
-            numOfPosition = sum(obj.ity.number_position);
+            numOfPosition = sum(obj.itinerary.number_position);
             obj.track_database = cell(numOfPosition,1);
-            positionInd = horzcat(obj.ity.ind_position{:});
+            positionInd = horzcat(obj.itinerary.ind_position{:});
             for i = positionInd
                 obj.track_database{i} = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
                     sprintf('trackingPosition_%d.txt',i)),...

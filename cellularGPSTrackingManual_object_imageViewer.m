@@ -35,7 +35,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         %   \___\___/_||_/__/\__|_|  \_,_\__|\__\___/_|
         %
         %
-        function obj = SuperMDATravelAgent_object(tmn)
+        function obj = cellularGPSTrackingManual_object_imageViewer(tmn)
             %%%
             % parse the input
             q = inputParser;
@@ -154,7 +154,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             obj.trackCenRow = kCenRow;
             obj.trackCenCol = kCenCol;
             obj.trackCenLogical = kCenLogical;
-                
+            
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
@@ -173,6 +173,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handles.axesImageViewer = axesImageViewer;
             handles.displayedImage = displayedImage;
             obj.gui_main = f;
+            guidata(f,handles);
             %% Execute just before the figure becomes visible
             %      _         _     ___ _ _
             %   _ | |_  _ __| |_  | _ ) | |
@@ -190,9 +191,6 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             obj.updateLimits();
             obj.loadNewTracks();
             %%%
-            % send the handles struct to the guidata.
-            guidata(f,handles);
-            %%%
             % make the gui visible
             set(f,'Visible','on');
         end
@@ -202,98 +200,100 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         function delete(obj)
             delete(obj.gui_main);
         end
-%%
-%
-    function obj = fKeyPressFcn(obj,~,keyInfo)
-        switch keyInfo.Key
-            case 'period'
-                obj.tmn.indImage = obj.tmn.indImage + 1;
-                if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
-                    obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
-                end
-                gui_imageViewer_refresh()
-            case 'comma'
-                obj.tmn.indImage = obj.tmn.indImage - 1;
-                if obj.tmn.indImage < 1
-                    obj.tmn.indImage = 1;
-                end
-                gui_imageViewer_refresh();
-            case 'rightarrow'
-
-            case 'leftarrow'
-
-            case 'downarrow'
-
-            case 'uparrow'
-
-            case 'backspace'
-
-        end
-    end
-    %%
-% Update the gui_imageViewer to reflect the current state.
-    function [obj] = gui_imageViewer_refresh(obj)
-        handles.image = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
-        handles.displayedImage.CData = handles.image;
-        handles.axesTracks_updateLimits();
-        drawnow;
-        %% tracks
+        %%
         %
-        for i = 1:length(obj.trackCircle)
-            myrec = obj.trackCircle{i};
-            if myCenLogical(i,obj.tmn.indImage)
-                myrec.Visible = 'on';
-                myrec.Position = [myCenCol(i,obj.tmn.indImage)-(axesTracks_circlesSize-1)/2,...
-                    myCenRow(i,obj.tmn.indImage)-(axesTracks_circlesSize-1)/2,...
-                    axesTracks_circlesSize,axesTracks_circlesSize];
-                obj.trackCircle{i} = myrec;
-            else
-                myrec.Visible = 'off';
+        function obj = fKeyPressFcn(obj,~,keyInfo)
+            switch keyInfo.Key
+                case 'period'
+                    obj.tmn.indImage = obj.tmn.indImage + 1;
+                    if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
+                        obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
+                    end
+                    obj.refresh;
+                case 'comma'
+                    obj.tmn.indImage = obj.tmn.indImage - 1;
+                    if obj.tmn.indImage < 1
+                        obj.tmn.indImage = 1;
+                    end
+                    obj.refresh;
+                case 'rightarrow'
+                    
+                case 'leftarrow'
+                    
+                case 'downarrow'
+                    
+                case 'uparrow'
+                    
+                case 'backspace'
+                    
             end
         end
-    end
-    %%
-%
-    function obj = updateLimits(obj)
-        handles = guidata(obj.gui_main);
-        
-        handles.axesTracks.YLim = [1,obj.tmn.itinerary.imageHeightNoBin/...
-            obj.tmn.itinerary.settings_binning(obj.tmn.indS)];
-        handles.axesTracks.XLim = [1,obj.tmn.itinerary.imageWidthNoBin/...
-            obj.tmn.itinerary.settings_binning(obj.tmn.indS)];
-        
-        guidata(obj.gui_main,handles);
-    end
-    %%
-%
-    function obj = loadNewTracks(obj)
-        handles = guidata(obj.gui_main);
-        %% Recalculate tracks
-        % Assumes image size remains the same for this settings
-        cellfun(@delete,obj.trackCircle);
-        cellfun(@delete,obj.trackLine);
-        mydatabase1 = obj.tmn.track_database{obj.tmn.indP};
-        %obj.tmn.track_database = readtable(fullfile(obj.tmn.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',obj.tmn.indP)),'Delimiter','\t');
-        obj.trackLine = cell(max(mydatabase1.trackID),1);
-        obj.trackCircle = cell(max(mydatabase1.trackID),1);
-        %myCenRow = obj.trackCenRow{obj.tmn.indP};
-        %myCenCol = obj.trackCenCol{obj.tmn.indP};
-        %myCenLogical = obj.trackCenLogical{obj.tmn.indP};
-        for i = 1:length(obj.trackLine)
-            myline = line('Parent',handles.axesTracks);
-            myline.Color = [rand rand rand];
-            myline.LineWidth = 1;
-            %mylogical = myCenLogical(i,:);
-            myline.YData = obj.trackCenRow{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
-            myline.XData = obj.trackCenCol(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
-            obj.trackLine{i} = myline;
+        %%
+        %
+        function obj = updateLimits(obj)
+            handles = guidata(obj.gui_main);
             
-            myrec = rectangle('Parent',handles.axesTracks);
-            myrec.Curvature = [1,1];
-            myrec.FaceColor = myline.Color;
-            myrec.Position = [myline.XData(1)-(axesTracks_circlesSize-1)/2,myline.YData(1)-(axesTracks_circlesSize-1)/2,axesTracks_circlesSize,axesTracks_circlesSize];
-            obj.trackCircle{i} = myrec;
+            handles.axesTracks.YLim = [1,obj.tmn.ity.imageHeightNoBin/...
+                obj.tmn.ity.settings_binning(obj.tmn.indS)];
+            handles.axesTracks.XLim = [1,obj.tmn.ity.imageWidthNoBin/...
+                obj.tmn.ity.settings_binning(obj.tmn.indS)];
+            
+            guidata(obj.gui_main,handles);
         end
-    end
+        %%
+        %
+        function obj = loadNewTracks(obj)
+            handles = guidata(obj.gui_main);
+            %% Recalculate tracks
+            % Assumes image size remains the same for this settings
+            cellfun(@delete,obj.trackCircle);
+            cellfun(@delete,obj.trackLine);
+            mydatabase1 = obj.tmn.track_database{obj.tmn.indP};
+            %obj.tmn.track_database = readtable(fullfile(obj.tmn.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',obj.tmn.indP)),'Delimiter','\t');
+            obj.trackLine = cell(max(mydatabase1.trackID),1);
+            obj.trackCircle = cell(max(mydatabase1.trackID),1);
+            %myCenRow = obj.trackCenRow{obj.tmn.indP};
+            %myCenCol = obj.trackCenCol{obj.tmn.indP};
+            %myCenLogical = obj.trackCenLogical{obj.tmn.indP};
+            for i = 1:length(obj.trackLine)
+                myline = line('Parent',handles.axesTracks);
+                myline.Color = [rand rand rand];
+                myline.LineWidth = 1;
+                %mylogical = myCenLogical(i,:);
+                myline.YData = obj.trackCenRow{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
+                myline.XData = obj.trackCenCol{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
+                obj.trackLine{i} = myline;
+                
+                myrec = rectangle('Parent',handles.axesTracks);
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = myline.Color;
+                myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                obj.trackCircle{i} = myrec;
+            end
+        end
+        %%
+        %
+        function obj = refresh(obj)
+            handles = guidata(obj.gui_main);
+            obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
+            handles.displayedImage.CData = obj.imag3;
+            obj.updateLimits;
+            drawnow;
+            guidata(obj.gui_main,handles);
+            
+            %% tracks
+            %
+            for i = 1:length(obj.trackCircle)
+                myrec = obj.trackCircle{i};
+                if obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    myrec.Visible = 'on';
+                    myrec.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-(obj.trackCircleSize-1)/2,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-(obj.trackCircleSize-1)/2,...
+                        obj.trackCircleSize,obj.trackCircleSize];
+                else
+                    myrec.Visible = 'off';
+                end
+            end
+        end
     end
 end
