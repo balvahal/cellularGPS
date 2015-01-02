@@ -19,7 +19,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         trackCenCol
         trackCenLogical
         trackCircleSize
-        
+        trackCenLogicalDiff
     end
     %% Methods
     %   __  __     _   _            _
@@ -155,6 +155,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             obj.trackCenCol = kCenCol;
             obj.trackCenLogical = kCenLogical;
             
+            obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
+            for i = 1:length(obj.trackCenLogical)
+                obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
+            end
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
@@ -209,13 +213,13 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
                         obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
                     end
-                    obj.refresh;
+                    obj.refresh_stepRight;
                 case 'comma'
                     obj.tmn.indImage = obj.tmn.indImage - 1;
                     if obj.tmn.indImage < 1
                         obj.tmn.indImage = 1;
                     end
-                    obj.refresh;
+                    obj.refresh_stepLeft;
                 case 'rightarrow'
                     
                 case 'leftarrow'
@@ -270,6 +274,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                 obj.trackCircle{i} = myrec;
             end
+            obj.refresh;
         end
         %%
         %
@@ -278,20 +283,74 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
             handles.displayedImage.CData = obj.imag3;
             obj.updateLimits;
-            drawnow;
             guidata(obj.gui_main,handles);
-            
             %% tracks
             %
+            trackCircleHalfSize = (obj.trackCircleSize-1)/2;
             for i = 1:length(obj.trackCircle)
-                myrec = obj.trackCircle{i};
                 if obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
-                    myrec.Visible = 'on';
-                    myrec.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-(obj.trackCircleSize-1)/2,...
-                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-(obj.trackCircleSize-1)/2,...
+                    obj.trackCircle{i}.Visible = 'on';
+                    obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCircleSize,obj.trackCircleSize];
                 else
-                    myrec.Visible = 'off';
+                    obj.trackCircle{i}.Visible = 'off';
+                end
+            end
+        end
+        %%
+        %
+        function obj = refresh_stepRight(obj)
+            handles = guidata(obj.gui_main);
+            obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
+            handles.displayedImage.CData = obj.imag3;
+            obj.updateLimits;
+            guidata(obj.gui_main,handles);
+            %% tracks
+            %
+            trackCircleHalfSize = (obj.trackCircleSize-1)/2;
+            for i = 1:length(obj.trackCircle)
+
+                if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0
+                                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircleSize,obj.trackCircleSize];
+                elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == -1
+                    obj.trackCircle{i}.Visible = 'off';
+                else
+                    obj.trackCircle{i}.Visible = 'on';
+                    obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircleSize,obj.trackCircleSize];
+                end
+            end
+        end
+                %%
+        %
+        function obj = refresh_stepLeft(obj)
+            handles = guidata(obj.gui_main);
+            obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
+            handles.displayedImage.CData = obj.imag3;
+            obj.updateLimits;
+            guidata(obj.gui_main,handles);
+            %% tracks
+            %
+            trackCircleHalfSize = (obj.trackCircleSize-1)/2;
+            for i = 1:length(obj.trackCircle)
+                if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    
+                elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0
+                                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircleSize,obj.trackCircleSize];
+                elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 1
+                    obj.trackCircle{i}.Visible = 'off';
+                else 
+                    obj.trackCircle{i}.Visible = 'on';
+                    obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircleSize,obj.trackCircleSize];
                 end
             end
         end
