@@ -132,6 +132,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             kCenLogical = cell(numOfPosition,1);
             alldatabase = tmn.track_database;
             numOfT = tmn.ity.number_of_timepoints;
+            %%%
+            % this loop takes a long time to execute
             parfor u = positionInd
                 mydatabase = alldatabase{u};
                 myCenRow = zeros(max(mydatabase.trackID),numOfT);
