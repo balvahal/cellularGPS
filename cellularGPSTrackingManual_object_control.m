@@ -67,7 +67,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             f = figure('Visible','off','Units','characters','MenuBar','none','Position',[fx fy fwidth fheight],...
-                'CloseRequestFcn',{@delete},'Name','Travel Agent Main');
+                'CloseRequestFcn',{@obj.delete},'Name','Travel Agent Main');
             tabgp = uitabgroup(f,'Position',[0,0,1,1]);
             tabGPS = uitab(tabgp,'Title','GPS');
             tabContrast = uitab(tabgp,'Title','Contrast');
@@ -252,7 +252,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         %% delete
         % for a clean delete make sure the objects that are stored as
         % properties are also deleted.
-        function delete(obj)
+        function delete(obj,~,~)
             delete(obj.gui_main);
         end
         %% Contrast Tab: callbacks and functions

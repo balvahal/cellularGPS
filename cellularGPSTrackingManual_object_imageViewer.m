@@ -201,7 +201,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         %% delete
         % for a clean delete make sure the objects that are stored as
         % properties are also deleted.
-        function delete(obj)
+        function delete(obj,~,~)
             delete(obj.gui_main);
         end
         %%
@@ -311,7 +311,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             trackCircleHalfSize = (obj.trackCircleSize-1)/2;
             for i = 1:length(obj.trackCircle)
 
-                if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    % do nothing
                 elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0
                                         obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
@@ -339,7 +340,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             trackCircleHalfSize = (obj.trackCircleSize-1)/2;
             for i = 1:length(obj.trackCircle)
                 if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
-                    
+                    %do nothing
                 elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0
                                         obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
