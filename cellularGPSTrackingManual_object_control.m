@@ -170,6 +170,17 @@ classdef cellularGPSTrackingManual_object_control < handle
             
             hwidth = 104;
             hx = (fwidth-hwidth)/2;
+            %% timepoint
+            %
+            tabGPS_editTimepoint = uicontrol('Parent',tabGPS,'Style','edit','Units','characters',...
+                'FontSize',14,'FontName','Verdana',...
+                'String',num2str(1),...
+                'Position',[region1(1)+2, region1(2), buttonSize(1),buttonSize(2)],...
+                'Callback',{@obj.tabGPS_editTimepoint_Callback});
+            
+            tabGPS_textTimepoint = uicontrol('Parent',tabGPS,'Style','text','Units','characters','String','timepoint',...
+                'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
+                'Position',[region1(1)+10+buttonSize(1), region1(2), 30, 2.6923]);
             %% The group table
             %
             tabGPS_tableGroup = uitable('Parent',tabGPS,'Units','characters',...
@@ -223,6 +234,8 @@ classdef cellularGPSTrackingManual_object_control < handle
             handles.tabContrast_sliderMax = tabContrast_sliderMax;
             handles.tabContrast_sliderMin = tabContrast_sliderMin;
             
+            handles.tabGPS_editTimepoint = tabGPS_editTimepoint;
+            handles.tabGPS_textTimepoint = tabGPS_textTimepoint;
             handles.tabGPS_tableGroup = tabGPS_tableGroup;
             handles.tabGPS_tablePosition = tabGPS_tablePosition;
             handles.tabGPS_tableSettings = tabGPS_tableSettings;
@@ -338,6 +351,23 @@ classdef cellularGPSTrackingManual_object_control < handle
         %
         %%
         %
+        function obj = tabGPS_editTimepoint_Callback(obj,~,~)
+            handles = guidata(obj.gui_main);
+            indImage = str2double(handles.tabGPS_editTimepoint.String);
+            indImage = round(indImage);
+            if indImage < 1
+                obj.tmn.indImage = 1;
+            elseif indImage > height(obj.tmn.smda_databaseSubset)
+                obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
+            else
+                obj.tmn.indImage = indImage;
+            end
+            obj.tmn.gui_imageViewer.refresh;
+            handles.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+            guidata(obj.gui_main,handles);
+        end
+        %%
+        %
         function obj = tabGPS_tableGroup_CellSelectionCallback(obj,~,eventdata)
             %%%
             % The main purpose of this function is to keep the information
@@ -436,6 +466,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         %
         function obj = tabGPS_refresh(obj)
             handles = guidata(obj.gui_main);
+            
             %% Group Table
             % Show the data in the itinerary |group_order| property
             tableGroupData = cell(obj.tmn.ity.number_group,...
@@ -487,6 +518,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             end
             set(handles.tabGPS_tableSettings,'Data',tableSettingsData);
             %% obj.tmn indices
+            %
             myGroupOrder = obj.tmn.ity.order_group;
             obj.tmn.indG = myGroupOrder(obj.tmn.pointerGroup(1));
             myPositionOrder = obj.tmn.ity.ind_position{gInd};
@@ -494,6 +526,10 @@ classdef cellularGPSTrackingManual_object_control < handle
             mySettingsOrder = obj.tmn.ity.ind_settings{pInd};
             obj.tmn.indS = mySettingsOrder(obj.tmn.pointerSettings(1));
             obj.tmn.updateFilenameListImage;
+            %%
+            %
+            handles.tabGPS_textTimepoint.String = sprintf('of %d timepoint(s)',height(obj.tmn.smda_databaseSubset));
+            guidata(obj.gui_main,handles);
         end
     end
 end

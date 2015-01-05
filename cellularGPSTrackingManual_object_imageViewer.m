@@ -214,13 +214,21 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     obj.tmn.indImage = obj.tmn.indImage + 1;
                     if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
                         obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
+                        return
                     end
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     obj.refresh_stepRight;
                 case 'comma'
                     obj.tmn.indImage = obj.tmn.indImage - 1;
                     if obj.tmn.indImage < 1
                         obj.tmn.indImage = 1;
+                        return
                     end
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     obj.refresh_stepLeft;
                 case 'rightarrow'
                     
@@ -286,6 +294,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handles.displayedImage.CData = obj.imag3;
             obj.updateLimits;
             guidata(obj.gui_main,handles);
+            
             %% tracks
             %
             trackCircleHalfSize = (obj.trackCircleSize-1)/2;
@@ -308,15 +317,16 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handles.displayedImage.CData = obj.imag3;
             obj.updateLimits;
             guidata(obj.gui_main,handles);
+            
             %% tracks
             %
             trackCircleHalfSize = (obj.trackCircleSize-1)/2;
             for i = 1:length(obj.trackCircle)
-
+                
                 if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
                     % do nothing
                 elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0
-                                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                    obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCircleSize,obj.trackCircleSize];
                 elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == -1
@@ -329,7 +339,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 end
             end
         end
-                %%
+        %%
         %
         function obj = refresh_stepLeft(obj)
             handles = guidata(obj.gui_main);
@@ -337,6 +347,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handles.displayedImage.CData = obj.imag3;
             obj.updateLimits;
             guidata(obj.gui_main,handles);
+            
             %% tracks
             %
             trackCircleHalfSize = (obj.trackCircleSize-1)/2;
@@ -344,12 +355,12 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
                     %do nothing
                 elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0
-                                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                    obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCircleSize,obj.trackCircleSize];
                 elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 1
                     obj.trackCircle{i}.Visible = 'off';
-                else 
+                else
                     obj.trackCircle{i}.Visible = 'on';
                     obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
                         obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
