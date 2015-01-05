@@ -240,6 +240,22 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     
                 case 'backspace'
                     
+                case 'd'
+                    %% timepoint at end of track
+                    %
+                    obj.tmn.indImage = find(obj.trackCenLogical{obj.tmn.indP}(obj.tmn.mcl.pointer_track,:),1,'last');
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                    obj.refresh;
+                case 'a'
+                    %% timepoint at start of track
+                    %
+                    obj.tmn.indImage = find(obj.trackCenLogical{obj.tmn.indP}(obj.tmn.mcl.pointer_track,:),1,'first');
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                    obj.refresh;
             end
         end
         %%
@@ -279,6 +295,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 obj.trackLine{i} = myline;
                 
                 myrec = rectangle('Parent',handles.axesTracks);
+                myrec.ButtonDownFcn = @obj.clickLoop;
+                myrec.UserData = i;
                 myrec.Curvature = [1,1];
                 myrec.FaceColor = myline.Color;
                 myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
@@ -367,6 +385,18 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.trackCircleSize,obj.trackCircleSize];
                 end
             end
+        end
+        %%
+        %
+        function obj = clickLoop(obj,myrec,~)
+            obj.tmn.mcl.pointer_track = myrec.UserData;
+            switch obj.tmn.makecell_mode
+                case 'link'
+                    obj.tmn.mcl.addTrack;
+                otherwise
+                    fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
+            end
+            obj.tmn.gui_control.tabMakeCell_loop;
         end
     end
 end

@@ -70,10 +70,11 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'CloseRequestFcn',{@obj.delete},'Name','Travel Agent Main');
             tabgp = uitabgroup(f,'Position',[0,0,1,1]);
             tabGPS = uitab(tabgp,'Title','GPS');
+            tabMakeCell = uitab(tabgp,'Title','MakeCell');
             tabContrast = uitab(tabgp,'Title','Contrast');
             
             
-            textBackgroundColorRegion1 = [37 124 224]/255; %tendoBlueLight
+            textBackgroundColorRegion1 = [42 141 255]/255; %tendoBlueLight
             buttonBackgroundColorRegion1 = [29 97 175]/255; %tendoBlueDark
             textBackgroundColorRegion2 = [56 165 95]/255; %tendoGreenLight
             buttonBackgroundColorRegion2 = [44 129 74]/255; %tendoGreenDark
@@ -175,12 +176,12 @@ classdef cellularGPSTrackingManual_object_control < handle
             tabGPS_editTimepoint = uicontrol('Parent',tabGPS,'Style','edit','Units','characters',...
                 'FontSize',14,'FontName','Verdana',...
                 'String',num2str(1),...
-                'Position',[region1(1)+2, region1(2), buttonSize(1),buttonSize(2)],...
+                'Position',[hx, region1(2)+1, buttonSize(1),buttonSize(2)],...
                 'Callback',{@obj.tabGPS_editTimepoint_Callback});
             
             tabGPS_textTimepoint = uicontrol('Parent',tabGPS,'Style','text','Units','characters','String','timepoint',...
                 'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
-                'Position',[region1(1)+10+buttonSize(1), region1(2), 30, 2.6923]);
+                'Position',[hx+2+buttonSize(1), region1(2)+1, 30, 2.6923]);
             %% The group table
             %
             tabGPS_tableGroup = uitable('Parent',tabGPS,'Units','characters',...
@@ -216,6 +217,21 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'FontSize',8,'FontName','Verdana',...
                 'CellSelectionCallback',@obj.tabGPS_tableSettings_CellSelectionCallback,...
                 'Position',[hx, region4(2)+0.7692, hwidth, 13.0769]);
+            %%
+            %   __  __      _        ___     _ _   _____     _
+            %  |  \/  |__ _| |_____ / __|___| | | |_   _|_ _| |__
+            %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
+            %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
+            %
+            tabMakeCell_table = uitable('Parent',tabMakeCell,'Units','characters',...
+                'BackgroundColor',[textBackgroundColorRegion2;buttonBackgroundColorRegion2],...
+                'ColumnName',{'cell #','trackIDS'},...
+                'ColumnEditable',logical([0,0]),...
+                'ColumnFormat',{'numeric','numeric'},...
+                'ColumnWidth',{'auto' 'auto'},...
+                'FontSize',8,'FontName','Verdana',...
+                'CellSelectionCallback',@obj.tabGPS_tableGroup_CellSelectionCallback,...
+                'Position',[hx, region2(2)+0.7692, hwidth, 13.0769]);
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -224,8 +240,12 @@ classdef cellularGPSTrackingManual_object_control < handle
             %
             % store the uicontrol handles in the figure handles via guidata()
             % store the uicontrol handles in the figure handles via guidata()
-            %handles.tabContrast_findImageHistogram = @tabContrast_findImageHistogram;
-            %handles.contrastHistogram;
+
+            handles.tabgp = tabgp;
+            handles.tabGPS = tabGPS;
+            handles.tabMakeCell = tabMakeCell;
+            handles.tabContrast = tabContrast;
+            
             handles.tabContrast_haxesLine = tabContrast_haxesLine;
             handles.tabContrast_lineMin = tabContrast_lineMin;
             handles.tabContrast_lineMax = tabContrast_lineMax;
@@ -239,6 +259,8 @@ classdef cellularGPSTrackingManual_object_control < handle
             handles.tabGPS_tableGroup = tabGPS_tableGroup;
             handles.tabGPS_tablePosition = tabGPS_tablePosition;
             handles.tabGPS_tableSettings = tabGPS_tableSettings;
+            
+            handles.tabMakeCell_table = tabMakeCell_table;
             
             obj.gui_main = f;
             guidata(f,handles);
@@ -257,7 +279,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             % functions can also be executed here if certain variables or parameters
             % need to be computed and set.
             obj.tabContrast_axesContrast_ButtonDownFcn;
-            obj.tabGPS_refresh
+            obj.tabGPS_loop
             %%%
             % make the gui visible
             set(f,'Visible','on');
@@ -343,7 +365,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             cmap = vertcat(zeros(mymin,3),cmap,ones(255-mymax,3));
             obj.tmn.gui_imageViewer.gui_main.Colormap = cmap;
         end
-        %% GPS Tab: callbacks
+        %% GPS Tab: callbacks and functions
         %    ___ ___  ___   _____     _
         %   / __| _ \/ __| |_   _|_ _| |__
         %  | (_ |  _/\__ \   | |/ _` | '_ \
@@ -398,7 +420,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.pointerPosition = 1;
             end
             
-            obj.tabGPS_refresh;
+            obj.tabGPS_loop;
             obj.tmn.gui_imageViewer.loadNewTracks;
             obj.tmn.gui_imageViewer.refresh;
         end
@@ -428,7 +450,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.tmn.pointerPosition = sort(unique(eventdata.Indices(:,1)));
             end
-            obj.tabGPS_refresh;
+            obj.tabGPS_loop;
             obj.tmn.gui_imageViewer.loadNewTracks;
             obj.tmn.gui_imageViewer.refresh;
         end
@@ -459,12 +481,12 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.tmn.pointerSettings = sort(unique(eventdata.Indices(:,1)));
             end
-            obj.tabGPS_refresh;
+            obj.tabGPS_loop;
             obj.tmn.gui_imageViewer.refresh;
         end
         %%
         %
-        function obj = tabGPS_refresh(obj)
+        function obj = tabGPS_loop(obj)
             handles = guidata(obj.gui_main);
             
             %% Group Table
@@ -530,6 +552,30 @@ classdef cellularGPSTrackingManual_object_control < handle
             %
             handles.tabGPS_textTimepoint.String = sprintf('of %d timepoint(s)',height(obj.tmn.smda_databaseSubset));
             guidata(obj.gui_main,handles);
+        end
+        %% MakeCell Tab: callbacks and functions
+        %   __  __      _        ___     _ _   _____     _
+        %  |  \/  |__ _| |_____ / __|___| | | |_   _|_ _| |__
+        %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
+        %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
+        %
+        %%
+        %
+        function obj = tabMakeCell_loop(obj)
+            handles = guidata(obj.gui_main);
+            %% Cell Table
+            % 
+            existingCells = 1:length(obj.tmn.mcl.makecell_logical);
+            existingCells = existingCells(obj.tmn.mcl.makecell_logical);
+            makeCellData = cell(length(obj.tmn.mcl.makecell_logical),...
+                length(handles.tabMakeCell_table.ColumnName));
+            n=0;
+            for i = existingCells
+                n = n + 1;
+                makeCellData{n,1} = i;
+                makeCellData{n,2} = obj.tmn.mcl.makecell_ind{i};
+            end
+            handles.tabMakeCell_table.Data = makeCellData;
         end
     end
 end

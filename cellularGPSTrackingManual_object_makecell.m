@@ -6,6 +6,11 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         makecell_logical
         makecell_order
         makecell_ind
+        makecell_mother
+        makecell_divisionStart
+        makecell_divisionEnd
+        makecell_apoptosisStart
+        makecell_apoptosisEnd
         
         track_database
         track_logical
@@ -14,7 +19,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         pointer_track
         pointer_next_track
         pointer_makecell = 1;
-        pointer_next_makecell = 2;
+        pointer_next_makecell = 1;
 
     end
 %     properties (SetAccess = private)
@@ -82,7 +87,16 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_track = q.Results.trackID;
             obj.pointer_makecell = q.Results.makecellID;
             
-            obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
+            if ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
+                obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
+            end
+        end
+        %% newCell
+        %
+        function obj = newCell(obj)
+            obj.pointer_makecell = obj.pointer_next_makecell;
+            obj.find_pointer_next_makecell;
+            obj.makecell_logical(obj.pointer_makecell) = true;
         end
     end
 end

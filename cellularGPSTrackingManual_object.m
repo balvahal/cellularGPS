@@ -3,7 +3,8 @@ classdef cellularGPSTrackingManual_object < handle
         %%% DATA
         %
         centroid_measurements
-        ity
+        ity % itinerary
+        mcl % makecell
         moviePath
         smda_database
         smda_databaseLogical
@@ -25,6 +26,7 @@ classdef cellularGPSTrackingManual_object < handle
         pointerPosition = 1;
         pointerSettings = 1;
         indImage = 1;
+        makecell_mode
     end
 %     properties (SetAccess = private)
 %     end
@@ -41,6 +43,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.ity = cellularGPSTrackingManual_object_itinerary;
             obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
+            obj.mcl = cellularGPSTrackingManual_object_makecell;
             obj.loadTrackData;
             obj.updateFilenameListImage;
             %% Launch gui
@@ -85,13 +88,6 @@ classdef cellularGPSTrackingManual_object < handle
                     sprintf('trackingPosition_%d.txt',i)),...
                     'Delimiter','\t');
             end
-        end
-        %% GUI_SMDA
-        % Methods specific to the *GUI_SMDA*
-        %%
-        %
-        function obj = gui_smda_refresh(obj)
-            cellularGPSTrackingManual_method_gui_smda_refresh(obj);
         end
     end
 end
