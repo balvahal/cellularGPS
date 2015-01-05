@@ -3,21 +3,21 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         moviePath
         %%% DATA
         %
-        makecell_logical
-        makecell_order
-        makecell_ind
-        makecell_mother
-        makecell_divisionStart
-        makecell_divisionEnd
-        makecell_apoptosisStart
-        makecell_apoptosisEnd
+        makecell_logical = false;
+        makecell_order = {};
+        makecell_ind = {};
+        makecell_mother = 0;
+        makecell_divisionStart = 0;
+        makecell_divisionEnd = 0;
+        makecell_apoptosisStart = 0;
+        makecell_apoptosisEnd = 0;
         
         track_database
         track_logical
         track_makecell
         
-        pointer_track
-        pointer_next_track
+        pointer_track = 1;
+        pointer_next_track = 1;
         pointer_makecell = 1;
         pointer_next_makecell = 1;
 
@@ -97,6 +97,12 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_makecell = obj.pointer_next_makecell;
             obj.find_pointer_next_makecell;
             obj.makecell_logical(obj.pointer_makecell) = true;
+            obj.makecell_ind{obj.pointer_makecell} = [];
+            obj.makecell_mother(obj.pointer_makecell) = 0;
+            obj.makecell_divisionStart(obj.pointer_makecell) = 0;
+            obj.makecell_divisionEnd(obj.pointer_makecell) = 0;
+            obj.makecell_apoptosisStart(obj.pointer_makecell) = 0;
+            obj.makecell_apoptosisEnd(obj.pointer_makecell) = 0;
         end
     end
 end

@@ -74,7 +74,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             tabContrast = uitab(tabgp,'Title','Contrast');
             
             
-            textBackgroundColorRegion1 = [42 141 255]/255; %tendoBlueLight
+            textBackgroundColorRegion1 = [37 124 224]/255; %tendoBlueLight
             buttonBackgroundColorRegion1 = [29 97 175]/255; %tendoBlueDark
             textBackgroundColorRegion2 = [56 165 95]/255; %tendoGreenLight
             buttonBackgroundColorRegion2 = [44 129 74]/255; %tendoGreenDark
@@ -223,6 +223,47 @@ classdef cellularGPSTrackingManual_object_control < handle
             %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
             %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
             %
+            %%
+            %
+            textColor = [255 235 205]/255;
+            buttongap = 2;
+            
+            tabMakeCell_buttongroup = uibuttongroup('Parent',tabMakeCell);
+            tabMakeCell_buttongroup.SelectionChangedFcn = @obj.tabMakeCell_buttongroup_SelectionChangedFcn;
+            
+            tabMakeCell_togglebuttonNone = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+                'FontSize',14,'FontName','Verdana','BackgroundColor',[139  69  19]/255,...
+                'String','None',...
+                'Position',[hx, region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'ForegroundColor',textColor);
+            uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','do nothing',...
+                'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
+                'Position',[hx, region1(2)+5.4615, buttonSize(1),2.6923],...
+                'ForegroundColor',textColor);
+            
+            tabMakeCell_pushbuttonLink = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+                'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
+                'String','Link',...
+                'Position',[hx + buttongap + buttonSize(1), region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'ForegroundColor',textColor);
+            
+            uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','Add a track to a cell',...
+                'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
+                'Position',[hx + buttongap + buttonSize(1), region1(2)+5.4615, buttonSize(1),2.6923],...
+                'ForegroundColor',textColor);
+            
+           tabMakeCell_pushbuttonBreak = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+                'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
+                'String','Break',...
+                'Position',[hx + buttongap*2 + buttonSize(1)*2, region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'ForegroundColor',textColor);
+            
+            uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','divide a track into two',...
+                'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
+                'Position',[hx + buttongap*2 + buttonSize(1)*2, region1(2)+5.4615, buttonSize(1),2.6923],...
+                'ForegroundColor',textColor);
+            %%
+            %
             tabMakeCell_table = uitable('Parent',tabMakeCell,'Units','characters',...
                 'BackgroundColor',[textBackgroundColorRegion2;buttonBackgroundColorRegion2],...
                 'ColumnName',{'cell #','trackIDS'},...
@@ -231,7 +272,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'ColumnWidth',{'auto' 'auto'},...
                 'FontSize',8,'FontName','Verdana',...
                 'CellSelectionCallback',@obj.tabGPS_tableGroup_CellSelectionCallback,...
-                'Position',[hx, region2(2)+0.7692, hwidth, 13.0769]);
+                'Position',[hx, region3(2)+0.7692, hwidth, 13.0769]);
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -260,7 +301,11 @@ classdef cellularGPSTrackingManual_object_control < handle
             handles.tabGPS_tablePosition = tabGPS_tablePosition;
             handles.tabGPS_tableSettings = tabGPS_tableSettings;
             
+            handles.tabMakeCell_buttongroup = tabMakeCell_buttongroup;
             handles.tabMakeCell_table = tabMakeCell_table;
+            handles.tabMakeCell_togglebuttonNone = tabMakeCell_togglebuttonNone;
+            handles.tabMakeCell_pushbuttonLink = tabMakeCell_pushbuttonLink;
+            handles.tabMakeCell_pushbuttonBreak = tabMakeCell_pushbuttonBreak;
             
             obj.gui_main = f;
             guidata(f,handles);
@@ -384,7 +429,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.tmn.indImage = indImage;
             end
-            obj.tmn.gui_imageViewer.refresh;
+            obj.tmn.gui_imageViewer.loop;
             handles.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
             guidata(obj.gui_main,handles);
         end
@@ -422,7 +467,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             
             obj.tabGPS_loop;
             obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.refresh;
+            obj.tmn.gui_imageViewer.loop;
         end
         %%
         %
@@ -452,7 +497,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             end
             obj.tabGPS_loop;
             obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.refresh;
+            obj.tmn.gui_imageViewer.loop;
         end
         %%
         %
@@ -482,7 +527,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.tmn.pointerSettings = sort(unique(eventdata.Indices(:,1)));
             end
             obj.tabGPS_loop;
-            obj.tmn.gui_imageViewer.refresh;
+            obj.tmn.gui_imageViewer.loop;
         end
         %%
         %
@@ -559,6 +604,33 @@ classdef cellularGPSTrackingManual_object_control < handle
         %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
         %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
         %
+        %%
+        %
+        function obj = tabMakeCell_buttongroup_SelectionChangedFcn(obj,~,eventdata)
+            handles = guidata(obj.gui_main);
+            activeColor = [139  69  19]/255;
+            inactiveColor = [29 97 175]/255;
+            switch lower(eventdata.NewValue.String)
+                case 'none'
+                    obj.tmn.makecell_mode = 'none';
+                    handles.tabMakeCell_togglebuttonNone.BackgroundColor = activeColor;
+                case 'link'
+                    obj.tmn.makecell_mode = 'link';
+                    handles.tabMakeCell_pushbuttonLink.BackgroundColor = activeColor;
+                case 'break'
+                    obj.tmn.makecell_mode = 'break';
+                    handles.tabMakeCell_pushbuttonBreak.BackgroundColor = activeColor;
+            end
+            switch lower(eventdata.OldValue.String)
+                case 'none'
+                    handles.tabMakeCell_togglebuttonNone.BackgroundColor = inactiveColor;
+                case 'link'
+                    handles.tabMakeCell_pushbuttonLink.BackgroundColor = inactiveColor;
+                case 'break'
+                    handles.tabMakeCell_pushbuttonBreak.BackgroundColor = inactiveColor;
+            end
+            guidata(obj.gui_main,handles);
+        end
         %%
         %
         function obj = tabMakeCell_loop(obj)

@@ -219,7 +219,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.refresh_stepRight;
+                    obj.loop_stepRight;
                 case 'comma'
                     obj.tmn.indImage = obj.tmn.indImage - 1;
                     if obj.tmn.indImage < 1
@@ -229,7 +229,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.refresh_stepLeft;
+                    obj.loop_stepLeft;
                 case 'rightarrow'
                     
                 case 'leftarrow'
@@ -247,7 +247,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.refresh;
+                    obj.loop;
                 case 'a'
                     %% timepoint at start of track
                     %
@@ -255,7 +255,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.refresh;
+                    obj.loop;
             end
         end
         %%
@@ -302,11 +302,11 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                 obj.trackCircle{i} = myrec;
             end
-            obj.refresh;
+            obj.loop;
         end
         %%
         %
-        function obj = refresh(obj)
+        function obj = loop(obj)
             handles = guidata(obj.gui_main);
             obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
             handles.displayedImage.CData = obj.imag3;
@@ -329,7 +329,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         end
         %%
         %
-        function obj = refresh_stepRight(obj)
+        function obj = loop_stepRight(obj)
             handles = guidata(obj.gui_main);
             obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
             handles.displayedImage.CData = obj.imag3;
@@ -359,7 +359,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         end
         %%
         %
-        function obj = refresh_stepLeft(obj)
+        function obj = loop_stepLeft(obj)
             handles = guidata(obj.gui_main);
             obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
             handles.displayedImage.CData = obj.imag3;
@@ -393,10 +393,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             switch obj.tmn.makecell_mode
                 case 'link'
                     obj.tmn.mcl.addTrack;
+                    obj.tmn.gui_control.tabMakeCell_loop;
                 otherwise
                     fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
             end
-            obj.tmn.gui_control.tabMakeCell_loop;
         end
     end
 end
