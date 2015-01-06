@@ -17,6 +17,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         track_makecell
         
         pointer_track = 1;
+        pointer_track2 = 1;
         pointer_next_track = 1;
         pointer_makecell = 1;
         pointer_next_makecell = 1;
@@ -149,13 +150,13 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
             addOptional(q, 'trackID1',obj.pointer_track, @(x)isnumeric(x));
-            addOptional(q, 'trackID2',obj.pointer_track, @(x)isnumeric(x));
+            addOptional(q, 'trackID2',obj.pointer_track2, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
-            trackID1 = q.Results.trackID1;
-            trackID2 = q.Results.trackID2;
+            obj.pointer_track = q.Results.trackID1;
+            obj.pointer_track2 = q.Results.trackID2;
             
-            if trackID1 == trackID2
+            if obj.pointer_track == obj.pointer_track2
                 warning('makecell:sametrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
                 return
             end
@@ -163,14 +164,13 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             existingTracks = 1:numel(obj.track_logical);
             existingTracks = existingTracks(obj.track_logical);
             
-            if ~ismember(trackID1,existingTracks) || ~ismember(trackID2,existingTracks)
+            if ~ismember(obj.pointer_track,existingTracks) || ~ismember(obj.pointer_track2,existingTracks)
                 error('makecell:badtrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
             end
             
-            obj.track_database.trackID(obj.track_database.trackID == trackID2) = trackID1;
-            
-            obj.pointer_track = trackID1;
-            obj.track_logical(trackID2) = false;
+            obj.track_database.trackID(obj.track_database.trackID == obj.pointer_track2) = obj.pointer_track;
+            obj.track_logical(obj.pointer_track2) = false;
+            obj.pointer_track2 = obj.pointer_track;
             obj.find_pointer_next_track;
         end
         %% deleteTrack

@@ -68,7 +68,8 @@ classdef cellularGPSTrackingManual_object_control < handle
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             f = figure('Visible','off','Units','characters','MenuBar','none','Position',[fx fy fwidth fheight],...
                 'CloseRequestFcn',{@obj.delete},'Name','Travel Agent Main');
-            tabgp = uitabgroup(f,'Position',[0,0,1,1]);
+            tabheight = 70;
+            tabgp = uitabgroup(f,'Units','characters','Position',[0,0,fwidth,tabheight]);
             tabGPS = uitab(tabgp,'Title','GPS');
             tabMakeCell = uitab(tabgp,'Title','MakeCell');
             tabContrast = uitab(tabgp,'Title','Contrast');

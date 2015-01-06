@@ -19,7 +19,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         trackCenCol
         trackCenLogical
         trackCircleSize
+        trackLineWidthHighlight = 3;
         trackCenLogicalDiff
+        trackColor
+        trackColorHighlight = [255 255 102]/255;
     end
     %% Methods
     %   __  __     _   _            _
@@ -164,7 +167,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
-            
+            obj.trackColor = colormap(lines(7));
             
             displayedImage = image('Parent',axesImageViewer,...
                 'CData',obj.imag3);
@@ -287,7 +290,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             %myCenLogical = obj.trackCenLogical{obj.tmn.indP};
             for i = 1:length(obj.trackLine)
                 myline = line('Parent',handles.axesTracks);
-                myline.Color = [rand rand rand];
+                myline.Color = obj.trackColor(mod(i,7)+1,:);
                 myline.LineWidth = 1;
                 %mylogical = myCenLogical(i,:);
                 myline.YData = obj.trackCenRow{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
@@ -388,8 +391,22 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         end
         %%
         %
-        function obj = clickLoop(obj,myrec,~)
+        function obj = clickLoop(obj,myrec,~)           
+            obj.tmn.mcl.pointer_track2 = obj.tmn.mcl.pointer_track;
             obj.tmn.mcl.pointer_track = myrec.UserData;
+            
+            if obj.tmn.mcl.pointer_track2~=obj.tmn.mcl.pointer_track
+                myrec2 = obj.trackCircle{obj.tmn.mcl.pointer_track2};
+                myline = obj.trackLine{obj.tmn.mcl.pointer_track};
+                myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
+                myrec.FaceColor = obj.trackColorHighlight;
+                myline.Color = obj.trackColorHighlight;
+                myrec2.FaceColor = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
+                myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
+                myline.LineWidth = 3;
+                myline2.LineWidth = 1;
+            end
+            
             switch obj.tmn.makecell_mode
                 case 'none'
                     fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
