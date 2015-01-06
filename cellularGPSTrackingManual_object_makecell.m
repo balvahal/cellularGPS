@@ -169,7 +169,30 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             
             obj.track_database.trackID(obj.track_database.trackID == trackID2) = trackID1;
             
+            obj.pointer_track = trackID1;
             obj.track_logical(trackID2) = false;
+            obj.find_pointer_next_track;
+        end
+        %% deleteTrack
+        %
+        function obj = deleteTrack(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addRequired(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            
+            obj.pointer_track = q.Results.trackID1;         
+            existingTracks = 1:numel(obj.track_logical);
+            existingTracks = existingTracks(obj.track_logical);
+            
+            if ~ismember(obj.pointer_track,existingTracks)
+                error('makecell:badtrack','Could not delete track, because the input %d is not a track.',obj.pointer_track);
+            end
+            
+            obj.track_logical(obj.pointer_track) = false;
+            obj.track_database = obj.track_database(obj.track_database.trackID(:) ~= obj.pointer_track,:);
             obj.find_pointer_next_track;
         end
     end
