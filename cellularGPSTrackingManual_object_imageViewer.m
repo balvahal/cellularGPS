@@ -391,8 +391,13 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         function obj = clickLoop(obj,myrec,~)
             obj.tmn.mcl.pointer_track = myrec.UserData;
             switch obj.tmn.makecell_mode
+                case 'none'
+                    fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 case 'link'
                     obj.tmn.mcl.addTrack;
+                    obj.tmn.gui_control.tabMakeCell_loop;
+                case 'break'
+                    obj.tmn.mcl.breakTrack;
                     obj.tmn.gui_control.tabMakeCell_loop;
                 otherwise
                     fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);

@@ -26,7 +26,7 @@ classdef cellularGPSTrackingManual_object < handle
         pointerPosition = 1;
         pointerSettings = 1;
         indImage = 1;
-        makecell_mode
+        makecell_mode = 'none';
     end
 %     properties (SetAccess = private)
 %     end
@@ -67,7 +67,6 @@ classdef cellularGPSTrackingManual_object < handle
             delete(obj.gui_imageViewer);
             delete(obj.gui_control);
         end
-
         %%
         %
         function obj = updateFilenameListImage(obj)

@@ -63,7 +63,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             ppChar = Pix_SS./Char_SS;
             set(0,'units',myunits);
             fwidth = 136.6; %683/ppChar(3) on a 1920x1080 monitor;
-            fheight = 70; %910/ppChar(4) on a 1920x1080 monitor;
+            fheight = 80; %910/ppChar(4) on a 1920x1080 monitor;
             fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             f = figure('Visible','off','Units','characters','MenuBar','none','Position',[fx fy fwidth fheight],...
@@ -83,6 +83,21 @@ classdef cellularGPSTrackingManual_object_control < handle
             textBackgroundColorRegion4 = [255 103 97]/255; %tendoRedLight
             buttonBackgroundColorRegion4 = [199 80 76]/255; %tendoRedDark
             buttonSize = [20 3.0769]; %[100/ppChar(3) 40/ppChar(4)];
+            hwidth = 104;
+            hheight = 40;
+            hx = (fwidth-hwidth)/2;
+            hy = 20;
+            %% timepoint
+            %
+            tabGPS_editTimepoint = uicontrol('Parent',f,'Style','edit','Units','characters',...
+                'FontSize',14,'FontName','Verdana',...
+                'String',num2str(1),...
+                'Position',[hx, 71, buttonSize(1),buttonSize(2)],...
+                'Callback',{@obj.tabGPS_editTimepoint_Callback});
+            
+            tabGPS_textTimepoint = uicontrol('Parent',f,'Style','text','Units','characters','String','timepoint',...
+                'FontSize',10,'FontName','Verdana',...
+                'Position',[hx+2+buttonSize(1), 71, 30, 2.6923]);
             %% Contrast Tab: gui
             %    ___         _               _     _____     _
             %   / __|___ _ _| |_ _ _ __ _ __| |_  |_   _|_ _| |__
@@ -91,10 +106,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             %
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
-            hwidth = 104;
-            hheight = 40;
-            hx = (fwidth-hwidth)/2;
-            hy = 20;
+
             tabContrast_axesContrast = axes('Parent',tabContrast,'Units','characters',...
                 'Position',[hx hy hwidth hheight]);
             tabContrast_axesContrast.NextPlot = 'add';
@@ -171,17 +183,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             
             hwidth = 104;
             hx = (fwidth-hwidth)/2;
-            %% timepoint
-            %
-            tabGPS_editTimepoint = uicontrol('Parent',tabGPS,'Style','edit','Units','characters',...
-                'FontSize',14,'FontName','Verdana',...
-                'String',num2str(1),...
-                'Position',[hx, region1(2)+1, buttonSize(1),buttonSize(2)],...
-                'Callback',{@obj.tabGPS_editTimepoint_Callback});
-            
-            tabGPS_textTimepoint = uicontrol('Parent',tabGPS,'Style','text','Units','characters','String','timepoint',...
-                'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
-                'Position',[hx+2+buttonSize(1), region1(2)+1, 30, 2.6923]);
+
             %% The group table
             %
             tabGPS_tableGroup = uitable('Parent',tabGPS,'Units','characters',...
@@ -268,10 +270,10 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'BackgroundColor',[textBackgroundColorRegion2;buttonBackgroundColorRegion2],...
                 'ColumnName',{'cell #','trackIDS'},...
                 'ColumnEditable',logical([0,0]),...
-                'ColumnFormat',{'numeric','numeric'},...
+                'ColumnFormat',{'numeric','char'},...
                 'ColumnWidth',{'auto' 'auto'},...
                 'FontSize',8,'FontName','Verdana',...
-                'CellSelectionCallback',@obj.tabGPS_tableGroup_CellSelectionCallback,...
+                'CellSelectionCallback',@obj.tabMakeCell_table_CellSelectionCallback,...
                 'Position',[hx, region3(2)+0.7692, hwidth, 13.0769]);
             %% Handles
             %   _  _              _ _
@@ -645,9 +647,21 @@ classdef cellularGPSTrackingManual_object_control < handle
             for i = existingCells
                 n = n + 1;
                 makeCellData{n,1} = i;
-                makeCellData{n,2} = obj.tmn.mcl.makecell_ind{i};
+                makeCellData{n,2} = num2str(obj.tmn.mcl.makecell_ind{i});
             end
             handles.tabMakeCell_table.Data = makeCellData;
+        end
+        %%
+        %
+        function obj = tabMakeCell_table_CellSelectionCallback(obj,~,eventdata)
+            if isempty(eventdata.Indices)
+                % if nothing is selected, which triggers after deleting data,
+                % make sure the pointer is still valid
+                obj.tmn.mcl.find_pointer_next_makecell;
+                return
+            else
+                obj.tmn.mcl.pointer_makecell = eventdata.Indices(1,1);
+            end
         end
     end
 end

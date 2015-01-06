@@ -20,6 +20,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         pointer_next_track = 1;
         pointer_makecell = 1;
         pointer_next_makecell = 1;
+        pointer_timepoint = 1;
 
     end
 %     properties (SetAccess = private)
@@ -80,8 +81,8 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             % parse the input
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
-            addOptional(q, 'trackID',obj.pointer_track, @(x)exist(fullfile(obj.moviePath,'TRACKING_DATA',x),'file'));
-            addOptional(q, 'makecellID',obj.pointer_makecell, @(x)exist(fullfile(obj.moviePath,'TRACKING_DATA',x),'file'));
+            addOptional(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
+            addOptional(q, 'makecellID',obj.pointer_makecell, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
             obj.pointer_track = q.Results.trackID;
@@ -103,6 +104,60 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.makecell_divisionEnd(obj.pointer_makecell) = 0;
             obj.makecell_apoptosisStart(obj.pointer_makecell) = 0;
             obj.makecell_apoptosisEnd(obj.pointer_makecell) = 0;
+        end
+        %% breakTrack
+        %
+        function obj = breakTrack(obj,varargin)
+            %%%
+            % the columns of the track table are
+            % * trackID
+            % * timepoint
+            % * centroid_row
+            % * centroid_col
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addOptional(q, 'trackID', obj.pointer_track, @(x)isnumeric(x));
+            addOptional(q, 'timepoint', obj.pointer_timepoint, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            
+            obj.pointer_track = q.Results.trackID;
+            obj.pointer_timepoint = q.Results.timepoint;
+            
+            myLogicalDatabase = obj.track_database.trackID == obj.pointer_track;
+            mySubDatabase = obj.track_database(myLogicalDatabase,:);
+            myLogicalBefore = mySubDatabase.timepoint < obj.pointer_timepoint;
+            if ~any(myLogicalBefore)
+                warning('makecell:nobreak','Could not break track, because none of the track exists before timepoint %d',q.Results.timepoint);
+                return
+            end
+            tableBefore = mySubDatabase(myLogicalBefore,:);
+            tableAfter = mySubDatabase(~myLogicalBefore,:);
+            obj.find_pointer_next_track;
+            tableAfter.trackID(:) = obj.pointer_next_track;
+            obj.track_logical(obj.pointer_next_track) = true;
+            obj.find_pointer_next_track;
+            tableOld = obj.track_database(~myLogicalDatabase,:);
+            obj.track_database = vertcat(tableOld,tableBefore,tableAfter);         
+        end
+                %% joinTrack
+        %
+        function obj = joinTrack(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addOptional(q, 'trackID1',obj.pointer_track, @(x)isnumeric(x));
+            addOptional(q, 'trackID2',obj.pointer_track, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            
+            obj.pointer_track = q.Results.trackID1;
+            obj.pointer_makecell = q.Results.trackID2;
+            
+            if ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
+                obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
+            end
         end
     end
 end
