@@ -166,7 +166,6 @@ for i = positionNumber
     end
     positionCentroid = vertcat(centroidCell{:});
     positionCentroid2 = positionCentroid(:,{'trackID','timepoint','centroid_row','centroid_col'});
-    positionCentroid2 = horzcat(positionCentroid2,table(zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),zeros(height(positionCentroid2),1),'VariableNames',{'value','parent','division_start','division_end'})); %#ok<AGROW>
     tablename = sprintf('trackingPosition_%d.txt',i);
     writetable(positionCentroid2,fullfile(tablePathOut,tablename),'Delimiter','\t');
     %% plot data for feedback purposes

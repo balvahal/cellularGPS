@@ -141,7 +141,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             tableOld = obj.track_database(~myLogicalDatabase,:);
             obj.track_database = vertcat(tableOld,tableBefore,tableAfter);         
         end
-                %% joinTrack
+        %% joinTrack
         %
         function obj = joinTrack(obj,varargin)
             %%%
@@ -152,12 +152,25 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addOptional(q, 'trackID2',obj.pointer_track, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
-            obj.pointer_track = q.Results.trackID1;
-            obj.pointer_makecell = q.Results.trackID2;
+            trackID1 = q.Results.trackID1;
+            trackID2 = q.Results.trackID2;
             
-            if ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
-                obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
+            if trackID1 == trackID2
+                warning('makecell:sametrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
+                return
             end
+            
+            existingTracks = 1:numel(obj.track_logical);
+            existingTracks = existingTracks(obj.track_logical);
+            
+            if ~ismember(trackID1,existingTracks) || ~ismember(trackID2,existingTracks)
+                error('makecell:badtrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
+            end
+            
+            obj.track_database.trackID(obj.track_database.trackID == trackID2) = trackID1;
+            
+            obj.track_logical(trackID2) = false;
+            obj.find_pointer_next_track;
         end
     end
 end
