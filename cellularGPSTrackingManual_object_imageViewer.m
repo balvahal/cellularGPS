@@ -23,6 +23,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         trackCenLogicalDiff
         trackColor
         trackColorHighlight = [255 255 102]/255;
+        
+        trackJoinBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -130,40 +132,42 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             axesTracks.YDir = 'reverse';
             numOfPosition = sum(tmn.ity.number_position);
             positionInd = horzcat(tmn.ity.ind_position{:});
-            kCenRow = cell(numOfPosition,1);
-            kCenCol = cell(numOfPosition,1);
-            kCenLogical = cell(numOfPosition,1);
-            alldatabase = tmn.track_database;
-            numOfT = tmn.ity.number_of_timepoints;
-            %%%
-            % this loop takes a long time to execute
-            parfor u = positionInd
-                mydatabase = alldatabase{u};
-                myCenRow = zeros(max(mydatabase.trackID),numOfT);
-                myCenCol = zeros(max(mydatabase.trackID),numOfT);
-                myCenLogical = false(size(myCenRow));
-                disp(u)
-                for v = 1:height(mydatabase)
-                    mytimepoint = mydatabase.timepoint(v);
-                    mytrackID = mydatabase.trackID(v);
-                    myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
-                    myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
-                    myCenLogical(mytrackID,mytimepoint) = true;
-                end
-                kCenRow{u} = myCenRow;
-                kCenCol{u} = myCenCol;
-                kCenLogical{u} = myCenLogical;
-            end
-            %%%
-            % Assignment to the object was required to be after the parfor.
-            obj.trackCenRow = kCenRow;
-            obj.trackCenCol = kCenCol;
-            obj.trackCenLogical = kCenLogical;
-            
-            obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
-            for i = 1:length(obj.trackCenLogical)
-                obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
-            end
+%             kCenRow = cell(numOfPosition,1);
+%             kCenCol = cell(numOfPosition,1);
+%             kCenLogical = cell(numOfPosition,1);
+%             alldatabase = tmn.track_database;
+%             numOfT = tmn.ity.number_of_timepoints;
+%             %%%
+%             % this loop takes a long time to execute
+%             parfor u = positionInd
+%                 tic
+%                 mydatabase = alldatabase{u};
+%                 myCenRow = zeros(max(mydatabase.trackID),numOfT);
+%                 myCenCol = zeros(max(mydatabase.trackID),numOfT);
+%                 myCenLogical = false(size(myCenRow));
+%                 disp(u)
+%                 for v = 1:height(mydatabase)
+%                     mytimepoint = mydatabase.timepoint(v);
+%                     mytrackID = mydatabase.trackID(v);
+%                     myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
+%                     myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
+%                     myCenLogical(mytrackID,mytimepoint) = true;
+%                 end
+%                 kCenRow{u} = myCenRow;
+%                 kCenCol{u} = myCenCol;
+%                 kCenLogical{u} = myCenLogical;
+%                 toc
+%             end
+%             %%%
+%             % Assignment to the object was required to be after the parfor.
+%             obj.trackCenRow = kCenRow;
+%             obj.trackCenCol = kCenCol;
+%             obj.trackCenLogical = kCenLogical;
+%             
+%             obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
+%             for i = 1:length(obj.trackCenLogical)
+%                 obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
+%             end
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
@@ -245,7 +249,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 case 'd'
                     %% timepoint at end of track
                     %
-                    obj.tmn.indImage = find(obj.trackCenLogical{obj.tmn.indP}(obj.tmn.mcl.pointer_track,:),1,'last');
+                    obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'last');
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
@@ -253,11 +257,18 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 case 'a'
                     %% timepoint at start of track
                     %
-                    obj.tmn.indImage = find(obj.trackCenLogical{obj.tmn.indP}(obj.tmn.mcl.pointer_track,:),1,'first');
+                    obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'first');
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     obj.loop;
+                case 'escape'
+                    %% reset conditional properties
+                    %
+                    obj.trackJoinBool = false;
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.infoBk_textMessage.String = sprintf('Aborted! System is reset.');
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
             end
         end
         %%
@@ -276,6 +287,34 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         %
         function obj = loadNewTracks(obj)
             handles = guidata(obj.gui_main);
+            handlesControl = guidata(obj.tmn.gui_control.gui_main);
+            handlesControl.infoBk_textMessage.String = sprintf('Loading new tracks...');
+            drawnow;
+            %%
+            % process centroid data
+            mydatabase = obj.tmn.track_database{obj.tmn.indP};
+            numOfT = obj.tmn.ity.number_of_timepoints;
+            myCenRow = zeros(max(mydatabase.trackID),numOfT);
+            myCenCol = zeros(max(mydatabase.trackID),numOfT);
+            myCenLogical = false(size(myCenRow));
+            for v = 1:height(mydatabase)
+                mytimepoint = mydatabase.timepoint(v);
+                mytrackID = mydatabase.trackID(v);
+                myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
+                myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
+                myCenLogical(mytrackID,mytimepoint) = true;
+            end
+            handlesControl.infoBk_textMessage.String = sprintf('Tracks identified with\n%d centroids',height(mydatabase));
+            drawnow;
+            
+            %%%
+            % Assignment to the object was required to be after the parfor.
+            obj.trackCenRow = myCenRow;
+            obj.trackCenCol = myCenCol;
+            obj.trackCenLogical = myCenLogical;
+            
+            obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
+            
             %% Recalculate tracks
             % Assumes image size remains the same for this settings
             cellfun(@delete,obj.trackCircle);
@@ -292,8 +331,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myline.Color = obj.trackColor(mod(i,7)+1,:);
                 myline.LineWidth = 1;
                 %mylogical = myCenLogical(i,:);
-                myline.YData = obj.trackCenRow{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
-                myline.XData = obj.trackCenCol{obj.tmn.indP}(i,obj.trackCenLogical{obj.tmn.indP}(i,:));
+                myline.YData = obj.trackCenRow(i,obj.trackCenLogical(i,:));
+                myline.XData = obj.trackCenCol(i,obj.trackCenLogical(i,:));
                 obj.trackLine{i} = myline;
                 
                 myrec = rectangle('Parent',handles.axesTracks);
@@ -304,7 +343,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                 obj.trackCircle{i} = myrec;
             end
+            handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
+            drawnow;
             obj.loop;
+            guidata(obj.tmn.gui_control.gui_main,handlesControl);
         end
         %%
         %
@@ -325,10 +367,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 trackCircleHalfSize = (obj.trackCircleSize-1)/2;
                 for i = 1:length(obj.trackCircle)
                     obj.trackLine{i}.Visible = 'on';
-                    if obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    if obj.trackCenLogical(i,obj.tmn.indImage)
                         obj.trackCircle{i}.Visible = 'on';
-                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
-                            obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                            obj.trackCenRow(i,obj.tmn.indImage)-trackCircleHalfSize,...
                             obj.trackCircleSize,obj.trackCircleSize];
                     else
                         obj.trackCircle{i}.Visible = 'off';
@@ -355,18 +397,18 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 trackCircleHalfSize = (obj.trackCircleSize-1)/2;
                 for i = 1:length(obj.trackCircle)
                     
-                    if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    if obj.trackCenLogicalDiff(i,obj.tmn.indImage-1) == 0 && ~obj.trackCenLogical(i,obj.tmn.indImage)
                         % do nothing
-                    elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == 0
-                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
-                            obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                    elseif obj.trackCenLogical(i,obj.tmn.indImage) && obj.trackCenLogicalDiff(i,obj.tmn.indImage-1) == 0
+                        obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                            obj.trackCenRow(i,obj.tmn.indImage)-trackCircleHalfSize,...
                             obj.trackCircleSize,obj.trackCircleSize];
-                    elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage-1) == -1
+                    elseif obj.trackCenLogicalDiff(i,obj.tmn.indImage-1) == -1
                         obj.trackCircle{i}.Visible = 'off';
                     else
                         obj.trackCircle{i}.Visible = 'on';
-                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
-                            obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                            obj.trackCenRow(i,obj.tmn.indImage)-trackCircleHalfSize,...
                             obj.trackCircleSize,obj.trackCircleSize];
                     end
                 end
@@ -390,18 +432,18 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             if obj.tmn.gui_control.menu_viewTrackBool
                 trackCircleHalfSize = (obj.trackCircleSize-1)/2;
                 for i = 1:length(obj.trackCircle)
-                    if obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage)
+                    if obj.trackCenLogicalDiff(i,obj.tmn.indImage) == 0 && ~obj.trackCenLogical(i,obj.tmn.indImage)
                         %do nothing
-                    elseif obj.trackCenLogical{obj.tmn.indP}(i,obj.tmn.indImage) && obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 0
-                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
-                            obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                    elseif obj.trackCenLogical(i,obj.tmn.indImage) && obj.trackCenLogicalDiff(i,obj.tmn.indImage) == 0
+                        obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                            obj.trackCenRow(i,obj.tmn.indImage)-trackCircleHalfSize,...
                             obj.trackCircleSize,obj.trackCircleSize];
-                    elseif obj.trackCenLogicalDiff{obj.tmn.indP}(i,obj.tmn.indImage) == 1
+                    elseif obj.trackCenLogicalDiff(i,obj.tmn.indImage) == 1
                         obj.trackCircle{i}.Visible = 'off';
                     else
                         obj.trackCircle{i}.Visible = 'on';
-                        obj.trackCircle{i}.Position = [obj.trackCenCol{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
-                            obj.trackCenRow{obj.tmn.indP}(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                        obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.tmn.indImage)-trackCircleHalfSize,...
+                            obj.trackCenRow(i,obj.tmn.indImage)-trackCircleHalfSize,...
                             obj.trackCircleSize,obj.trackCircleSize];
                     end
                 end
@@ -434,19 +476,30 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     myline.LineWidth = 3;
                     myline2.LineWidth = 1;
                 end
-                
+                handlesControl = guidata(obj.tmn.gui_control.gui_main);
                 switch obj.tmn.makecell_mode
                     case 'none'
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
-                    case 'link'
-                        obj.tmn.mcl.addTrack;
+                    case 'join'
+                        if obj.trackJoinBool
+                            obj.tmn.mcl.joinTrack;
+                            obj.trackJoinBool = false;
+                            handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',obj.tmn.mcl.pointer_track2,obj.tmn.mcl.pointer_track);
+                        else
+                            handlesControl.infoBk_textMessage.String = sprintf('Join track %d with...',obj.tmn.mcl.pointer_track);
+                            obj.trackJoinBool = true;
+                        end
                         obj.tmn.gui_control.tabMakeCell_loop;
                     case 'break'
                         obj.tmn.mcl.breakTrack;
                         obj.tmn.gui_control.tabMakeCell_loop;
+                    case 'delete'
+                        obj.tmn.mcl.deleteTrack;
+                        obj.tmn.gui_control.tabMakeCell_loop;
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 end
+                guidata(obj.tmn.gui_control.gui_main,handlesControl);
             end
         end
     end
