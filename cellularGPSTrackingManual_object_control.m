@@ -15,6 +15,9 @@ classdef cellularGPSTrackingManual_object_control < handle
         
         contrastHistogram
         
+        %%% menu
+        %
+        menu_viewTrackBool = true;
     end
     %% Methods
     %   __  __     _   _            _
@@ -63,16 +66,15 @@ classdef cellularGPSTrackingManual_object_control < handle
             ppChar = Pix_SS./Char_SS;
             set(0,'units',myunits);
             fwidth = 136.6; %683/ppChar(3) on a 1920x1080 monitor;
-            fheight = 80; %910/ppChar(4) on a 1920x1080 monitor;
+            fheight = 70; %910/ppChar(4) on a 1920x1080 monitor;
             fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
-            f = figure('Visible','off','Units','characters','MenuBar','none','Position',[fx fy fwidth fheight],...
+            f = figure('Visible','off','Units','characters','MenuBar','None','Position',[fx fy fwidth fheight],...
                 'CloseRequestFcn',{@obj.delete},'Name','Travel Agent Main');
-            tabheight = 70;
-            tabgp = uitabgroup(f,'Units','characters','Position',[0,0,fwidth,tabheight]);
-            tabGPS = uitab(tabgp,'Title','GPS');
-            tabMakeCell = uitab(tabgp,'Title','MakeCell');
-            tabContrast = uitab(tabgp,'Title','Contrast');
+            muView = uimenu(f,'Label','View');
+            muViewHT = uimenu(muView,'Label','Hide Tracks',...
+                'Callback',@obj.menu_viewTracks);
+            
             
             
             textBackgroundColorRegion1 = [37 124 224]/255; %tendoBlueLight
@@ -84,21 +86,44 @@ classdef cellularGPSTrackingManual_object_control < handle
             textBackgroundColorRegion4 = [255 103 97]/255; %tendoRedLight
             buttonBackgroundColorRegion4 = [199 80 76]/255; %tendoRedDark
             buttonSize = [20 3.0769]; %[100/ppChar(3) 40/ppChar(4)];
-            hwidth = 104;
-            hheight = 40;
-            hx = (fwidth-hwidth)/2;
-            hy = 20;
+            %% Info Brick
+            % The section of the gui that contains useful information and messages.
+            %   ___       __       ___     _    _
+            %  |_ _|_ _  / _|___  | _ )_ _(_)__| |__
+            %   | || ' \|  _/ _ \ | _ \ '_| / _| / /
+            %  |___|_||_|_| \___/ |___/_| |_\__|_\_\
+            %
+            infoBk_panelMessage = uipanel('Title','Message','Units','characters','Parent',f,...
+                'Position',[0,65,fwidth,5]);
+            infoBk_textMessage = uicontrol('Parent',infoBk_panelMessage,'Style','text','Units','characters','String','timepoint',...
+                'FontSize',10,'FontName','Verdana','HorizontalAlignment','left',...
+                'Position',[16, 0.5, 20, 2.6923]);
+            infoBk_panelInfo = uipanel('Title','Info','Units','characters','Parent',f,...
+                'Position',[0,60,fwidth,5]);
             %% timepoint
             %
-            tabGPS_editTimepoint = uicontrol('Parent',f,'Style','edit','Units','characters',...
+            infoBk_editTimepoint = uicontrol('Parent',infoBk_panelInfo,'Style','edit','Units','characters',...
                 'FontSize',14,'FontName','Verdana',...
                 'String',num2str(1),...
-                'Position',[hx, 71, buttonSize(1),buttonSize(2)],...
-                'Callback',{@obj.tabGPS_editTimepoint_Callback});
+                'Position',[0, 0.5, 15,2.6923],...
+                'Callback',{@obj.infoBk_editTimepoint_Callback});
             
-            tabGPS_textTimepoint = uicontrol('Parent',f,'Style','text','Units','characters','String','timepoint',...
-                'FontSize',10,'FontName','Verdana',...
-                'Position',[hx+2+buttonSize(1), 71, 30, 2.6923]);
+            infoBk_textTimepoint = uicontrol('Parent',infoBk_panelInfo,'Style','text','Units','characters','String','timepoint',...
+                'FontSize',10,'FontName','Verdana','HorizontalAlignment','left',...
+                'Position',[16, 0.5, 20, 2.6923]);
+            
+            %% Tabs
+            %   _____     _
+            %  |_   _|_ _| |__ ___
+            %    | |/ _` | '_ (_-<
+            %    |_|\__,_|_.__/__/
+            %
+            tab_panel = uipanel('Title','Tabs','Units','characters','Parent',f,...
+                'Position',[0,0,fwidth,60]);
+            tabgp = uitabgroup(tab_panel,'Units','characters','Position',[0,0,fwidth,58.5]);
+            tabGPS = uitab(tabgp,'Title','GPS');
+            tabMakeCell = uitab(tabgp,'Title','MakeCell');
+            tabContrast = uitab(tabgp,'Title','Contrast');
             %% Contrast Tab: gui
             %    ___         _               _     _____     _
             %   / __|___ _ _| |_ _ _ __ _ __| |_  |_   _|_ _| |__
@@ -107,7 +132,10 @@ classdef cellularGPSTrackingManual_object_control < handle
             %
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
-
+            hwidth = 104;
+            hheight = 40;
+            hx = (fwidth-hwidth)/2;
+            hy = 10;
             tabContrast_axesContrast = axes('Parent',tabContrast,'Units','characters',...
                 'Position',[hx hy hwidth hheight]);
             tabContrast_axesContrast.NextPlot = 'add';
@@ -125,10 +153,10 @@ classdef cellularGPSTrackingManual_object_control < handle
             ylabel('Pixel Count');
             %% Create controls
             %  two slider bars
-            hwidth = 104;
+            hwidth = 112;
             hheight = 2;
             hx = (fwidth-hwidth)/2;
-            hy = 10;
+            hy = 5;
             %%% sliderMax
             %
             sliderStep = 1/(256 - 1);
@@ -138,7 +166,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Callback',{@obj.tabContrast_sliderMax_Callback});
             
             hx = (fwidth-hwidth)/2;
-            hy = 5;
+            hy = 2;
             %%% sliderMin
             %
             sliderStep = 1/(256 - 1);
@@ -151,7 +179,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             hwidth = 104;
             hheight = 40;
             hx = (fwidth-hwidth)/2;
-            hy = 20;
+            hy = 10;
             tabContrast_haxesLine = axes('Parent',tabContrast,'Units','characters',...
                 'Position',[hx hy hwidth hheight]);
             tabContrast_haxesLine.NextPlot = 'add';
@@ -184,7 +212,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             
             hwidth = 104;
             hx = (fwidth-hwidth)/2;
-
+            
             %% The group table
             %
             tabGPS_tableGroup = uitable('Parent',tabGPS,'Units','characters',...
@@ -226,44 +254,51 @@ classdef cellularGPSTrackingManual_object_control < handle
             %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
             %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
             %
+            region1 = [0 49.5]; %[0 730/ppChar(4)]; %180 pixels
+            region2 = [0 42.3077]; %[0 550/ppChar(4)]; %180 pixels
+            region3 = [0 13.8462]; %[0 180/ppChar(4)]; %370 pixels
+            region4 = [0 0]; %180 pixels
             %%
             %
+            tabMakeCell_panelTrack = uipanel('Title','Track','Units','characters','Parent',tabMakeCell,...
+                'Position',[0,region1(2),fwidth,10]);
             textColor = [255 235 205]/255;
             buttongap = 2;
             
-            tabMakeCell_buttongroup = uibuttongroup('Parent',tabMakeCell);
+            tabMakeCell_buttongroup = uibuttongroup('Parent',tabMakeCell_panelTrack);
             tabMakeCell_buttongroup.SelectionChangedFcn = @obj.tabMakeCell_buttongroup_SelectionChangedFcn;
             
             tabMakeCell_togglebuttonNone = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',[139  69  19]/255,...
                 'String','None',...
-                'Position',[hx, region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'Position',[hx, 0.5, buttonSize(1),buttonSize(2)],...
                 'ForegroundColor',textColor);
+            
             uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','do nothing',...
                 'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
-                'Position',[hx, region1(2)+5.4615, buttonSize(1),2.6923],...
+                'Position',[hx, buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
             tabMakeCell_pushbuttonLink = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
                 'String','Link',...
-                'Position',[hx + buttongap + buttonSize(1), region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'Position',[hx + buttongap + buttonSize(1), 0.5, buttonSize(1),buttonSize(2)],...
                 'ForegroundColor',textColor);
             
             uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','Add a track to a cell',...
                 'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
-                'Position',[hx + buttongap + buttonSize(1), region1(2)+5.4615, buttonSize(1),2.6923],...
+                'Position',[hx + buttongap + buttonSize(1),buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-           tabMakeCell_pushbuttonBreak = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+            tabMakeCell_pushbuttonBreak = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
                 'String','Break',...
-                'Position',[hx + buttongap*2 + buttonSize(1)*2, region1(2)+2, buttonSize(1),buttonSize(2)],...
+                'Position',[hx + buttongap*2 + buttonSize(1)*2,0.5, buttonSize(1),buttonSize(2)],...
                 'ForegroundColor',textColor);
             
             uicontrol('Parent',tabMakeCell,'Style','text','Units','characters','String','divide a track into two',...
                 'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion1,...
-                'Position',[hx + buttongap*2 + buttonSize(1)*2, region1(2)+5.4615, buttonSize(1),2.6923],...
+                'Position',[hx + buttongap*2 + buttonSize(1)*2, buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             %%
             %
@@ -284,7 +319,13 @@ classdef cellularGPSTrackingManual_object_control < handle
             %
             % store the uicontrol handles in the figure handles via guidata()
             % store the uicontrol handles in the figure handles via guidata()
-
+            handles.muView = muView;
+            handles.muViewHT = muViewHT;
+            
+            handles.infoBk_textMessage = infoBk_textMessage;
+            handles.infoBk_editTimepoint = infoBk_editTimepoint;
+            handles.infoBk_textTimepoint = infoBk_textTimepoint;
+            
             handles.tabgp = tabgp;
             handles.tabGPS = tabGPS;
             handles.tabMakeCell = tabMakeCell;
@@ -298,8 +339,6 @@ classdef cellularGPSTrackingManual_object_control < handle
             handles.tabContrast_sliderMax = tabContrast_sliderMax;
             handles.tabContrast_sliderMin = tabContrast_sliderMin;
             
-            handles.tabGPS_editTimepoint = tabGPS_editTimepoint;
-            handles.tabGPS_textTimepoint = tabGPS_textTimepoint;
             handles.tabGPS_tableGroup = tabGPS_tableGroup;
             handles.tabGPS_tablePosition = tabGPS_tablePosition;
             handles.tabGPS_tableSettings = tabGPS_tableSettings;
@@ -421,9 +460,9 @@ classdef cellularGPSTrackingManual_object_control < handle
         %
         %%
         %
-        function obj = tabGPS_editTimepoint_Callback(obj,~,~)
+        function obj = infoBk_editTimepoint_Callback(obj,~,~)
             handles = guidata(obj.gui_main);
-            indImage = str2double(handles.tabGPS_editTimepoint.String);
+            indImage = str2double(handles.infoBk_editTimepoint.String);
             indImage = round(indImage);
             if indImage < 1
                 obj.tmn.indImage = 1;
@@ -433,7 +472,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.tmn.indImage = indImage;
             end
             obj.tmn.gui_imageViewer.loop;
-            handles.tabGPS_editTimepoint.String = num2str(obj.tmn.indImage);
+            handles.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
             guidata(obj.gui_main,handles);
         end
         %%
@@ -598,7 +637,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             obj.tmn.updateFilenameListImage;
             %%
             %
-            handles.tabGPS_textTimepoint.String = sprintf('of %d timepoint(s)',height(obj.tmn.smda_databaseSubset));
+            handles.infoBk_textTimepoint.String = sprintf('of %d\ntimepoint(s)',height(obj.tmn.smda_databaseSubset));
             guidata(obj.gui_main,handles);
         end
         %% MakeCell Tab: callbacks and functions
@@ -639,7 +678,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         function obj = tabMakeCell_loop(obj)
             handles = guidata(obj.gui_main);
             %% Cell Table
-            % 
+            %
             existingCells = 1:length(obj.tmn.mcl.makecell_logical);
             existingCells = existingCells(obj.tmn.mcl.makecell_logical);
             makeCellData = cell(length(obj.tmn.mcl.makecell_logical),...
@@ -663,6 +702,24 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.tmn.mcl.pointer_makecell = eventdata.Indices(1,1);
             end
+        end
+        %%
+        %
+        function obj = menu_viewTracks(obj,~,~)
+            handles = guidata(obj.gui_main);
+            if obj.menu_viewTrackBool
+                obj.menu_viewTrackBool = false;
+                handles.muViewHT.Label = 'Show Tracks';
+                for i = 1:length(obj.tmn.gui_imageViewer.trackCircle)
+                        obj.tmn.gui_imageViewer.trackCircle{i}.Visible = 'off';
+                        obj.tmn.gui_imageViewer.trackLine{i}.Visible = 'off';
+                end
+            else
+                obj.menu_viewTrackBool = true;
+                handles.muViewHT.Label = 'Hide Tracks';
+                obj.tmn.gui_imageViewer.loop;
+            end
+            guidata(obj.gui_main,handles);
         end
     end
 end

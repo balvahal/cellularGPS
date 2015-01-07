@@ -77,7 +77,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         end
         %% addTrack
         %
-        function obj = addTrack(obj,varargin)
+        function obj = addTrack2Cell(obj,varargin)
             %%%
             % parse the input
             q = inputParser;

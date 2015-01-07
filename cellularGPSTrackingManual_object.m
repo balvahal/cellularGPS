@@ -51,6 +51,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.gui_imageViewer = cellularGPSTrackingManual_object_imageViewer(obj);
             obj.gui_control = cellularGPSTrackingManual_object_control(obj);
 
+            obj.gui_imageViewer.loadNewTracks;
         end
         %%
         %
