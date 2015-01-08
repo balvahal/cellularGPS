@@ -130,6 +130,14 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             axesTracks.NextPlot = 'add';
             axesTracks.Visible = 'off';
             axesTracks.YDir = 'reverse';
+            
+            
+            axesCircles = axes('Parent',f,'Units','characters',...
+                'Position',[0 0 fwidth  fheight]);
+            axesCircles.NextPlot = 'add';
+            axesCircles.Visible = 'off';
+            axesCircles.YDir = 'reverse';
+            
             numOfPosition = sum(tmn.ity.number_position);
             positionInd = horzcat(tmn.ity.ind_position{:});
             %             kCenRow = cell(numOfPosition,1);
@@ -183,6 +191,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             %
             % store the uicontrol handles in the figure handles via guidata()
             handles.axesTracks = axesTracks;
+            handles.axesCircles = axesCircles;
             handles.axesImageViewer = axesImageViewer;
             handles.displayedImage = displayedImage;
             obj.gui_main = f;
@@ -281,6 +290,11 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handles.axesTracks.XLim = [1,obj.tmn.ity.imageWidthNoBin/...
                 obj.tmn.ity.settings_binning(obj.tmn.indS)];
             
+            handles.axesCircles.YLim = [1,obj.tmn.ity.imageHeightNoBin/...
+                obj.tmn.ity.settings_binning(obj.tmn.indS)];
+            handles.axesCircles.XLim = [1,obj.tmn.ity.imageWidthNoBin/...
+                obj.tmn.ity.settings_binning(obj.tmn.indS)];
+            
             guidata(obj.gui_main,handles);
         end
         %%
@@ -341,7 +355,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 if ~any(obj.trackCenLogical(i,:))
                     continue
                 end
-                myrec = rectangle('Parent',handles.axesTracks);
+                myrec = rectangle('Parent',handles.axesCircles);
                 myrec.ButtonDownFcn = @obj.clickLoop;
                 myrec.UserData = i;
                 myrec.Curvature = [1,1];
@@ -368,7 +382,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handlesControl.infoBk_textMessage.String = sprintf('Importing Tracks...');
             drawnow;
             for i = 1:length(obj.trackLine)
-                if ~any(obj.trackCenLogical(i,:))
+                if ~obj.tmn.mcl.track_logical(i)
                     continue
                 end
                 myline = line('Parent',handles.axesTracks);
@@ -381,10 +395,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handlesControl.infoBk_textMessage.String = sprintf('Importing Circles...');
             drawnow;
             for i = 1:length(obj.trackCircle)
-                if ~any(obj.trackCenLogical(i,:))
+                if ~obj.tmn.mcl.track_logical(i)
                     continue
                 end
-                myrec = rectangle('Parent',handles.axesTracks);
+                myrec = rectangle('Parent',handles.axesCircles);
                 myrec.ButtonDownFcn = @obj.clickLoop;
                 myrec.UserData = i;
                 myrec.Curvature = [1,1];
@@ -414,6 +428,9 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             if obj.tmn.gui_control.menu_viewTrackBool
                 trackCircleHalfSize = (obj.trackCircleSize-1)/2;
                 for i = 1:length(obj.trackCircle)
+                    if ~obj.tmn.mcl.track_logical(i)
+                        continue
+                    end
                     obj.trackLine{i}.Visible = 'on';
                     if obj.trackCenLogical(i,obj.tmn.indImage)
                         obj.trackCircle{i}.Visible = 'on';
@@ -530,19 +547,24 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                     case 'join'
                         if obj.trackJoinBool
-                            oldTrack = obj.tmn.mcl.pointer_track2;
-                            newTrack = obj.tmn.mcl.pointer_track;
-                            obj.tmn.mcl.joinTrack(oldTrack,newTrack);
+                            if obj.tmn.mcl.pointer_track2 > obj.tmn.mcl.pointer_track
+                                keepTrack = obj.tmn.mcl.pointer_track;
+                                replaceTrack = obj.tmn.mcl.pointer_track2;
+                            else
+                                keepTrack = obj.tmn.mcl.pointer_track2;
+                                replaceTrack = obj.tmn.mcl.pointer_track;
+                            end
+                            obj.tmn.mcl.joinTrack(keepTrack,replaceTrack);
                             obj.trackJoinBool = false;
-                            myLogical = ismember(obj.tmn.mcl.track_database.trackID,[oldTrack,newTrack]);
+                            myLogical = ismember(obj.tmn.mcl.track_database.trackID,[keepTrack,replaceTrack]);
                             myArray = 1:numel(myLogical);
                             myArray = myArray(myLogical);
-                            obj.trackCenRow(oldTrack,:) = 0;
-                            obj.trackCenCol(oldTrack,:) = 0;
-                            obj.trackCenLogical(oldTrack,:) = false;
-                            obj.trackCenRow(newTrack,:) = 0;
-                            obj.trackCenCol(newTrack,:) = 0;
-                            obj.trackCenLogical(newTrack,:) = false;
+                            obj.trackCenRow(keepTrack,:) = 0;
+                            obj.trackCenCol(keepTrack,:) = 0;
+                            obj.trackCenLogical(keepTrack,:) = false;
+                            obj.trackCenRow(replaceTrack,:) = 0;
+                            obj.trackCenCol(replaceTrack,:) = 0;
+                            obj.trackCenLogical(replaceTrack,:) = false;
                             for v = myArray
                                 mytimepoint = obj.tmn.mcl.track_database.timepoint(v);
                                 mytrackID = obj.tmn.mcl.track_database.trackID(v);
@@ -551,8 +573,15 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                                 obj.trackCenLogical(mytrackID,mytimepoint) = true;
                             end
                             obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-                            obj.visualizeTracks;
-                            handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',obj.tmn.mcl.pointer_track2,obj.tmn.mcl.pointer_track);
+                            
+                            obj.trackLine{replaceTrack}.delete;
+                            obj.trackCircle{replaceTrack}.delete;
+                            
+                            obj.trackLine{keepTrack}.YData = obj.trackCenRow(keepTrack,obj.trackCenLogical(keepTrack,:));
+                            obj.trackLine{keepTrack}.XData = obj.trackCenCol(keepTrack,obj.trackCenLogical(keepTrack,:));
+                            obj.trackCircle{keepTrack}.Position = [obj.trackLine{keepTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{keepTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                            
+                            handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',keepTrack,replaceTrack);
                         else
                             handlesControl.infoBk_textMessage.String = sprintf('Join track %d with...',obj.tmn.mcl.pointer_track);
                             obj.trackJoinBool = true;
@@ -563,6 +592,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         oldTrack = obj.tmn.mcl.pointer_track;
                         obj.tmn.mcl.breakTrack(obj.tmn.mcl.pointer_track,obj.tmn.indImage);
                         newTrack = obj.tmn.mcl.pointer_track;
+                        obj.tmn.mcl.pointer_track = oldTrack;
+                        
                         myLogical = ismember(obj.tmn.mcl.track_database.trackID,[oldTrack,newTrack]);
                         myArray = 1:numel(myLogical);
                         myArray = myArray(myLogical);
@@ -580,7 +611,28 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             obj.trackCenLogical(mytrackID,mytimepoint) = true;
                         end
                         obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-                        obj.visualizeTracks;
+                        
+                        handles = guidata(obj.gui_main);
+                        myline = line('Parent',handles.axesTracks);
+                        myline.Color = obj.trackColor(mod(newTrack,7)+1,:);
+                        myline.LineWidth = 1;
+                        myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
+                        myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
+                        obj.trackLine{newTrack} = myline;
+                        
+                        myrec = rectangle('Parent',handles.axesCircles);
+                        myrec.ButtonDownFcn = @obj.clickLoop;
+                        myrec.UserData = newTrack;
+                        myrec.Curvature = [1,1];
+                        myrec.FaceColor = obj.trackLine{newTrack}.Color;
+                        myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                        obj.trackCircle{newTrack} = myrec;
+                        
+                        obj.trackLine{oldTrack}.YData = obj.trackCenRow(oldTrack,obj.trackCenLogical(oldTrack,:));
+                        obj.trackLine{oldTrack}.XData = obj.trackCenCol(oldTrack,obj.trackCenLogical(oldTrack,:));
+                        obj.trackCircle{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                        
+                        %obj.visualizeTracks;
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.loop;
                     case 'delete'
