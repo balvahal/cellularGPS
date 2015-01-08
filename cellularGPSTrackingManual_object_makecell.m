@@ -196,7 +196,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addOptional(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
-            obj.pointer_track = q.Results.trackID1;         
+            obj.pointer_track = q.Results.trackID;         
             existingTracks = 1:numel(obj.track_logical);
             existingTracks = existingTracks(obj.track_logical);
             

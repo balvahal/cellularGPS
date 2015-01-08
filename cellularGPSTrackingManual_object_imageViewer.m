@@ -409,6 +409,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
             guidata(obj.tmn.gui_control.gui_main,handlesControl);
+            obj.loop;
         end
         %%
         %
@@ -574,8 +575,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             end
                             obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
                             
-                            obj.trackLine{replaceTrack}.delete;
-                            obj.trackCircle{replaceTrack}.delete;
+                            obj.trackLine{replaceTrack}.Visible = 'off';
+                            obj.trackCircle{replaceTrack}.Visible = 'off';
                             
                             obj.trackLine{keepTrack}.YData = obj.trackCenRow(keepTrack,obj.trackCenLogical(keepTrack,:));
                             obj.trackLine{keepTrack}.XData = obj.trackCenCol(keepTrack,obj.trackCenLogical(keepTrack,:));
@@ -636,7 +637,21 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.loop;
                     case 'delete'
-                        obj.tmn.mcl.deleteTrack;
+                        replaceTrack = obj.tmn.mcl.pointer_track;
+                        obj.tmn.mcl.deleteTrack(replaceTrack);
+                        
+                        obj.trackCenRow(replaceTrack,:) = 0;
+                        obj.trackCenCol(replaceTrack,:) = 0;
+                        obj.trackCenLogical(replaceTrack,:) = false;
+                        obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
+                        
+                        obj.trackLine{replaceTrack}.Visible = 'off';
+                        obj.trackCircle{replaceTrack}.Visible = 'off';
+                        
+                        handlesControl.infoBk_textMessage.String = sprintf('Deleted track %d.',replaceTrack);
+                        obj.tmn.gui_control.tabMakeCell_loop;
+                        obj.loop;
+                        
                         obj.tmn.gui_control.tabMakeCell_loop;
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
