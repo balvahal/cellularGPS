@@ -43,7 +43,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.ity = cellularGPSTrackingManual_object_itinerary;
             obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
-            obj.mcl = cellularGPSTrackingManual_object_makecell;
+            obj.mcl = cellularGPSTrackingManual_object_makecell(moviePath);
             obj.loadTrackData;
             obj.updateFilenameListImage;
             %% Launch gui
@@ -52,6 +52,8 @@ classdef cellularGPSTrackingManual_object < handle
             obj.gui_control = cellularGPSTrackingManual_object_control(obj);
 
             obj.gui_imageViewer.loadNewTracks;
+            obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
+            obj.gui_control.tabContrast_sliderMax_Callback
         end
         %%
         %

@@ -31,8 +31,20 @@ classdef cellularGPSTrackingManual_object_makecell < handle
     methods
         %%
         %
-        function obj = cellularGPSTrackingManual_object_makecell()
-
+        function obj = cellularGPSTrackingManual_object_makecell(moviePath,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'moviePath', @(x) isdir(x));
+            addOptional(q, 'pInd',0, @(x)isnumeric(x));
+            parse(q,moviePath,varargin{:});
+            pInd = q.Results.pInd;
+            obj.moviePath = q.Results.moviePath;
+            if pInd == 0
+                % no pInd was given
+                return
+            end
+            obj.import(pInd);
         end
         %%
         %
@@ -137,6 +149,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             tableAfter = mySubDatabase(~myLogicalBefore,:);
             obj.find_pointer_next_track;
             tableAfter.trackID(:) = obj.pointer_next_track;
+            obj.pointer_track = obj.pointer_next_track; %the pointer now identifies the new track number
             obj.track_logical(obj.pointer_next_track) = true;
             obj.find_pointer_next_track;
             tableOld = obj.track_database(~myLogicalDatabase,:);
@@ -180,7 +193,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             % parse the input
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
-            addRequired(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
+            addOptional(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
             obj.pointer_track = q.Results.trackID1;         
@@ -194,6 +207,38 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.track_logical(obj.pointer_track) = false;
             obj.track_database = obj.track_database(obj.track_database.trackID(:) ~= obj.pointer_track,:);
             obj.find_pointer_next_track;
+        end
+        %% import
+        %
+        function obj = import(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addOptional(q, 'pInd',1, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            pInd = q.Results.pInd;
+            obj.track_database = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
+                sprintf('trackingPosition_%d.txt',pInd)),...
+                'Delimiter','\t');
+            trackID = unique(obj.track_database.trackID);
+            obj.track_logical = false(max(trackID),1);
+            obj.track_logical(trackID) = true;
+            obj.find_pointer_next_track;
+            obj.find_pointer_next_makecell;
+            if ~exist(fullfile(obj.moviePath,'TRACKING_DATA',sprintf('makeCellPosition_%d.txt',pInd)),'file')
+                warning('makecell:nofile','The makecell file does not exist for position %d.',pInd);
+            end
+        end
+        %% export
+        %
+        function obj = export(obj)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            parse(q,obj);
+
         end
     end
 end

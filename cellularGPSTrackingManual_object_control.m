@@ -254,7 +254,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             %  | |\/| / _` | / / -_) (__/ -_) | |   | |/ _` | '_ \
             %  |_|  |_\__,_|_\_\___|\___\___|_|_|   |_|\__,_|_.__/
             %
-            region1 = [0 45]; %[0 730/ppChar(4)]; %180 pixels
+            region1 = [0 46]; %[0 730/ppChar(4)]; %180 pixels
             region2 = [0 42.3077]; %[0 550/ppChar(4)]; %180 pixels
             region3 = [0 13.8462]; %[0 180/ppChar(4)]; %370 pixels
             region4 = [0 0]; %180 pixels
@@ -269,10 +269,10 @@ classdef cellularGPSTrackingManual_object_control < handle
             textColor = [255 235 205]/255;
             
             
-            tabMakeCell_buttongroup = uibuttongroup('Parent',tabMakeCell_panelTrack);
-            tabMakeCell_buttongroup.SelectionChangedFcn = @obj.tabMakeCell_buttongroup_SelectionChangedFcn;
+            tabMakeCell_buttongroupTrack = uibuttongroup('Parent',tabMakeCell_panelTrack);
+            tabMakeCell_buttongroupTrack.SelectionChangedFcn = @obj.tabMakeCell_buttongroupTrack_SelectionChangedFcn;
             
-            tabMakeCell_togglebuttonNone = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+            tabMakeCell_togglebuttonNone = uicontrol('Parent',tabMakeCell_buttongroupTrack,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',[139  69  19]/255,...
                 'String','None',...
                 'Position',[hx, 0.5, buttonSize(1),buttonSize(2)],...
@@ -283,7 +283,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Position',[hx, buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-            tabMakeCell_pushbuttonJoin = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+            tabMakeCell_pushbuttonJoin = uicontrol('Parent',tabMakeCell_buttongroupTrack,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
                 'String','Join',...
                 'Position',[hx + buttongap + buttonSize(1), 0.5, buttonSize(1),buttonSize(2)],...
@@ -294,7 +294,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Position',[hx + buttongap + buttonSize(1),buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-            tabMakeCell_pushbuttonBreak = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+            tabMakeCell_pushbuttonBreak = uicontrol('Parent',tabMakeCell_buttongroupTrack,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
                 'String','Break',...
                 'Position',[hx + buttongap*2 + buttonSize(1)*2,0.5, buttonSize(1),buttonSize(2)],...
@@ -305,7 +305,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Position',[hx + buttongap*2 + buttonSize(1)*2, buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-            tabMakeCell_pushbuttonDelete = uicontrol('Parent',tabMakeCell_buttongroup,'Style','togglebutton','Units','characters',...
+            tabMakeCell_pushbuttonDelete = uicontrol('Parent',tabMakeCell_buttongroupTrack,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion1,...
                 'String','Delete',...
                 'Position',[hx + buttongap*3 + buttonSize(1)*3,0.5, buttonSize(1),buttonSize(2)],...
@@ -358,10 +358,10 @@ classdef cellularGPSTrackingManual_object_control < handle
             handles.tabGPS_tablePosition = tabGPS_tablePosition;
             handles.tabGPS_tableSettings = tabGPS_tableSettings;
             
-            handles.tabMakeCell_buttongroup = tabMakeCell_buttongroup;
+            handles.tabMakeCell_buttongroupTrack = tabMakeCell_buttongroupTrack;
             handles.tabMakeCell_table = tabMakeCell_table;
             handles.tabMakeCell_togglebuttonNone = tabMakeCell_togglebuttonNone;
-            handles.tabMakeCell_pushbuttonLink = tabMakeCell_pushbuttonJoin;
+            handles.tabMakeCell_pushbuttonJoin = tabMakeCell_pushbuttonJoin;
             handles.tabMakeCell_pushbuttonBreak = tabMakeCell_pushbuttonBreak;
             handles.tabMakeCell_pushbuttonDelete = tabMakeCell_pushbuttonDelete;
             
@@ -664,7 +664,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         %
         %%
         %
-        function obj = tabMakeCell_buttongroup_SelectionChangedFcn(obj,~,eventdata)
+        function obj = tabMakeCell_buttongroupTrack_SelectionChangedFcn(obj,~,eventdata)
             handles = guidata(obj.gui_main);
             activeColor = [139  69  19]/255;
             inactiveColor = [29 97 175]/255;
@@ -673,8 +673,8 @@ classdef cellularGPSTrackingManual_object_control < handle
                     obj.tmn.makecell_mode = 'none';
                     handles.tabMakeCell_togglebuttonNone.BackgroundColor = activeColor;
                 case 'join'
-                    obj.tmn.makecell_mode = 'link';
-                    handles.tabMakeCell_pushbuttonLink.BackgroundColor = activeColor;
+                    obj.tmn.makecell_mode = 'join';
+                    handles.tabMakeCell_pushbuttonJoin.BackgroundColor = activeColor;
                 case 'break'
                     obj.tmn.makecell_mode = 'break';
                     handles.tabMakeCell_pushbuttonBreak.BackgroundColor = activeColor;
@@ -686,7 +686,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 case 'none'
                     handles.tabMakeCell_togglebuttonNone.BackgroundColor = inactiveColor;
                 case 'join'
-                    handles.tabMakeCell_pushbuttonLink.BackgroundColor = inactiveColor;
+                    handles.tabMakeCell_pushbuttonJoin.BackgroundColor = inactiveColor;
                 case 'break'
                     handles.tabMakeCell_pushbuttonBreak.BackgroundColor = inactiveColor;
                 case 'delete'

@@ -132,42 +132,42 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             axesTracks.YDir = 'reverse';
             numOfPosition = sum(tmn.ity.number_position);
             positionInd = horzcat(tmn.ity.ind_position{:});
-%             kCenRow = cell(numOfPosition,1);
-%             kCenCol = cell(numOfPosition,1);
-%             kCenLogical = cell(numOfPosition,1);
-%             alldatabase = tmn.track_database;
-%             numOfT = tmn.ity.number_of_timepoints;
-%             %%%
-%             % this loop takes a long time to execute
-%             parfor u = positionInd
-%                 tic
-%                 mydatabase = alldatabase{u};
-%                 myCenRow = zeros(max(mydatabase.trackID),numOfT);
-%                 myCenCol = zeros(max(mydatabase.trackID),numOfT);
-%                 myCenLogical = false(size(myCenRow));
-%                 disp(u)
-%                 for v = 1:height(mydatabase)
-%                     mytimepoint = mydatabase.timepoint(v);
-%                     mytrackID = mydatabase.trackID(v);
-%                     myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
-%                     myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
-%                     myCenLogical(mytrackID,mytimepoint) = true;
-%                 end
-%                 kCenRow{u} = myCenRow;
-%                 kCenCol{u} = myCenCol;
-%                 kCenLogical{u} = myCenLogical;
-%                 toc
-%             end
-%             %%%
-%             % Assignment to the object was required to be after the parfor.
-%             obj.trackCenRow = kCenRow;
-%             obj.trackCenCol = kCenCol;
-%             obj.trackCenLogical = kCenLogical;
-%             
-%             obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
-%             for i = 1:length(obj.trackCenLogical)
-%                 obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
-%             end
+            %             kCenRow = cell(numOfPosition,1);
+            %             kCenCol = cell(numOfPosition,1);
+            %             kCenLogical = cell(numOfPosition,1);
+            %             alldatabase = tmn.track_database;
+            %             numOfT = tmn.ity.number_of_timepoints;
+            %             %%%
+            %             % this loop takes a long time to execute
+            %             parfor u = positionInd
+            %                 tic
+            %                 mydatabase = alldatabase{u};
+            %                 myCenRow = zeros(max(mydatabase.trackID),numOfT);
+            %                 myCenCol = zeros(max(mydatabase.trackID),numOfT);
+            %                 myCenLogical = false(size(myCenRow));
+            %                 disp(u)
+            %                 for v = 1:height(mydatabase)
+            %                     mytimepoint = mydatabase.timepoint(v);
+            %                     mytrackID = mydatabase.trackID(v);
+            %                     myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
+            %                     myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
+            %                     myCenLogical(mytrackID,mytimepoint) = true;
+            %                 end
+            %                 kCenRow{u} = myCenRow;
+            %                 kCenCol{u} = myCenCol;
+            %                 kCenLogical{u} = myCenLogical;
+            %                 toc
+            %             end
+            %             %%%
+            %             % Assignment to the object was required to be after the parfor.
+            %             obj.trackCenRow = kCenRow;
+            %             obj.trackCenCol = kCenCol;
+            %             obj.trackCenLogical = kCenLogical;
+            %
+            %             obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
+            %             for i = 1:length(obj.trackCenLogical)
+            %                 obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
+            %             end
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
@@ -293,10 +293,13 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             %%
             % process centroid data
             mydatabase = obj.tmn.track_database{obj.tmn.indP};
+            obj.tmn.mcl.import(obj.tmn.indP);
             numOfT = obj.tmn.ity.number_of_timepoints;
             myCenRow = zeros(max(mydatabase.trackID),numOfT);
             myCenCol = zeros(max(mydatabase.trackID),numOfT);
             myCenLogical = false(size(myCenRow));
+            handlesControl.infoBk_textMessage.String = sprintf('Tracks identified with\n%d centroids',height(mydatabase));
+            drawnow;
             for v = 1:height(mydatabase)
                 mytimepoint = mydatabase.timepoint(v);
                 mytrackID = mydatabase.trackID(v);
@@ -304,9 +307,6 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
                 myCenLogical(mytrackID,mytimepoint) = true;
             end
-            handlesControl.infoBk_textMessage.String = sprintf('Tracks identified with\n%d centroids',height(mydatabase));
-            drawnow;
-            
             %%%
             % Assignment to the object was required to be after the parfor.
             obj.trackCenRow = myCenRow;
@@ -320,32 +320,80 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             cellfun(@delete,obj.trackCircle);
             cellfun(@delete,obj.trackLine);
             mydatabase1 = obj.tmn.track_database{obj.tmn.indP};
-            %obj.tmn.track_database = readtable(fullfile(obj.tmn.moviePath,'TRACKING_DATA',sprintf('trackingPosition_%d.txt',obj.tmn.indP)),'Delimiter','\t');
             obj.trackLine = cell(max(mydatabase1.trackID),1);
             obj.trackCircle = cell(max(mydatabase1.trackID),1);
-            %myCenRow = obj.trackCenRow{obj.tmn.indP};
-            %myCenCol = obj.trackCenCol{obj.tmn.indP};
-            %myCenLogical = obj.trackCenLogical{obj.tmn.indP};
+            handlesControl.infoBk_textMessage.String = sprintf('Importing Tracks...');
+            drawnow;
             for i = 1:length(obj.trackLine)
+                if ~any(obj.trackCenLogical(i,:))
+                    continue
+                end
                 myline = line('Parent',handles.axesTracks);
                 myline.Color = obj.trackColor(mod(i,7)+1,:);
                 myline.LineWidth = 1;
-                %mylogical = myCenLogical(i,:);
                 myline.YData = obj.trackCenRow(i,obj.trackCenLogical(i,:));
                 myline.XData = obj.trackCenCol(i,obj.trackCenLogical(i,:));
                 obj.trackLine{i} = myline;
-                
+            end
+            handlesControl.infoBk_textMessage.String = sprintf('Importing Circles...');
+            drawnow;
+            for i = 1:length(obj.trackCircle)
+                if ~any(obj.trackCenLogical(i,:))
+                    continue
+                end
                 myrec = rectangle('Parent',handles.axesTracks);
                 myrec.ButtonDownFcn = @obj.clickLoop;
                 myrec.UserData = i;
                 myrec.Curvature = [1,1];
-                myrec.FaceColor = myline.Color;
-                myrec.Position = [myline.XData(1)-(obj.trackCircleSize-1)/2,myline.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                myrec.FaceColor = obj.trackLine{i}.Color;
+                myrec.Position = [obj.trackLine{i}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{i}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                 obj.trackCircle{i} = myrec;
             end
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
             obj.loop;
+            guidata(obj.tmn.gui_control.gui_main,handlesControl);
+        end
+        %%
+        %
+        function obj = visualizeTracks(obj)
+            handles = guidata(obj.gui_main);
+            handlesControl = guidata(obj.tmn.gui_control.gui_main);
+            %% Recalculate tracks
+            % Assumes image size remains the same for this settings
+            cellfun(@delete,obj.trackCircle);
+            cellfun(@delete,obj.trackLine);
+            obj.trackLine = cell(max(obj.tmn.mcl.track_database.trackID),1);
+            obj.trackCircle = cell(max(obj.tmn.mcl.track_database.trackID),1);
+            handlesControl.infoBk_textMessage.String = sprintf('Importing Tracks...');
+            drawnow;
+            for i = 1:length(obj.trackLine)
+                if ~any(obj.trackCenLogical(i,:))
+                    continue
+                end
+                myline = line('Parent',handles.axesTracks);
+                myline.Color = obj.trackColor(mod(i,7)+1,:);
+                myline.LineWidth = 1;
+                myline.YData = obj.trackCenRow(i,obj.trackCenLogical(i,:));
+                myline.XData = obj.trackCenCol(i,obj.trackCenLogical(i,:));
+                obj.trackLine{i} = myline;
+            end
+            handlesControl.infoBk_textMessage.String = sprintf('Importing Circles...');
+            drawnow;
+            for i = 1:length(obj.trackCircle)
+                if ~any(obj.trackCenLogical(i,:))
+                    continue
+                end
+                myrec = rectangle('Parent',handles.axesTracks);
+                myrec.ButtonDownFcn = @obj.clickLoop;
+                myrec.UserData = i;
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = obj.trackLine{i}.Color;
+                myrec.Position = [obj.trackLine{i}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{i}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                obj.trackCircle{i} = myrec;
+            end
+            handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
+            drawnow;
             guidata(obj.tmn.gui_control.gui_main,handlesControl);
         end
         %%
@@ -482,17 +530,59 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                     case 'join'
                         if obj.trackJoinBool
-                            obj.tmn.mcl.joinTrack;
+                            oldTrack = obj.tmn.mcl.pointer_track2;
+                            newTrack = obj.tmn.mcl.pointer_track;
+                            obj.tmn.mcl.joinTrack(oldTrack,newTrack);
                             obj.trackJoinBool = false;
+                            myLogical = ismember(obj.tmn.mcl.track_database.trackID,[oldTrack,newTrack]);
+                            myArray = 1:numel(myLogical);
+                            myArray = myArray(myLogical);
+                            obj.trackCenRow(oldTrack,:) = 0;
+                            obj.trackCenCol(oldTrack,:) = 0;
+                            obj.trackCenLogical(oldTrack,:) = false;
+                            obj.trackCenRow(newTrack,:) = 0;
+                            obj.trackCenCol(newTrack,:) = 0;
+                            obj.trackCenLogical(newTrack,:) = false;
+                            for v = myArray
+                                mytimepoint = obj.tmn.mcl.track_database.timepoint(v);
+                                mytrackID = obj.tmn.mcl.track_database.trackID(v);
+                                obj.trackCenRow(mytrackID,mytimepoint) = obj.tmn.mcl.track_database.centroid_row(v);
+                                obj.trackCenCol(mytrackID,mytimepoint) = obj.tmn.mcl.track_database.centroid_col(v);
+                                obj.trackCenLogical(mytrackID,mytimepoint) = true;
+                            end
+                            obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
+                            obj.visualizeTracks;
                             handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',obj.tmn.mcl.pointer_track2,obj.tmn.mcl.pointer_track);
                         else
                             handlesControl.infoBk_textMessage.String = sprintf('Join track %d with...',obj.tmn.mcl.pointer_track);
                             obj.trackJoinBool = true;
                         end
                         obj.tmn.gui_control.tabMakeCell_loop;
+                        obj.loop;
                     case 'break'
-                        obj.tmn.mcl.breakTrack;
+                        oldTrack = obj.tmn.mcl.pointer_track;
+                        obj.tmn.mcl.breakTrack(obj.tmn.mcl.pointer_track,obj.tmn.indImage);
+                        newTrack = obj.tmn.mcl.pointer_track;
+                        myLogical = ismember(obj.tmn.mcl.track_database.trackID,[oldTrack,newTrack]);
+                        myArray = 1:numel(myLogical);
+                        myArray = myArray(myLogical);
+                        obj.trackCenRow(oldTrack,:) = 0;
+                        obj.trackCenCol(oldTrack,:) = 0;
+                        obj.trackCenLogical(oldTrack,:) = false;
+                        obj.trackCenRow(newTrack,:) = 0;
+                        obj.trackCenCol(newTrack,:) = 0;
+                        obj.trackCenLogical(newTrack,:) = false;
+                        for v = myArray
+                            mytimepoint = obj.tmn.mcl.track_database.timepoint(v);
+                            mytrackID = obj.tmn.mcl.track_database.trackID(v);
+                            obj.trackCenRow(mytrackID,mytimepoint) = obj.tmn.mcl.track_database.centroid_row(v);
+                            obj.trackCenCol(mytrackID,mytimepoint) = obj.tmn.mcl.track_database.centroid_col(v);
+                            obj.trackCenLogical(mytrackID,mytimepoint) = true;
+                        end
+                        obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
+                        obj.visualizeTracks;
                         obj.tmn.gui_control.tabMakeCell_loop;
+                        obj.loop;
                     case 'delete'
                         obj.tmn.mcl.deleteTrack;
                         obj.tmn.gui_control.tabMakeCell_loop;
