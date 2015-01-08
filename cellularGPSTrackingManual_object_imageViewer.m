@@ -306,8 +306,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             drawnow;
             %%
             % process centroid data
-            mydatabase = obj.tmn.track_database{obj.tmn.indP};
             obj.tmn.mcl.import(obj.tmn.indP);
+            mydatabase = obj.tmn.mcl.track_database;
             numOfT = obj.tmn.ity.number_of_timepoints;
             myCenRow = zeros(max(mydatabase.trackID),numOfT);
             myCenCol = zeros(max(mydatabase.trackID),numOfT);
@@ -545,7 +545,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 handlesControl = guidata(obj.tmn.gui_control.gui_main);
                 switch obj.tmn.makecell_mode
                     case 'none'
-                        fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
+                        handlesControl.infoBk_textMessage.String = sprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                     case 'join'
                         if obj.trackJoinBool
                             if obj.tmn.mcl.pointer_track2 > obj.tmn.mcl.pointer_track
@@ -614,21 +614,26 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
                         
                         handles = guidata(obj.gui_main);
-                        myline = line('Parent',handles.axesTracks);
-                        myline.Color = obj.trackColor(mod(newTrack,7)+1,:);
-                        myline.LineWidth = 1;
-                        myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
-                        myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
-                        obj.trackLine{newTrack} = myline;
-                        
-                        myrec = rectangle('Parent',handles.axesCircles);
-                        myrec.ButtonDownFcn = @obj.clickLoop;
-                        myrec.UserData = newTrack;
-                        myrec.Curvature = [1,1];
-                        myrec.FaceColor = obj.trackLine{newTrack}.Color;
-                        myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                        obj.trackCircle{newTrack} = myrec;
-                        
+                        if newTrack > numel(obj.trackLine)
+                            myline = line('Parent',handles.axesTracks);
+                            myline.Color = obj.trackColor(mod(newTrack,7)+1,:);
+                            myline.LineWidth = 1;
+                            myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
+                            myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
+                            obj.trackLine{newTrack} = myline;
+                            
+                            myrec = rectangle('Parent',handles.axesCircles);
+                            myrec.ButtonDownFcn = @obj.clickLoop;
+                            myrec.UserData = newTrack;
+                            myrec.Curvature = [1,1];
+                            myrec.FaceColor = obj.trackLine{newTrack}.Color;
+                            myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                            obj.trackCircle{newTrack} = myrec;
+                        else
+                            obj.trackLine{newTrack}.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
+                            obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
+                            obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                        end
                         obj.trackLine{oldTrack}.YData = obj.trackCenRow(oldTrack,obj.trackCenLogical(oldTrack,:));
                         obj.trackLine{oldTrack}.XData = obj.trackCenCol(oldTrack,obj.trackCenLogical(oldTrack,:));
                         obj.trackCircle{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];

@@ -1,6 +1,7 @@
 classdef cellularGPSTrackingManual_object_makecell < handle
     properties
         moviePath
+        pInd %the position number
         %%% DATA
         %
         makecell_logical = false;
@@ -38,13 +39,16 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addRequired(q, 'moviePath', @(x) isdir(x));
             addOptional(q, 'pInd',0, @(x)isnumeric(x));
             parse(q,moviePath,varargin{:});
-            pInd = q.Results.pInd;
+            obj.pInd = q.Results.pInd;
             obj.moviePath = q.Results.moviePath;
-            if pInd == 0
+            if ~isdir(fullfile(obj.moviePath,'MAKECELL_DATA'))
+                mkdir(fullfile(obj.moviePath,'MAKECELL_DATA'));
+            end
+            if obj.pInd == 0
                 % no pInd was given
                 return
             end
-            obj.import(pInd);
+            obj.import;
         end
         %%
         %
@@ -103,13 +107,14 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             
             if ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
                 obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
+                obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;
             end
         end
         %% newCell
         %
         function obj = newCell(obj)
-            obj.pointer_makecell = obj.pointer_next_makecell;
             obj.find_pointer_next_makecell;
+            obj.pointer_makecell = obj.pointer_next_makecell;
             obj.makecell_logical(obj.pointer_makecell) = true;
             obj.makecell_ind{obj.pointer_makecell} = [];
             obj.makecell_mother(obj.pointer_makecell) = 0;
@@ -142,8 +147,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             mySubDatabase = obj.track_database(myLogicalDatabase,:);
             myLogicalBefore = mySubDatabase.timepoint < obj.pointer_timepoint;
             if ~any(myLogicalBefore)
-                warning('makecell:nobreak','Could not break track, because none of the track exists before timepoint %d',q.Results.timepoint);
-                return
+                error('makecell:nobreak','Could not break track, because none of the track exists before timepoint %d',q.Results.timepoint);
             end
             tableBefore = mySubDatabase(myLogicalBefore,:);
             tableAfter = mySubDatabase(~myLogicalBefore,:);
@@ -215,19 +219,26 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             % parse the input
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
-            addOptional(q, 'pInd',1, @(x)isnumeric(x));
+            addOptional(q, 'pInd',obj.pInd, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
-            pInd = q.Results.pInd;
-            obj.track_database = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
-                sprintf('trackingPosition_%d.txt',pInd)),...
-                'Delimiter','\t');
+            obj.pInd = q.Results.pInd;
+            if exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.pInd)),'file')
+                obj.track_database = readtable(fullfile(obj.moviePath,'MAKECELL_DATA',...
+                    sprintf('trackingPosition_%d.txt',obj.pInd)),...
+                    'Delimiter','\t');
+            else
+                obj.track_database = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
+                    sprintf('trackingPosition_%d.txt',obj.pInd)),...
+                    'Delimiter','\t');
+                obj.track_database = obj.track_database(:,{'trackID','timepoint','centroid_row','centroid_col'});
+            end
             trackID = unique(obj.track_database.trackID);
             obj.track_logical = false(max(trackID),1);
             obj.track_logical(trackID) = true;
             obj.find_pointer_next_track;
             obj.find_pointer_next_makecell;
-            if ~exist(fullfile(obj.moviePath,'TRACKING_DATA',sprintf('makeCellPosition_%d.txt',pInd)),'file')
-                warning('makecell:nofile','The makecell file does not exist for position %d.',pInd);
+            if ~exist(fullfile(obj.moviePath,'TRACKING_DATA',sprintf('makeCellPosition_%d.txt',obj.pInd)),'file')
+                warning('makecell:nofile','The makecell file does not exist for position %d.',obj.pInd);
             end
         end
         %% export
@@ -238,7 +249,8 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
             parse(q,obj);
-
+            [obj.track_database,~] = sortrows(obj.track_database,{'trackID','timepoint'},{'ascend','ascend'});
+            writetable(obj.track_database,fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.pInd)),'Delimiter','\t');
         end
     end
 end
