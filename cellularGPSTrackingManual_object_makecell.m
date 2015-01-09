@@ -1,7 +1,7 @@
 classdef cellularGPSTrackingManual_object_makecell < handle
     properties
         moviePath
-        pInd %the position number
+        positionIndex %the position number
         %%% DATA
         %
         makecell_logical = false;
@@ -21,14 +21,14 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         pointer_track2 = 1;
         pointer_next_track = 1;
         pointer_makecell = 1;
+        pointer_makecell2 = 1;
         pointer_next_makecell = 1;
         pointer_timepoint = 1;
-
     end
-%     properties (SetAccess = private)
-%     end
-%     events
-%     end
+    %     properties (SetAccess = private)
+    %     end
+    %     events
+    %     end
     methods
         %%
         %
@@ -39,13 +39,13 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addRequired(q, 'moviePath', @(x) isdir(x));
             addOptional(q, 'pInd',0, @(x)isnumeric(x));
             parse(q,moviePath,varargin{:});
-            obj.pInd = q.Results.pInd;
+            obj.positionIndex = q.Results.pInd;
             obj.moviePath = q.Results.moviePath;
             if ~isdir(fullfile(obj.moviePath,'MAKECELL_DATA'))
                 mkdir(fullfile(obj.moviePath,'MAKECELL_DATA'));
             end
-            if obj.pInd == 0
-                % no pInd was given
+            if obj.positionIndex == 0
+                % no positionIndex was given
                 return
             end
             obj.import;
@@ -157,7 +157,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.track_logical(obj.pointer_next_track) = true;
             obj.find_pointer_next_track;
             tableOld = obj.track_database(~myLogicalDatabase,:);
-            obj.track_database = vertcat(tableOld,tableBefore,tableAfter);         
+            obj.track_database = vertcat(tableOld,tableBefore,tableAfter);
         end
         %% joinTrack
         %
@@ -200,7 +200,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addOptional(q, 'trackID',obj.pointer_track, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             
-            obj.pointer_track = q.Results.trackID;         
+            obj.pointer_track = q.Results.trackID;
             existingTracks = 1:numel(obj.track_logical);
             existingTracks = existingTracks(obj.track_logical);
             
@@ -219,16 +219,16 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             % parse the input
             q = inputParser;
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
-            addOptional(q, 'pInd',obj.pInd, @(x)isnumeric(x));
+            addOptional(q, 'pInd',obj.positionIndex, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
-            obj.pInd = q.Results.pInd;
-            if exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.pInd)),'file')
+            obj.positionIndex = q.Results.pInd;
+            if exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.positionIndex)),'file')
                 obj.track_database = readtable(fullfile(obj.moviePath,'MAKECELL_DATA',...
-                    sprintf('trackingPosition_%d.txt',obj.pInd)),...
+                    sprintf('trackingPosition_%d.txt',obj.positionIndex)),...
                     'Delimiter','\t');
             else
                 obj.track_database = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
-                    sprintf('trackingPosition_%d.txt',obj.pInd)),...
+                    sprintf('trackingPosition_%d.txt',obj.positionIndex)),...
                     'Delimiter','\t');
                 obj.track_database = obj.track_database(:,{'trackID','timepoint','centroid_row','centroid_col'});
             end
@@ -237,8 +237,46 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.track_logical(trackID) = true;
             obj.find_pointer_next_track;
             obj.find_pointer_next_makecell;
-            if ~exist(fullfile(obj.moviePath,'TRACKING_DATA',sprintf('makeCellPosition_%d.txt',obj.pInd)),'file')
-                warning('makecell:nofile','The makecell file does not exist for position %d.',obj.pInd);
+            if ~exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'file')
+                warning('makecell:nofile','The makecell file does not exist for position %d.',obj.positionIndex);
+            else
+                %%
+                %
+                data = loadjson(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
+                if iscell(data.moviePath)
+                    obj.moviePath = fullfile(data.moviePath{:});
+                else
+                    obj.moviePath = data.moviePath;
+                end
+                obj.positionIndex = data.positionIndex;
+                
+                obj.makecell_logical = data.makecell_logical;
+                if data.makecell_order == 0
+                    obj.makecell_order = {};
+                else
+                    obj.makecell_order = data.makecell_order;
+                end
+                if data.makecell_order == 0
+                    obj.makecell_ind = {};
+                else
+                    obj.makecell_ind = data.makecell_ind;
+                end
+                obj.makecell_mother = data.makecell_mother;
+                obj.makecell_divisionStart = data.makecell_divisionStart;
+                obj.makecell_divisionEnd = data.makecell_divisionEnd;
+                obj.makecell_apoptosisStart = data.makecell_apoptosisStart;
+                obj.makecell_apoptosisEnd = data.makecell_apoptosisEnd;
+                
+                obj.track_logical = logical(data.track_logical);
+                obj.track_makecell = data.track_makecell;
+                
+                obj.pointer_track = data.pointer_track;
+                obj.pointer_track2 = data.pointer_track2;
+                obj.pointer_next_track = data.pointer_next_track;
+                obj.pointer_makecell = data.pointer_makecell;
+                obj.pointer_makecell2 = data.pointer_makecell2;
+                obj.pointer_next_makecell = data.pointer_next_makecell;
+                obj.pointer_timepoint = data.pointer_timepoint;
             end
         end
         %% export
@@ -250,7 +288,93 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
             parse(q,obj);
             [obj.track_database,~] = sortrows(obj.track_database,{'trackID','timepoint'},{'ascend','ascend'});
-            writetable(obj.track_database,fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.pInd)),'Delimiter','\t');
+            writetable(obj.track_database,fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.positionIndex)),'Delimiter','\t');
+            
+            %% convert data into JSON
+            %
+            jsonStrings = {};
+            n = 1;
+            %%%
+            %
+            jsonStrings{n} = micrographIOT_cellStringArray2json('moviePath',strsplit(obj.moviePath,filesep)); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('positionIndex',obj.positionIndex); n = n + 1;
+            %%%
+            %
+            jsonStrings{n} = micrographIOT_array2json('makecell_logical',obj.makecell_logical); n = n + 1;
+            jsonStrings{n} = micrographIOT_cellNumericArray2json('makecell_order',obj.makecell_order); n = n + 1;
+            jsonStrings{n} = micrographIOT_cellNumericArray2json('makecell_ind',obj.makecell_ind); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('makecell_mother',obj.makecell_mother); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('makecell_divisionStart',obj.makecell_divisionStart);  n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('makecell_divisionEnd',obj.makecell_divisionEnd); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('makecell_apoptosisStart',obj.makecell_apoptosisStart);  n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('makecell_apoptosisEnd',obj.makecell_apoptosisEnd);  n = n + 1;
+            %%%
+            %
+            jsonStrings{n} = micrographIOT_array2json('track_logical',obj.track_logical); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('track_makecell',obj.track_makecell); n = n + 1;
+            %%%
+            %
+            jsonStrings{n} = micrographIOT_array2json('pointer_track',obj.pointer_track); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_track2',obj.pointer_track2); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_next_track',obj.pointer_next_track); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_makecell',obj.pointer_makecell); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_makecell2',obj.pointer_makecell2); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_next_makecell',obj.pointer_next_makecell); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_timepoint',obj.pointer_timepoint);
+            %% export the JSON data to a text file
+            %
+            myjson = micrographIOT_jsonStrings2Object(jsonStrings);
+            fid = fopen(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'w');
+            if fid == -1
+                error('smdaITF:badfile','Cannot open the file, preventing the export of the smdaITF.');
+            end
+            fprintf(fid,myjson);
+            fclose(fid);
+            %%%
+            %
+            myjson = micrographIOT_autoIndentJson(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
+            fid = fopen(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'w');
+            if fid == -1
+                error('smdaITF:badfile','Cannot open the file, preventing the export of the smdaITF.');
+            end
+            fprintf(fid,myjson);
+            fclose(fid);
+        end
+        %%
+        %
+        function obj = identifyMother(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addOptional(q, 'mom', obj.pointer_makecell, @(x)isnumeric(x));
+            addOptional(q, 'dau', obj.pointer_makecell2, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            obj.pointer_makecell = q.Results.mom;
+            obj.pointer_makecell2 = q.Results.dau;
+            
+            existingMakecell = 1:numel(obj.makecell_logical);
+            existingMakecell = existingMakecell(obj.track_logical);
+            
+            if ~ismember(obj.pointer_makecell,existingMakecell) || ~ismember(obj.pointer_makecell2,existingMakecell)
+                error('makecell:badmkcl','Could not assign mother cell, because of invalid cell number.');
+            elseif obj.pointer_makecell == obj.pointer_makecell2
+                error('makecell:samemkcl','Could not assign mother cell, because the two cell numbers are the same.');
+            end
+            
+            obj.makecell_mother(obj.pointer_makecell2) = obj.pointer_makecell;
+        end
+        %% exportTracesMatrix
+        % Several matrices will be created with time represented by
+        % columns:
+        %
+        % * a matrix where each row represents a cell
+        % * a matrix where traces are connected along rows according to
+        % their mother
+        % * a subset of the previous matrix where only unique traces exist
+        % along all rows
+        function obj = exportTracesMatrix(obj)
+            
         end
     end
 end
