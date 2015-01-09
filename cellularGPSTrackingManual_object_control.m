@@ -362,7 +362,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Position',[hx + buttongap + buttonSize(1),buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-            tabMakeCell_pushbuttonMother = uicontrol('Parent',tabMakeCell_panelMakeCell,'Style','pushbutton','Units','characters',...
+            tabMakeCell_togglebuttonMother = uicontrol('Parent',tabMakeCell_buttongroupMakeCell,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion2,...
                 'String','Mother',...
                 'Position',[hx + buttongap*2 + buttonSize(1)*2,0.5, buttonSize(1),buttonSize(2)],...
@@ -436,7 +436,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             
             handles.tabMakeCell_pushbuttonNewCell = tabMakeCell_pushbuttonNewCell;
             handles.tabMakeCell_pushbuttonAddTrack2Cell = tabMakeCell_pushbuttonAddTrack2Cell;
-            handles.tabMakeCell_pushbuttonMother = tabMakeCell_pushbuttonMother;
+            handles.tabMakeCell_togglebuttonMother = tabMakeCell_togglebuttonMother;
             
             obj.gui_main = f;
             guidata(f,handles);
@@ -785,8 +785,8 @@ classdef cellularGPSTrackingManual_object_control < handle
                 case 'none'
                     obj.tmn.makecell_mode2 = 'none';
                     handles.tabMakeCell_togglebuttonNone.BackgroundColor = activeColor;
-                case 'track 2 cell'
-                    obj.tmn.makecell_mode2 = 'track 2 cell';
+                case 'mother'
+                    obj.tmn.makecell_mode2 = 'mother';
                     handles.tabMakeCell_togglebuttonAddTrack2Cell.BackgroundColor = activeColor;
                 case 'break'
                     obj.tmn.makecell_mode2 = 'break';
@@ -798,7 +798,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             switch lower(eventdata.OldValue.String)
                 case 'none'
                     handles.tabMakeCell_togglebuttonNone.BackgroundColor = inactiveColor;
-                case 'track 2 cell'
+                case 'mother'
                     handles.tabMakeCell_togglebuttonAddTrack2Cell.BackgroundColor = inactiveColor;
                 case 'break'
                     handles.tabMakeCell_togglebuttonBreak.BackgroundColor = inactiveColor;

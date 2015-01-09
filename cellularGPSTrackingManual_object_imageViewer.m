@@ -25,6 +25,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         trackColorHighlight = [255 255 102]/255;
         
         trackJoinBool = false;
+        
+        makecellMotherBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -140,42 +142,6 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             
             numOfPosition = sum(tmn.ity.number_position);
             positionInd = horzcat(tmn.ity.ind_position{:});
-            %             kCenRow = cell(numOfPosition,1);
-            %             kCenCol = cell(numOfPosition,1);
-            %             kCenLogical = cell(numOfPosition,1);
-            %             alldatabase = tmn.track_database;
-            %             numOfT = tmn.ity.number_of_timepoints;
-            %             %%%
-            %             % this loop takes a long time to execute
-            %             parfor u = positionInd
-            %                 tic
-            %                 mydatabase = alldatabase{u};
-            %                 myCenRow = zeros(max(mydatabase.trackID),numOfT);
-            %                 myCenCol = zeros(max(mydatabase.trackID),numOfT);
-            %                 myCenLogical = false(size(myCenRow));
-            %                 disp(u)
-            %                 for v = 1:height(mydatabase)
-            %                     mytimepoint = mydatabase.timepoint(v);
-            %                     mytrackID = mydatabase.trackID(v);
-            %                     myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
-            %                     myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
-            %                     myCenLogical(mytrackID,mytimepoint) = true;
-            %                 end
-            %                 kCenRow{u} = myCenRow;
-            %                 kCenCol{u} = myCenCol;
-            %                 kCenLogical{u} = myCenLogical;
-            %                 toc
-            %             end
-            %             %%%
-            %             % Assignment to the object was required to be after the parfor.
-            %             obj.trackCenRow = kCenRow;
-            %             obj.trackCenCol = kCenCol;
-            %             obj.trackCenLogical = kCenLogical;
-            %
-            %             obj.trackCenLogicalDiff = cell(size(obj.trackCenLogical));
-            %             for i = 1:length(obj.trackCenLogical)
-            %                 obj.trackCenLogicalDiff{i} = diff(obj.trackCenLogical{i},1,2);
-            %             end
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackCircleSize = 11; %must be an odd number
@@ -258,23 +224,50 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 case 'd'
                     %% timepoint at end of track
                     %
+                    oldIndImage = obj.tmn.indImage;
                     obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'last');
-                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
-                    handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
-                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.loop;
+                    if oldIndImage >= obj.tmn.indImage
+                        obj.tmn.indImage = oldIndImage + 1;
+                        if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
+                            obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
+                            return
+                        end
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepRight;
+                    else
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepX;
+                    end
                 case 'a'
                     %% timepoint at start of track
                     %
+                    oldIndImage = obj.tmn.indImage;
                     obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'first');
-                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
-                    handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
-                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
-                    obj.loop;
+                    if oldIndImage <= obj.tmn.indImage
+                        obj.tmn.indImage = oldIndImage - 1;
+                        if obj.tmn.indImage < 1
+                            obj.tmn.indImage = 1;
+                            return
+                        end
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepLeft;
+                    else
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepX;
+                    end
                 case 'escape'
                     %% reset conditional properties
                     %
                     obj.trackJoinBool = false;
+                    obj.makecellMotherBool = false;
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
                     handlesControl.infoBk_textMessage.String = sprintf('Aborted! System is reset.');
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
@@ -365,7 +358,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             end
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
-            obj.loop;
+            obj.loop_stepX;
             guidata(obj.tmn.gui_control.gui_main,handlesControl);
         end
         %%
@@ -409,11 +402,11 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
             guidata(obj.tmn.gui_control.gui_main,handlesControl);
-            obj.loop;
+            obj.loop_stepX;
         end
         %%
         %
-        function obj = loop(obj)
+        function obj = loop_stepX(obj)
             handles = guidata(obj.gui_main);
             obj.imag3 = imread(fullfile(obj.tmn.moviePath,'.thumb',obj.tmn.smda_databaseSubset.filename{obj.tmn.indImage}));
             handles.displayedImage.CData = obj.imag3;
@@ -588,7 +581,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             obj.trackJoinBool = true;
                         end
                         obj.tmn.gui_control.tabMakeCell_loop;
-                        obj.loop;
+                        obj.loop_stepX;
                     case 'break'
                         oldTrack = obj.tmn.mcl.pointer_track;
                         obj.tmn.mcl.breakTrack(obj.tmn.mcl.pointer_track,obj.tmn.indImage);
@@ -640,7 +633,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         
                         %obj.visualizeTracks;
                         obj.tmn.gui_control.tabMakeCell_loop;
-                        obj.loop;
+                        obj.loop_stepX;
                     case 'delete'
                         replaceTrack = obj.tmn.mcl.pointer_track;
                         obj.tmn.mcl.deleteTrack(replaceTrack);
@@ -655,7 +648,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         
                         handlesControl.infoBk_textMessage.String = sprintf('Deleted track %d.',replaceTrack);
                         obj.tmn.gui_control.tabMakeCell_loop;
-                        obj.loop;
+                        obj.loop_stepX;
                         
                         obj.tmn.gui_control.tabMakeCell_loop;
                     otherwise

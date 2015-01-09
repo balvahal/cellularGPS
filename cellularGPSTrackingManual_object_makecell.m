@@ -250,7 +250,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                 end
                 obj.positionIndex = data.positionIndex;
                 
-                obj.makecell_logical = data.makecell_logical;
+                obj.makecell_logical = logical(data.makecell_logical);
                 if data.makecell_order == 0
                     obj.makecell_order = {};
                 else

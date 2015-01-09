@@ -14,7 +14,7 @@ classdef cellularGPSTrackingManual_object < handle
         %
         gui_imageViewer
         gui_control
-        %%% INDICES AND POINTERS
+        %%% INDICES AND POINTERS AND MODES
         % state information about the gui and the information being
         % displayed
         indG = 1;
