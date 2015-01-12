@@ -656,6 +656,13 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 end
                 guidata(obj.tmn.gui_control.gui_main,handlesControl);
             end
+            
+            switch obj.tmn.makecell_mode2
+                case 'none'
+                    
+                case 'mother'
+               makecellMotherBool;     
+            end
         end
     end
 end

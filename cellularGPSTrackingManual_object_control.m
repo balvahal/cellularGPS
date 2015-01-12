@@ -362,12 +362,12 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'Position',[hx + buttongap + buttonSize(1),buttonSize(2)+1, buttonSize(1),2.6923],...
                 'ForegroundColor',textColor);
             
-            tabMakeCell_togglebuttonMother = uicontrol('Parent',tabMakeCell_buttongroupMakeCell,'Style','togglebutton','Units','characters',...
+            tabMakeCell_togglebuttonMother = uicontrol('Parent',tabMakeCell_panelMakeCell,'Style','togglebutton','Units','characters',...
                 'FontSize',14,'FontName','Verdana','BackgroundColor',buttonBackgroundColorRegion2,...
                 'String','Mother',...
                 'Position',[hx + buttongap*2 + buttonSize(1)*2,0.5, buttonSize(1),buttonSize(2)],...
                 'ForegroundColor',textColor,...
-                'Callback',{@obj.tabMakeCell_pushbuttonMother_Callback});
+                'Callback',{@obj.tabMakeCell_togglebuttonMother_Callback});
             
             uicontrol('Parent',tabMakeCell_panelMakeCell,'Style','text','Units','characters','String','choose mother cell',...
                 'FontSize',10,'FontName','Verdana','BackgroundColor',textBackgroundColorRegion2,...
@@ -870,8 +870,12 @@ classdef cellularGPSTrackingManual_object_control < handle
         end
         %%
         %
-        function obj = tabMakeCell_pushbuttonMother_Callback(obj,~,~)
-            
+        function obj = tabMakeCell_togglebuttonMother_Callback(obj,~,eventdata)
+            if eventdata.Source.Value == 0
+                obj.tmn.makecell_mode2 = 'none';
+            else
+                obj.tmn.makecell_mode2 = 'mother';
+            end
         end
     end
 end

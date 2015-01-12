@@ -5,8 +5,8 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         %%% DATA
         %
         makecell_logical = false;
-        makecell_order = {};
-        makecell_ind = {};
+        makecell_order = cell(1,1);
+        makecell_ind = cell(1,1);
         makecell_mother = 0;
         makecell_divisionStart = 0;
         makecell_divisionEnd = 0;
@@ -105,7 +105,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_track = q.Results.trackID;
             obj.pointer_makecell = q.Results.makecellID;
             
-            if ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
+            if ~isempty(obj.makecell_ind{obj.pointer_makecell}) && ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
                 obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
                 obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;
             end
