@@ -268,7 +268,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     %
                     obj.trackJoinBool = false;
                     obj.makecellMotherBool = false;
+                    obj.tmn.makecell_mode = 'none';
                     handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
                     handlesControl.infoBk_textMessage.String = sprintf('Aborted! System is reset.');
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
             end
@@ -523,22 +526,16 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 % displayed
                 obj.tmn.mcl.pointer_track2 = obj.tmn.mcl.pointer_track;
                 obj.tmn.mcl.pointer_track = myrec.UserData;
-                
-                if obj.tmn.mcl.pointer_track2~=obj.tmn.mcl.pointer_track
-                    myrec2 = obj.trackCircle{obj.tmn.mcl.pointer_track2};
-                    myline = obj.trackLine{obj.tmn.mcl.pointer_track};
-                    myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
-                    myrec.FaceColor = obj.trackColorHighlight;
-                    myline.Color = obj.trackColorHighlight;
-                    myrec2.FaceColor = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
-                    myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
-                    myline.LineWidth = 3;
-                    myline2.LineWidth = 1;
-                end
+                obj.tmn.mcl.pointer_makecell2 = obj.tmn.mcl.pointer_makecell;
+                obj.tmn.mcl.pointer_makecell = obj.tmn.mcl.track_makecell(obj.tmn.mcl.pointer_track);
+                %% highlight
+                obj.highlightTrack;
                 handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                %% track edits
+                %
                 switch obj.tmn.makecell_mode
                     case 'none'
-                        handlesControl.infoBk_textMessage.String = sprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
+                        handlesControl.infoBk_textMessage.String = sprintf('trackID %d\nmakecellID %d',obj.tmn.mcl.pointer_track,obj.tmn.mcl.pointer_makecell);
                     case 'join'
                         if obj.trackJoinBool
                             if obj.tmn.mcl.pointer_track2 > obj.tmn.mcl.pointer_track
@@ -651,10 +648,37 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.loop_stepX;
                         
                         obj.tmn.gui_control.tabMakeCell_loop;
+                    case 'mother'
+                        if obj.makecellMotherBool
+                            obj.makecellMotherBool = false;
+                            [mom,dau] = obj.tmn.mcl.identifyMother(obj.tmn.mcl.pointer_makecell2,obj.tmn.mcl.pointer_makecell);
+                            handlesControl.infoBk_textMessage.String = sprintf('Cell %d is the mother of\ncell %d.',mom,dau);
+                        else
+                            handlesControl.infoBk_textMessage.String = sprintf('Cell %d will be the mother of...',obj.tmn.mcl.pointer_makecell);
+                            obj.makecellMotherBool = true;
+                        end
+                        obj.tmn.gui_control.tabMakeCell_loop;
+                        obj.loop_stepX;
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 end
                 guidata(obj.tmn.gui_control.gui_main,handlesControl);
+            end
+        end
+        %%
+        %
+        function obj = highlightTrack(obj)
+            if obj.tmn.mcl.pointer_track2~=obj.tmn.mcl.pointer_track
+                myrec = obj.trackCircle{obj.tmn.mcl.pointer_track};
+                myrec2 = obj.trackCircle{obj.tmn.mcl.pointer_track2};
+                myline = obj.trackLine{obj.tmn.mcl.pointer_track};
+                myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
+                myrec.FaceColor = obj.trackColorHighlight;
+                myline.Color = obj.trackColorHighlight;
+                myrec2.FaceColor = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
+                myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,7)+1,:);
+                myline.LineWidth = 3;
+                myline2.LineWidth = 1;
             end
         end
     end

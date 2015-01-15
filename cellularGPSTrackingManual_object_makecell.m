@@ -234,11 +234,13 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             end
             trackID = unique(obj.track_database.trackID);
             obj.track_logical = false(max(trackID),1);
+            obj.track_makecell = zeros(max(trackID),1);
             obj.track_logical(trackID) = true;
             obj.find_pointer_next_track;
             obj.find_pointer_next_makecell;
             if ~exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'file')
                 warning('makecell:nofile','The makecell file does not exist for position %d.',obj.positionIndex);
+                
             else
                 %%
                 %
@@ -342,7 +344,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         end
         %%
         %
-        function obj = identifyMother(obj,varargin)
+        function [mom,dau] = identifyMother(obj,varargin)
             %%%
             % parse the input
             q = inputParser;
@@ -354,14 +356,15 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_makecell2 = q.Results.dau;
             
             existingMakecell = 1:numel(obj.makecell_logical);
-            existingMakecell = existingMakecell(obj.track_logical);
+            existingMakecell = existingMakecell(obj.makecell_logical);
             
             if ~ismember(obj.pointer_makecell,existingMakecell) || ~ismember(obj.pointer_makecell2,existingMakecell)
                 error('makecell:badmkcl','Could not assign mother cell, because of invalid cell number.');
             elseif obj.pointer_makecell == obj.pointer_makecell2
                 error('makecell:samemkcl','Could not assign mother cell, because the two cell numbers are the same.');
             end
-            
+            mom = obj.pointer_makecell;
+            dau = obj.pointer_makecell2;
             obj.makecell_mother(obj.pointer_makecell2) = obj.pointer_makecell;
         end
         %% exportTracesMatrix
