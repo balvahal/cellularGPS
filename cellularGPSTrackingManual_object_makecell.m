@@ -22,6 +22,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         pointer_next_track = 1;
         pointer_makecell = 1;
         pointer_makecell2 = 1;
+        pointer_makecell3 = 1;
         pointer_next_makecell = 1;
         pointer_timepoint = 1;
     end
@@ -105,9 +106,9 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_track = q.Results.trackID;
             obj.pointer_makecell = q.Results.makecellID;
             
-            if ~isempty(obj.makecell_ind{obj.pointer_makecell}) && ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
+            if isempty(obj.makecell_ind{obj.pointer_makecell}) || ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
                 obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
-                obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;
+                obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;                
             end
         end
         %% newCell
@@ -174,7 +175,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.pointer_track2 = q.Results.trackID2;
             
             if obj.pointer_track == obj.pointer_track2
-                warning('makecell:sametrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
+                warning('makecell:sametrack','Could not join tracks, because the inputs %d and %d represent only a single track.',q.Results.trackID1,q.Results.trackID2);
                 return
             end
             
@@ -182,7 +183,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             existingTracks = existingTracks(obj.track_logical);
             
             if ~ismember(obj.pointer_track,existingTracks) || ~ismember(obj.pointer_track2,existingTracks)
-                error('makecell:badtrack','Could not join tracks, because the inputs %d and %d represent only a single track.',trackID1,trackID2);
+                error('makecell:badtrack','Could not join tracks, because the inputs %d and %d represent only a single track.',q.Results.trackID1,q.Results.trackID2);
             end
             
             obj.track_database.trackID(obj.track_database.trackID == obj.pointer_track2) = obj.pointer_track;

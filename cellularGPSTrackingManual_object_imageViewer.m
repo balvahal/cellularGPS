@@ -24,7 +24,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         trackCenLogicalDiff
         trackColor = [0.85,0.325,0.098;0.494,0.184,0.556;0.466,0.674,0.188];
         trackColorHighlight = [0.929,0.694,0.125];
-        trackText 
+        trackText
         trackTextBackgroundColor = [240 255 240]/255;
         trackTextColor = [47 79 79]/255;
         trackTextFontSize = 9;
@@ -225,6 +225,14 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
                     guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     obj.loop_stepLeft;
+                case 'hyphen'
+                    %% delete a track
+                    %
+                    obj.tmn.makecell_mode = 'delete';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonDelete.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
                 case 'rightarrow'
                     
                 case 'leftarrow'
@@ -277,6 +285,50 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         obj.loop_stepX;
                     end
+                case 'b'
+                    %% break a track into two tracks
+                    %
+                    obj.tmn.makecell_mode = 'break';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonBreak.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                case 'c'
+                    %% create a new cell
+                    %
+                    obj.tmn.gui_control.tabMakeCell_pushbuttonNewCell_Callback;
+                case 'j'
+                    %% join two tracks
+                    %
+                    obj.tmn.makecell_mode = 'join';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonJoin.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                case 'n'
+                    %% do nothing
+                    %
+                    obj.tmn.makecell_mode = 'none';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                case 'm'
+                    %% chose mother cell
+                    %
+                    obj.tmn.makecell_mode = 'mother';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonMother.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                case 't'
+                    %% add a track to a cell
+                    %
+                    obj.tmn.makecell_mode = 'track 2 cell';
+                    handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                    handlesControl.tabMakeCell_togglebuttonAddTrack2Cell.Value = 1;
+                    obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                    guidata(obj.tmn.gui_control.gui_main,handlesControl);
                 case 'escape'
                     %% reset conditional properties
                     %
@@ -386,19 +438,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 if ~any(obj.trackCenLogical(i,:))
                     continue
                 end
-                mytext = text('Parent',handles.axesText);
-                mytext.Color = obj.trackTextColor;
-                mytext.BackgroundColor = obj.trackTextBackgroundColor; 
-                mytext.FontSize = obj.trackTextFontSize;
-                mytext.Margin = obj.trackTextMargin;
-                mytext.UserData = i;
-                mytext.Position = [obj.trackLine{i}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{i}.YData(1)+(obj.trackCircleSize-1)/2];
-                myString = sprintf('k#: %d',i);
-                if obj.tmn.mcl.track_makecell(i) ~= 0
-                    myString = strcat(sprintf('\nMakeCell ID: %d',obj.tmn.mcl.track_makecell(i)));
-                end
-                mytext.String = myString;
-                obj.trackText{i} = mytext;
+                obj.trackText{i} = text('Parent',handles.axesText);
+                obj.updateTrackText(i);
             end
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
@@ -797,6 +838,10 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         end
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.loop_stepX;
+                    case 'track 2 cell'
+                        obj.tmn.mcl.addTrack2Cell(obj.tmn.mcl.pointer_track,obj.tmn.mcl.pointer_makecell3);
+                        obj.tmn.gui_control.tabMakeCell_loop;
+                        obj.updateTrackText;
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 end
@@ -808,16 +853,59 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
         function obj = highlightTrack(obj)
             if obj.tmn.mcl.pointer_track2~=obj.tmn.mcl.pointer_track
                 myrec = obj.trackCircle{obj.tmn.mcl.pointer_track};
-                myrec2 = obj.trackCircle{obj.tmn.mcl.pointer_track2};
-                myline = obj.trackLine{obj.tmn.mcl.pointer_track};
-                myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
                 myrec.FaceColor = obj.trackColorHighlight;
-                myline.Color = obj.trackColorHighlight;
+                
+                myrec2 = obj.trackCircle{obj.tmn.mcl.pointer_track2};
                 myrec2.FaceColor = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,3)+1,:);
-                myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,3)+1,:);
+                
+                myline = obj.trackLine{obj.tmn.mcl.pointer_track};
+                myline.Color = obj.trackColorHighlight;
                 myline.LineWidth = 3;
+                
+                myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
+                myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,3)+1,:);
                 myline2.LineWidth = 1;
+                
+                mclID = obj.tmn.mcl.track_makecell(obj.tmn.mcl.pointer_track);
+                if mclID ~= 0 
+                    myrec.EdgeColor = obj.trackColorHighlight2;
+                    myrec.LineWidth = 2;
+                else    
+                    myrec.EdgeColor = [0,0,0];
+                    myrec.LineWidth = 0.5;
+                end
             end
+        end
+        %%
+        %
+        function obj = updateTrackText(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_imageViewer'));
+            addOptional(q, 'trackID',obj.tmn.mcl.pointer_track, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            trackID = q.Results.trackID;
+            obj.trackText{trackID}.Color = obj.trackTextColor;
+            obj.trackText{trackID}.BackgroundColor = obj.trackTextBackgroundColor;
+            obj.trackText{trackID}.FontSize = obj.trackTextFontSize;
+            obj.trackText{trackID}.Margin = obj.trackTextMargin;
+            obj.trackText{trackID}.UserData = trackID;
+            obj.trackText{trackID}.Position = [obj.trackLine{trackID}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{trackID}.YData(1)+(obj.trackCircleSize-1)/2];
+            myString = sprintf('trck#: %d',trackID);
+            mclID = obj.tmn.mcl.track_makecell(trackID);
+            if mclID ~= 0
+                myString = strcat(myString,sprintf('\nmkcl#: %d',mclID));
+                if obj.tmn.mcl.makecell_mother(mclID) ~= 0
+                    myString = strcat(myString,sprintf('\mthr: %d',obj.tmn.mcl.makecell_mother(mclID)));
+                end
+                if obj.tmn.mcl.makecell_divisionStart(mclID) ~= 0
+                    myString = strcat(myString,sprintf('\ndvSt: %d',obj.tmn.mcl.makecell_divisionStart(mclID)));
+                elseif obj.tmn.mcl.makecell_apoptosisStart(mclID) ~= 0
+                    myString = strcat(myString,sprintf('\napSt: %d',obj.tmn.mcl.makecell_apoptosisStart(mclID)));
+                end
+            end
+            obj.trackText{trackID}.String = myString;
         end
     end
 end
