@@ -18,6 +18,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         %%% menu
         %
         menu_viewTrackBool = true;
+        menu_viewTime = 'all';
     end
     %% Methods
     %   __  __     _   _            _
@@ -73,7 +74,12 @@ classdef cellularGPSTrackingManual_object_control < handle
                 'CloseRequestFcn',{@obj.delete},'Name','Travel Agent Main');
             muView = uimenu(f,'Label','View');
             muViewHT = uimenu(muView,'Label','Hide Tracks',...
-                'Callback',@obj.menu_viewTracks);
+                'Callback',@obj.menuViewTracks_Callback);
+            muViewTime = uimenu(muView,'Label','Time Window');
+            muViewTimeAll = uimenu(muViewTime,'Label','All Time',...
+                'Callback',@obj.menuViewTime_Callback,'Checked','on');
+            muViewTimeNow = uimenu(muViewTime,'Label','At Present',...
+                'Callback',@obj.menuViewTime_Callback);
             
             
             
@@ -404,6 +410,9 @@ classdef cellularGPSTrackingManual_object_control < handle
             % store the uicontrol handles in the figure handles via guidata()
             handles.muView = muView;
             handles.muViewHT = muViewHT;
+            handles.muViewTime = muViewTime;
+            handles.muViewTimeAll = muViewTimeAll;
+            handles.muViewTimeNow = muViewTimeNow;
             
             handles.infoBk_textMessage = infoBk_textMessage;
             handles.infoBk_editTimepoint = infoBk_editTimepoint;
@@ -559,7 +568,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.tmn.indImage = indImage;
             end
-            obj.tmn.gui_imageViewer.loop;
+            obj.tmn.gui_imageViewer.loop_stepX;
             handles.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
             guidata(obj.gui_main,handles);
         end
@@ -601,7 +610,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             obj.tmn.mcl.export;
             
             obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.loop;
+            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
@@ -635,7 +644,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             obj.tmn.mcl.export;
             
             obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.loop;
+            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
@@ -665,7 +674,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.tmn.pointerSettings = sort(unique(eventdata.Indices(:,1)));
             end
             obj.tabGPS_loop;
-            obj.tmn.gui_imageViewer.loop;
+            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
@@ -791,38 +800,6 @@ classdef cellularGPSTrackingManual_object_control < handle
         end
         %%
         %
-        function obj = tabMakeCell_buttongroupMakeCell_SelectionChangedFcn(obj,~,eventdata)
-            handles = guidata(obj.gui_main);
-            activeColor = [139  69  19]/255;
-            inactiveColor = [44 129 74]/255;
-            switch lower(eventdata.NewValue.String)
-                case 'none'
-                    obj.tmn.makecell_mode2 = 'none';
-                    handles.tabMakeCell_togglebuttonNone.BackgroundColor = activeColor;
-                case 'mother'
-                    obj.tmn.makecell_mode2 = 'mother';
-                    handles.tabMakeCell_togglebuttonAddTrack2Cell.BackgroundColor = activeColor;
-                case 'break'
-                    obj.tmn.makecell_mode2 = 'break';
-                    handles.tabMakeCell_togglebuttonBreak.BackgroundColor = activeColor;
-                case 'delete'
-                    obj.tmn.makecell_mode2 = 'delete';
-                    handles.tabMakeCell_togglebuttonDelete.BackgroundColor = activeColor;
-            end
-            switch lower(eventdata.OldValue.String)
-                case 'none'
-                    handles.tabMakeCell_togglebuttonNone.BackgroundColor = inactiveColor;
-                case 'mother'
-                    handles.tabMakeCell_togglebuttonAddTrack2Cell.BackgroundColor = inactiveColor;
-                case 'break'
-                    handles.tabMakeCell_togglebuttonBreak.BackgroundColor = inactiveColor;
-                case 'delete'
-                    handles.tabMakeCell_togglebuttonDelete.BackgroundColor = inactiveColor;
-            end
-            guidata(obj.gui_main,handles);
-        end
-        %%
-        %
         function obj = tabMakeCell_loop(obj)
             handles = guidata(obj.gui_main);
             %% Cell Table
@@ -859,7 +836,7 @@ classdef cellularGPSTrackingManual_object_control < handle
         end
         %%
         %
-        function obj = menu_viewTracks(obj,~,~)
+        function obj = menuViewTracks_Callback(obj,~,~)
             handles = guidata(obj.gui_main);
             if obj.menu_viewTrackBool
                 obj.menu_viewTrackBool = false;
@@ -871,7 +848,7 @@ classdef cellularGPSTrackingManual_object_control < handle
             else
                 obj.menu_viewTrackBool = true;
                 handles.muViewHT.Label = 'Hide Tracks';
-                obj.tmn.gui_imageViewer.loop;
+                obj.tmn.gui_imageViewer.loop_stepX;
             end
             guidata(obj.gui_main,handles);
         end
@@ -886,6 +863,23 @@ classdef cellularGPSTrackingManual_object_control < handle
         function obj = tabMakeCell_pushbuttonAddTrack2Cell_Callback(obj,~,~)
             obj.tmn.mcl.addTrack2Cell;
             obj.tabMakeCell_loop;
+        end
+        %%
+        %
+        function obj = menuViewTime_Callback(obj,mymenu,~)
+            handles = guidata(obj.gui_main);
+            switch lower(mymenu.Label)
+                case 'all time'
+                    obj.menu_viewTime = 'all';
+                    handles.muViewTimeAll.Checked = 'on';
+                    handles.muViewTimeNow.Checked = 'off';
+                case 'at present'
+                    obj.menu_viewTime = 'now';
+                    handles.muViewTimeAll.Checked = 'off';
+                    handles.muViewTimeNow.Checked = 'on';
+            end
+            obj.tmn.gui_imageViewer.loop_stepX;
+            guidata(obj.gui_main,handles);
         end
     end
 end

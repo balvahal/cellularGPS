@@ -27,7 +27,6 @@ classdef cellularGPSTrackingManual_object < handle
         pointerSettings = 1;
         indImage = 1;
         makecell_mode = 'none';
-        makecell_mode2 = 'none';
     end
 %     properties (SetAccess = private)
 %     end
