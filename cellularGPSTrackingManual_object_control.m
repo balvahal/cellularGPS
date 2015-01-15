@@ -887,10 +887,5 @@ classdef cellularGPSTrackingManual_object_control < handle
             obj.tmn.mcl.addTrack2Cell;
             obj.tabMakeCell_loop;
         end
-        %%
-        %
-        function obj = tabMakeCell_pushbuttonMother_Callback(obj,~,~)
-
-        end
     end
 end
