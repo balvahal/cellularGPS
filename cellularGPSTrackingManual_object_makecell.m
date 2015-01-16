@@ -238,10 +238,23 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.track_makecell = zeros(max(trackID),1);
             obj.track_logical(trackID) = true;
             obj.find_pointer_next_track;
-            obj.find_pointer_next_makecell;
             if ~exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'file')
                 warning('makecell:nofile','The makecell file does not exist for position %d.',obj.positionIndex);
-                
+                obj.makecell_logical = false;
+                obj.makecell_order = cell(1,1);
+                obj.makecell_ind = cell(1,1);
+                obj.makecell_mother = 0;
+                obj.makecell_divisionStart = 0;
+                obj.makecell_divisionEnd = 0;
+                obj.makecell_apoptosisStart = 0;
+                obj.makecell_apoptosisEnd = 0;
+                obj.track_makecell = zeros(size(obj.track_logical));
+                obj.pointer_track = 1;
+                obj.pointer_track2 = 1;
+                obj.pointer_makecell = 1;
+                obj.pointer_makecell2 = 1;
+                obj.pointer_makecell3 = 1;
+                obj.pointer_timepoint = 1;
             else
                 %%
                 %
@@ -259,7 +272,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                 else
                     obj.makecell_order = data.makecell_order;
                 end
-                if data.makecell_order == 0
+                if data.makecell_ind == 0
                     obj.makecell_ind = {};
                 else
                     obj.makecell_ind = data.makecell_ind;
@@ -278,9 +291,11 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                 obj.pointer_next_track = data.pointer_next_track;
                 obj.pointer_makecell = data.pointer_makecell;
                 obj.pointer_makecell2 = data.pointer_makecell2;
+                obj.pointer_makecell3 = data.pointer_makecell3;
                 obj.pointer_next_makecell = data.pointer_next_makecell;
                 obj.pointer_timepoint = data.pointer_timepoint;
             end
+            obj.find_pointer_next_makecell;
         end
         %% export
         %
@@ -322,6 +337,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             jsonStrings{n} = micrographIOT_array2json('pointer_next_track',obj.pointer_next_track); n = n + 1;
             jsonStrings{n} = micrographIOT_array2json('pointer_makecell',obj.pointer_makecell); n = n + 1;
             jsonStrings{n} = micrographIOT_array2json('pointer_makecell2',obj.pointer_makecell2); n = n + 1;
+            jsonStrings{n} = micrographIOT_array2json('pointer_makecell3',obj.pointer_makecell3); n = n + 1;
             jsonStrings{n} = micrographIOT_array2json('pointer_next_makecell',obj.pointer_next_makecell); n = n + 1;
             jsonStrings{n} = micrographIOT_array2json('pointer_timepoint',obj.pointer_timepoint);
             %% export the JSON data to a text file

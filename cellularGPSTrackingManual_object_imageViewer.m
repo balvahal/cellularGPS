@@ -444,6 +444,8 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.tmn.indP);
             drawnow;
             obj.loop_stepX;
+            obj.tmn.gui_control.tabGPS_loop;
+            obj.tmn.gui_control.tabMakeCell_loop;
             guidata(obj.tmn.gui_control.gui_main,handlesControl);
         end
         %%
