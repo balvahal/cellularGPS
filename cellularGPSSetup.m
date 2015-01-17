@@ -10,7 +10,7 @@ end
 %%% LAPJV
 %
 filename = fullfile(mfilepath,'matlab_file_exchange','LAPJV.zip');
-url = 'http://www.mathworks.com/matlabcentral/fileexchange/downloads/17255';
+url = 'http://www.mathworks.com/matlabcentral/fileexchange/submissions/26836/v/15/download/zip';
 websave(filename,url);
 unzip(fullfile(mfilepath,'matlab_file_exchange','LAPJV.zip'),...
     fullfile(mfilepath,'matlab_file_exchange','LAPJV')...
@@ -19,7 +19,7 @@ delete(filename);
 %%% JSONlab
 %
 filename = fullfile(mfilepath,'matlab_file_exchange','JSONlab.zip');
-url = 'http://www.mathworks.com/matlabcentral/fileexchange/downloads/58936';
+url = 'http://www.mathworks.com/matlabcentral/fileexchange/submissions/33381/v/16/download/zip';
 websave(filename,url);
 unzip(fullfile(mfilepath,'matlab_file_exchange','JSONlab.zip'),...
     fullfile(mfilepath,'matlab_file_exchange','JSONlab')...
@@ -28,7 +28,7 @@ delete(filename);
 %%% MUNKRES
 %
 filename = fullfile(mfilepath,'matlab_file_exchange','MUNKRES.zip');
-url = 'http://www.mathworks.com/matlabcentral/fileexchange/downloads/12382';
+url = 'http://www.mathworks.com/matlabcentral/fileexchange/submissions/20652/v/5/download/zip';
 websave(filename,url);
 unzip(fullfile(mfilepath,'matlab_file_exchange','MUNKRES.zip'),...
     fullfile(mfilepath,'matlab_file_exchange','MUNKRES')...
