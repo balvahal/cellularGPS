@@ -297,6 +297,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     %% create a new cell
                     %
                     obj.tmn.gui_control.tabMakeCell_pushbuttonNewCell_Callback;
+                    obj.tmn.mcl.pointer_makecell3 = obj.tmn.mcl.pointer_makecell;
                 case 'j'
                     %% join two tracks
                     %
@@ -844,6 +845,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.tmn.mcl.addTrack2Cell(obj.tmn.mcl.pointer_track,obj.tmn.mcl.pointer_makecell3);
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.updateTrackText;
+                        obj.highlightTrack;
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 end
@@ -867,15 +869,21 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myline2 = obj.trackLine{obj.tmn.mcl.pointer_track2};
                 myline2.Color = obj.trackColor(mod(obj.tmn.mcl.pointer_track2,3)+1,:);
                 myline2.LineWidth = 1;
-                
-                mclID = obj.tmn.mcl.track_makecell(obj.tmn.mcl.pointer_track);
-                if mclID ~= 0 
-                    myrec.EdgeColor = obj.trackColorHighlight2;
-                    myrec.LineWidth = 2;
-                else    
-                    myrec.EdgeColor = [0,0,0];
-                    myrec.LineWidth = 0.5;
-                end
+            else
+                myrec = obj.trackCircle{obj.tmn.mcl.pointer_track};
+                myrec.FaceColor = obj.trackColorHighlight;
+
+                myline = obj.trackLine{obj.tmn.mcl.pointer_track};
+                myline.Color = obj.trackColorHighlight;
+                myline.LineWidth = 3;
+            end
+            mclID = obj.tmn.mcl.track_makecell(obj.tmn.mcl.pointer_track);
+            if mclID ~= 0
+                myrec.EdgeColor = obj.trackColorHighlight2;
+                myrec.LineWidth = 2;
+            else
+                myrec.EdgeColor = [0,0,0];
+                myrec.LineWidth = 0.5;
             end
         end
         %%
