@@ -856,6 +856,7 @@ classdef cellularGPSTrackingManual_object_control < handle
                 for i = 1:length(obj.tmn.gui_imageViewer.trackCircle)
                     obj.tmn.gui_imageViewer.trackCircle{i}.Visible = 'off';
                     obj.tmn.gui_imageViewer.trackLine{i}.Visible = 'off';
+                    obj.tmn.gui_imageViewer.trackText{i}.Visible = 'off';
                 end
             else
                 obj.menu_viewTrackBool = true;

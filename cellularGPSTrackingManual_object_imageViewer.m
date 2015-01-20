@@ -248,6 +248,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     %
                     oldIndImage = obj.tmn.indImage;
                     obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'last');
+                    firstInd =  find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'first');
                     if oldIndImage >= obj.tmn.indImage
                         obj.tmn.indImage = oldIndImage + 1;
                         if obj.tmn.indImage > height(obj.tmn.smda_databaseSubset)
@@ -258,6 +259,12 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
                         guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         obj.loop_stepRight;
+                    elseif oldIndImage < firstInd
+                        obj.tmn.indImage = firstInd;
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepX;
                     else
                         handlesControl = guidata(obj.tmn.gui_control.gui_main);
                         handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
@@ -269,6 +276,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                     %
                     oldIndImage = obj.tmn.indImage;
                     obj.tmn.indImage = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'first');
+                    lastInd = find(obj.trackCenLogical(obj.tmn.mcl.pointer_track,:),1,'last');
                     if oldIndImage <= obj.tmn.indImage
                         obj.tmn.indImage = oldIndImage - 1;
                         if obj.tmn.indImage < 1
@@ -279,6 +287,12 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
                         guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         obj.loop_stepLeft;
+                    elseif oldIndImage > lastInd
+                        obj.tmn.indImage = lastInd;
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
+                        obj.loop_stepX;
                     else
                         handlesControl = guidata(obj.tmn.gui_control.gui_main);
                         handlesControl.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
@@ -750,12 +764,19 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             
                             obj.trackLine{replaceTrack}.Visible = 'off';
                             obj.trackCircle{replaceTrack}.Visible = 'off';
+                            obj.trackText{replaceTrack}.Visible = 'off';
                             
                             obj.trackLine{keepTrack}.YData = obj.trackCenRow(keepTrack,obj.trackCenLogical(keepTrack,:));
                             obj.trackLine{keepTrack}.XData = obj.trackCenCol(keepTrack,obj.trackCenLogical(keepTrack,:));
                             obj.trackCircle{keepTrack}.Position = [obj.trackLine{keepTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{keepTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                            
+                            obj.trackText{keepTrack}.Position = [obj.trackLine{keepTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{keepTrack}.YData(1)+(obj.trackCircleSize-1)/2];
                             handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',keepTrack,replaceTrack);
+                            %%
+                            % return to 'none' mode
+                            handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                            handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                            obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                            guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         else
                             handlesControl.infoBk_textMessage.String = sprintf('Join track %d with...',obj.tmn.mcl.pointer_track);
                             obj.trackJoinBool = true;
@@ -802,17 +823,28 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             myrec.FaceColor = obj.trackLine{newTrack}.Color;
                             myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                             obj.trackCircle{newTrack} = myrec;
+                            
+                            obj.trackText{newTrack} = text('Parent',handles.axesText);
+                            obj.updateTrackText(newTrack);
+                            obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
                         else
                             obj.trackLine{newTrack}.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
                             obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
                             obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                            obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
                         end
                         obj.trackLine{oldTrack}.YData = obj.trackCenRow(oldTrack,obj.trackCenLogical(oldTrack,:));
                         obj.trackLine{oldTrack}.XData = obj.trackCenCol(oldTrack,obj.trackCenLogical(oldTrack,:));
                         obj.trackCircle{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                        
+                        obj.trackText{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)+(obj.trackCircleSize-1)/2];
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.loop_stepX;
+                        %%
+                        % return to 'none' mode
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                        obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     case 'delete'
                         replaceTrack = obj.tmn.mcl.pointer_track;
                         obj.tmn.mcl.deleteTrack(replaceTrack);
@@ -824,17 +856,30 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         
                         obj.trackLine{replaceTrack}.Visible = 'off';
                         obj.trackCircle{replaceTrack}.Visible = 'off';
+                        obj.trackText{replaceTrack}.Visible = 'off';
                         
                         handlesControl.infoBk_textMessage.String = sprintf('Deleted track %d.',replaceTrack);
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.loop_stepX;
                         
                         obj.tmn.gui_control.tabMakeCell_loop;
+                        %%
+                        % return to 'none' mode
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                        obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     case 'mother'
                         if obj.makecellMotherBool
                             obj.makecellMotherBool = false;
                             [mom,dau] = obj.tmn.mcl.identifyMother(obj.tmn.mcl.pointer_makecell2,obj.tmn.mcl.pointer_makecell);
                             handlesControl.infoBk_textMessage.String = sprintf('Cell %d is the mother of\ncell %d.',mom,dau);
+                            %%
+                            % return to 'none' mode
+                            handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                            handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                            obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                            guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         else
                             handlesControl.infoBk_textMessage.String = sprintf('Cell %d will be the mother of...',obj.tmn.mcl.pointer_makecell);
                             obj.makecellMotherBool = true;
@@ -846,6 +891,12 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                         obj.tmn.gui_control.tabMakeCell_loop;
                         obj.updateTrackText;
                         obj.highlightTrack;
+                        %%
+                        % return to 'none' mode
+                        handlesControl = guidata(obj.tmn.gui_control.gui_main);
+                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
+                        obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                        guidata(obj.tmn.gui_control.gui_main,handlesControl);
                     otherwise
                         fprintf('trackID %d\n',obj.tmn.mcl.pointer_track);
                 end
@@ -872,7 +923,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             else
                 myrec = obj.trackCircle{obj.tmn.mcl.pointer_track};
                 myrec.FaceColor = obj.trackColorHighlight;
-
+                
                 myline = obj.trackLine{obj.tmn.mcl.pointer_track};
                 myline.Color = obj.trackColorHighlight;
                 myline.LineWidth = 3;
@@ -907,7 +958,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             if mclID ~= 0
                 myString = strcat(myString,sprintf('\nmkcl#: %d',mclID));
                 if obj.tmn.mcl.makecell_mother(mclID) ~= 0
-                    myString = strcat(myString,sprintf('\mthr: %d',obj.tmn.mcl.makecell_mother(mclID)));
+                    myString = strcat(myString,sprintf('\nmthr: %d',obj.tmn.mcl.makecell_mother(mclID)));
                 end
                 if obj.tmn.mcl.makecell_divisionStart(mclID) ~= 0
                     myString = strcat(myString,sprintf('\ndvSt: %d',obj.tmn.mcl.makecell_divisionStart(mclID)));

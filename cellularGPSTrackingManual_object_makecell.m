@@ -155,6 +155,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             obj.find_pointer_next_track;
             tableAfter.trackID(:) = obj.pointer_next_track;
             obj.pointer_track = obj.pointer_next_track; %the pointer now identifies the new track number
+            obj.track_makecell(obj.pointer_track) = 0;
             obj.track_logical(obj.pointer_next_track) = true;
             obj.find_pointer_next_track;
             tableOld = obj.track_database(~myLogicalDatabase,:);
