@@ -108,7 +108,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             
             if isempty(obj.makecell_ind{obj.pointer_makecell}) || ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
                 obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
-                obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;                
+                obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;
             end
         end
         %% newCell
@@ -259,7 +259,9 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             else
                 %%
                 %
-                data = loadjson(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
+                json = fileread(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
+                data = parse_json(json);
+                data = data{1}; %the data struct comes wrapped in a cell.
                 if iscell(data.moviePath)
                     obj.moviePath = fullfile(data.moviePath{:});
                 else
