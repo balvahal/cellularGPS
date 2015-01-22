@@ -445,6 +445,14 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                 myrec.Curvature = [1,1];
                 myrec.FaceColor = obj.trackLine{i}.Color;
                 myrec.Position = [obj.trackLine{i}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{i}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                mclID = obj.tmn.mcl.track_makecell(i);
+                if mclID ~= 0
+                    myrec.EdgeColor = obj.trackColorHighlight2;
+                    myrec.LineWidth = 2;
+                else
+                    myrec.EdgeColor = [0,0,0];
+                    myrec.LineWidth = 0.5;
+                end
                 obj.trackCircle{i} = myrec;
             end
             handlesControl.infoBk_textMessage.String = sprintf('Transcribing Text...');
@@ -879,6 +887,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             handlesControl = guidata(obj.tmn.gui_control.gui_main);
                             handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
                             obj.tmn.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
+                            obj.updateTrackText;
                             guidata(obj.tmn.gui_control.gui_main,handlesControl);
                         else
                             handlesControl.infoBk_textMessage.String = sprintf('Cell %d will be the mother of...',obj.tmn.mcl.pointer_makecell);

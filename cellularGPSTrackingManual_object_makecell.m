@@ -268,27 +268,66 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                     obj.moviePath = data.moviePath;
                 end
                 obj.positionIndex = data.positionIndex;
-                
-                obj.makecell_logical = logical(data.makecell_logical);
-                if data.makecell_order == 0
+                if iscell(data.makecell_logical)
+                    obj.makecell_logical = logical(cell2mat(data.makecell_logical));
+                else
+                    obj.makecell_logical = logical(data.makecell_logical);
+                end
+                if iscell(data.makecell_order)
+                    obj.makecell_order = cell(length(data.makecell_order),1);
+                    for i = 1:length(data.makecell_order)
+                        obj.makecell_order{i} = cell2mat(data.makecell_order{i});
+                    end
+                elseif data.makecell_order == 0
                     obj.makecell_order = {};
                 else
-                    obj.makecell_order = data.makecell_order;
+                    obj.makecell_order = {data.makecell_order};
                 end
-                if data.makecell_ind == 0
+                if iscell(data.makecell_ind)
+                    obj.makecell_ind = cell(length(data.makecell_ind),1);
+                    for i = 1:length(data.makecell_ind)
+                        obj.makecell_ind{i} = cell2mat(data.makecell_ind{i});
+                    end
+                elseif data.makecell_ind == 0
                     obj.makecell_ind = {};
                 else
-                    obj.makecell_ind = data.makecell_ind;
+                    obj.makecell_ind = {data.makecell_ind};
                 end
-                obj.makecell_mother = data.makecell_mother;
-                obj.makecell_divisionStart = data.makecell_divisionStart;
-                obj.makecell_divisionEnd = data.makecell_divisionEnd;
-                obj.makecell_apoptosisStart = data.makecell_apoptosisStart;
-                obj.makecell_apoptosisEnd = data.makecell_apoptosisEnd;
-                
-                obj.track_logical = logical(data.track_logical);
-                obj.track_makecell = data.track_makecell;
-                
+                if iscell(data.makecell_mother)
+                    obj.makecell_mother = cell2mat(data.makecell_mother);
+                else
+                    obj.makecell_mother = data.makecell_mother;
+                end
+                if iscell(data.makecell_divisionStart)
+                    obj.makecell_divisionStart = cell2mat(data.makecell_divisionStart);
+                else
+                    obj.makecell_divisionStart = data.makecell_divisionStart;
+                end
+                if iscell(data.makecell_divisionEnd)
+                    obj.makecell_divisionEnd = cell2mat(data.makecell_divisionEnd);
+                else
+                    obj.makecell_divisionEnd = data.makecell_divisionEnd;
+                end
+                if iscell(data.makecell_apoptosisStart)
+                    obj.makecell_apoptosisStart = cell2mat(data.makecell_apoptosisStart);
+                else
+                    obj.makecell_apoptosisStart = data.makecell_apoptosisStart;
+                end
+                if iscell(data.makecell_apoptosisEnd)
+                    obj.makecell_apoptosisEnd = cell2mat(data.makecell_apoptosisEnd);
+                else
+                    obj.makecell_apoptosisEnd = data.makecell_apoptosisEnd;
+                end
+                if iscell(data.track_logical)
+                    obj.track_logical = logical(cell2mat(data.track_logical));
+                else
+                    obj.track_logical = logical(data.track_logical);
+                end
+                if iscell(data.track_makecell)
+                    obj.track_makecell = cell2mat(data.track_makecell);
+                else
+                    obj.track_makecell = data.track_makecell;
+                end
                 obj.pointer_track = data.pointer_track;
                 obj.pointer_track2 = data.pointer_track2;
                 obj.pointer_next_track = data.pointer_next_track;
