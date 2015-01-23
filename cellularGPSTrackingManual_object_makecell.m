@@ -188,6 +188,13 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             end
             
             obj.track_database.trackID(obj.track_database.trackID == obj.pointer_track2) = obj.pointer_track;
+            
+            if obj.track_makecell(obj.pointer_track2) ~= 0
+                obj.makecell_mother(obj.makecell_mother == obj.track_makecell(obj.pointer_track2)) = obj.track_makecell(obj.pointer_track);
+                obj.deleteCell(obj.track_makecell(obj.pointer_track2));
+                obj.track_makecell(obj.pointer_track2) = 0;
+            end
+            
             obj.track_logical(obj.pointer_track2) = false;
             obj.pointer_track2 = obj.pointer_track;
             obj.find_pointer_next_track;
@@ -210,9 +217,39 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                 error('makecell:badtrack','Could not delete track, because the input %d is not a track.',obj.pointer_track);
             end
             
+            if obj.track_makecell(obj.pointer_track) ~= 0
+                obj.deleteCell(obj.track_makecell(obj.pointer_track));
+                obj.track_makecell(obj.pointer_track) = 0;
+            end
+
             obj.track_logical(obj.pointer_track) = false;
             obj.track_database = obj.track_database(obj.track_database.trackID(:) ~= obj.pointer_track,:);
             obj.find_pointer_next_track;
+        end
+        %%
+        %
+        function obj = deleteCell(obj,varargin)
+            %%%
+            % parse the input
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addOptional(q, 'makecellID',obj.pointer_makecell, @(x)isnumeric(x));
+            parse(q,obj,varargin{:});
+            
+            makecellID = q.Results.makecellID;
+            obj.makecell_logical(makecellID) = false;
+            obj.makecell_order{makecellID} = [];
+            obj.makecell_ind{makecellID} = [];
+            obj.makecell_mother(makecellID) = 0;
+            obj.makecell_mother(obj.makecell_mother == makecellID) = 0;
+            obj.makecell_divisionStart(makecellID) = 0;
+            obj.makecell_divisionEnd(makecellID) = 0;
+            obj.makecell_apoptosisStart(makecellID) = 0;
+            obj.makecell_apoptosisEnd(makecellID) = 0;
+            
+            obj.track_makecell(obj.track_makecell == makecellID) = 0;
+            
+            obj.find_pointer_next_makecell;
         end
         %% import
         %

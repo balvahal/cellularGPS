@@ -840,6 +840,9 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
                             obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
                             obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
+                            obj.trackLine{newTrack}.Visible = 'on';
+                            obj.trackCircle{newTrack}.Visible = 'on';
+                            obj.trackText{newTrack}.Visible = 'on';
                         end
                         obj.trackLine{oldTrack}.YData = obj.trackCenRow(oldTrack,obj.trackCenLogical(oldTrack,:));
                         obj.trackLine{oldTrack}.XData = obj.trackCenCol(oldTrack,obj.trackCenLogical(oldTrack,:));
