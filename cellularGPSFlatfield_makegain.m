@@ -29,7 +29,7 @@ ffTable = readtable(fullfile(moviePath,'flatfield','smda_database.txt'),'Delimit
 filename = ffTable.filename(ffTable.channel_number == channelNumber);
 %%%
 % identify the length of exposure for each image
-expr=sprintf('(\\d+)_w%d',channelNumber);
+expr=sprintf('(\\d+)_w\\d+');
 exposure = zeros(size(filename));
 flatfieldIM = cell(size(filename));
 for i=1:length(filename) %floop 1
