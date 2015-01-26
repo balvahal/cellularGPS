@@ -151,10 +151,6 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             axesCircles.Visible = 'off';
             axesCircles.YDir = 'reverse';
             
-            
-            
-            numOfPosition = sum(tmn.ity.number_position);
-            positionInd = horzcat(tmn.ity.ind_position{:});
             obj.trackLine = {};
             obj.trackCircle = {};
             obj.trackText = {};
