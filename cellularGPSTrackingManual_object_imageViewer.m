@@ -836,10 +836,36 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
                             obj.updateTrackText(newTrack);
                             obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
                         else
-                            obj.trackLine{newTrack}.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
-                            obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
-                            obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                            obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
+                            if isa(obj.trackLine{newTrack},'matlab.graphics.primitive.Line');
+                                obj.trackLine{newTrack}.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
+                                obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
+                            else
+                                myline = line('Parent',handles.axesTracks);
+                                myline.Color = obj.trackColor(mod(newTrack,3)+1,:);
+                                myline.LineWidth = 1;
+                                myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
+                                myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
+                                obj.trackLine{newTrack} = myline;
+                            end
+                            if isa(obj.trackCircle{newTrack},'matlab.graphics.primitive.Rectangle')
+                                obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                            else
+                                myrec = rectangle('Parent',handles.axesCircles);
+                                myrec.ButtonDownFcn = @obj.clickLoop;
+                                myrec.UserData = newTrack;
+                                myrec.Curvature = [1,1];
+                                myrec.FaceColor = obj.trackLine{newTrack}.Color;
+                                myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                                obj.trackCircle{newTrack} = myrec;
+                            end
+                            if isa(obj.trackLine{newTrack},'matlab.graphics.primitive.Text');
+                                obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
+                                
+                            else
+                                obj.trackText{newTrack} = text('Parent',handles.axesText);
+                                obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
+                            end
+                            obj.updateTrackText(newTrack);
                             obj.trackLine{newTrack}.Visible = 'on';
                             obj.trackCircle{newTrack}.Visible = 'on';
                             obj.trackText{newTrack}.Visible = 'on';
