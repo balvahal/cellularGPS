@@ -46,14 +46,16 @@ end
 tic
 fprintf('reading centroid info\n');
 master_smda_database = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
-cenTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'),'Delimiter','\t');
-cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
+master_cenTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation.txt'),'Delimiter','\t');
+master_cenFilenameTable = readtable(fullfile(moviePath,'SEGMENT_DATA','segmentation_filename.txt'),'Delimiter','\t');
 toc
 %%%
 %
 myPosNumber = transpose(unique(master_smda_database.position_number));
 for v = myPosNumber
     smda_database = master_smda_database(master_smda_database.position_number == v,:);
+    cenTable = master_cenTable(master_cenTable.position_number == v,:);
+    cenFilenameTable = master_cenFilenameTable(master_cenFilenameTable.position_number == v,:);
     %%%
     % find the channel Name and corresponding numbers
     channelNumber = unique(smda_database.channel_number);
