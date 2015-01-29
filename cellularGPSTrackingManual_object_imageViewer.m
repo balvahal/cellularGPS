@@ -385,6 +385,7 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             %%
             % process centroid data
             obj.tmn.mcl.import(obj.tmn.indP);
+            obj.tmn.mcl.moviePath = obj.tmn.moviePath;
             mydatabase = obj.tmn.mcl.track_database;
             numOfT = obj.tmn.ity.number_of_timepoints;
             myCenRow = zeros(max(mydatabase.trackID),numOfT);
