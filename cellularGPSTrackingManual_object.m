@@ -39,6 +39,7 @@ classdef cellularGPSTrackingManual_object < handle
             obj.moviePath = moviePath;           
             %% Load settings
             %
+            obj.smda_database = readtable(fullfile(moviePath,'thumb_database.txt'),'Delimiter','\t');
             obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.ity = cellularGPSTrackingManual_object_itinerary;
             obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
@@ -72,10 +73,11 @@ classdef cellularGPSTrackingManual_object < handle
         %%
         %
         function obj = updateFilenameListImage(obj)
-            obj.smda_database = readtable(fullfile(obj.moviePath,'CENTROID_DATA',sprintf('centroid_measurements_g%d_s%d.txt',obj.indG,obj.indP)),'Delimiter','\t');
-            obj.smda_databaseLogical = obj.smda_database.settings_number == obj.indS;
-            obj.smda_databaseSubset = obj.smda_database(obj.smda_databaseLogical,:);
-            obj.smda_databaseSubset = sortrows(obj.smda_databaseSubset,{'timepoint'});
+            obj.smda_databaseLogical = obj.smda_database.group_number == obj.indG &...
+                obj.smda_database.position_number == obj.indP &...
+                obj.smda_database.settings_number == obj.indS;
+            mytable = obj.smda_database(obj.smda_databaseLogical,:);
+            obj.smda_databaseSubset = sortrows(mytable,{'timepoint'});
         end
         %%
         %
