@@ -1,18 +1,22 @@
 function [] = cellularGPSTracking_makeTracks_movementWithIntensity(moviePath)
 trackingProfile = loadjson(fullfile(moviePath,'cGPS_trackingProfile.txt'));
 cenTable = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
+smda_database = readtable(fullfile(moviePath,'smda_database.txt'));
 positionNumber = transpose(unique(cenTable.position_number));
+for i = 1:length(positionNumber)
+    groupNumber(i) = smda_database.group_number(find(smda_database.position_number == positionNumber(i),1,'first'));
+end
 tablePathOut = fullfile(moviePath,'TRACKING_DATA');
 if ~isdir(tablePathOut)
     mkdir(tablePathOut);
 end
 %% find tracks for centroids in each position
 %
-for i = positionNumber
+for i = 1:length(positionNumber)
     %% sort out centroids for each timepoint
     % sorting timepoints in descending order means the tracking will be
     % performed in reverse time.
-    cenTablePosition = cenTable(cenTable.position_number == i,:);
+    cenTablePosition = readtable(fullfile(moviePath,sprintf('centroid_measurements_g%d_s%d.txt',groupNumber(i),positionNumber(i))),'Delimiter','\t');
     mytime = sort(unique(cenTablePosition.timepoint),'descend');
     centroidCell = cell(size(mytime));
     for j = 1:length(mytime)
@@ -166,7 +170,7 @@ for i = positionNumber
     end
     positionCentroid = vertcat(centroidCell{:});
     positionCentroid2 = positionCentroid(:,{'trackID','timepoint','centroid_row','centroid_col'});
-    tablename = sprintf('trackingPosition_%d.txt',i);
+    tablename = sprintf('trackingPosition_%d.txt',positionNumber(i));
     writetable(positionCentroid2,fullfile(tablePathOut,tablename),'Delimiter','\t');
     %% plot data for feedback purposes
     %
