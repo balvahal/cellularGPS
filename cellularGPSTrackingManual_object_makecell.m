@@ -25,6 +25,10 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         pointer_makecell3 = 1;
         pointer_next_makecell = 1;
         pointer_timepoint = 1;
+        
+        output_connectedTracks
+        output_connectedUniqueTracks
+        output_tracks
     end
     %     properties (SetAccess = private)
     %     end
@@ -299,11 +303,6 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                 json = fileread(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
                 data = parse_json(json);
                 data = data{1}; %the data struct comes wrapped in a cell.
-                if iscell(data.moviePath)
-                    obj.moviePath = fullfile(data.moviePath{:});
-                else
-                    obj.moviePath = data.moviePath;
-                end
                 obj.positionIndex = data.positionIndex;
                 if iscell(data.makecell_logical)
                     obj.makecell_logical = logical(cell2mat(data.makecell_logical));
@@ -473,6 +472,97 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         % * a subset of the previous matrix where only unique traces exist
         % along all rows
         function obj = exportTracesMatrix(obj)
+            %% find the centroid table for the position
+            %
+            smda_database = readtable(fullfile(obj.moviePath,'smda_database.txt'),'Delimiter','\t');
+            groupNumber = smda_database.group_number(find(smda_database.position_number == obj.positionIndex,1,'first'));
+            cenTable = readtable(fullfile(obj.moviePath,'CENTROID_DATA',sprintf('centroid_measurements_g%d_s%d',groupNumber,obj.positionIndex)),'Delimiter','\t');
+            %% output_connectedTracks
+            %
+            obj.output_connectedTracks = {};
+            track_makecellTables = cell(size(obj.track_makecell));
+            myLogical = obj.track_makecell ~= 0;
+            myInd = 1:numel(myLogical);
+            myInd = myInd(myLogical);
+            for i = myInd
+                myLogical2 = false(height(cenTable),1);
+                tracktable = obj.track_database(obj.track_database.trackID == i,:);
+                for j = 1:height(tracktable)
+                    myLogical2 = myLogical2 | (cenTable.centroid_col == tracktable.centroid_col(j) & ...
+                        cenTable.centroid_row == tracktable.centroid_row(j) & cenTable.timepoint == tracktable.timepoint(j));
+                end
+                track_makecellTables{i} = cenTable(myLogical2,:);
+            end
+            
+            myLogical = obj.makecell_mother == 0 & obj.makecell_logical;
+            seedCells = 1:numel(myLogical);
+            seedCells = seedCells(myLogical);
+            makecell_mother2 = obj.makecell_mother;
+            currentCell = seedCells(1);
+            tracks = {};
+            tracksPointer = 1;
+            while ~isempty(seedCells)
+                dauSum = sum(makecell_mother2 == currentCell);
+                if dauSum == 0
+                    if tracksPointer > numel(tracks)
+                        tracks{tracksPointer} = currentCell;
+                    else
+                        %tracks{tracksPointer}(end+1) = currentCell;
+                    end
+                    tracksPointer = tracksPointer + 1;
+                    if tracksPointer > numel(tracks)
+                        seedCells(1) = [];
+                        if isempty(seedCells)
+                            break;
+                        else
+                            currentCell = seedCells(1);
+                        end
+                    else
+                        currentCell = tracks{tracksPointer}(end);
+                        continue;
+                    end
+                elseif dauSum == 1
+                    if tracksPointer > numel(tracks)
+                        tracks{tracksPointer} = currentCell;
+                    else
+                        %tracks{tracksPointer}(end+1) = currentCell;
+                    end
+                    myInd = find(makecell_mother2 == currentCell);
+                    tracks{tracksPointer}(end+1) = myInd;
+                    currentCell = myInd;
+                else
+                    if tracksPointer > numel(tracks)
+                        tracks{tracksPointer} = currentCell;
+                    else
+                        %tracks{tracksPointer}(end+1) = currentCell;
+                    end
+                    trackTemp = tracks{tracksPointer};
+                    myInd = find(makecell_mother2 == currentCell);
+                    tracks{tracksPointer}(end+1) = myInd(1);
+                    for i = 2:length(myInd)
+                        tracks{end+1} = trackTemp; %#ok<*AGROW>
+                        tracks{end}(end+1) = myInd(i);
+                    end
+                    currentCell = myInd(1);
+                end
+            end
+            for i = 1:length(tracks)
+                cellNum = tracks{i}(1);
+                trackNum = obj.makecell_ind{cellNum}(1);
+                obj.output_connectedTracks{i} = track_makecellTables{trackNum};
+                if length(tracks{i}) > 1
+                    for j = 2:length(tracks{i})
+                        cellNum = tracks{i}(j);
+                        trackNum = obj.makecell_ind{cellNum}(1);
+                        obj.output_connectedTracks{i} = vertcat(obj.output_connectedTracks{i},track_makecellTables{trackNum});
+                    end
+                end
+            end
+            %% output_connectedUniqueTracks
+            %
+            
+            %% output_tracks
+            %
             
         end
     end
