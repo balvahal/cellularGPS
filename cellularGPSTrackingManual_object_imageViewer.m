@@ -410,9 +410,17 @@ classdef cellularGPSTrackingManual_object_imageViewer < handle
             
             %% Recalculate tracks
             % Assumes image size remains the same for this settings
-            cellfun(@delete,obj.trackCircle);
-            cellfun(@delete,obj.trackLine);
-            cellfun(@delete,obj.trackText);
+            for i = 1:length(obj.trackCircle)
+                if isa(obj.trackCircle{i},'matlab.graphics.primitive.Rectangle')
+                    delete(obj.trackCircle{i});
+                end
+                if isa(obj.trackLine{i},'matlab.graphics.primitive.Line')
+                    delete(obj.trackLine{i});
+                end
+                if isa(obj.trackText{i},'matlab.graphics.primitive.Text')
+                    delete(obj.trackText{i});
+                end
+            end
             mydatabase1 = obj.tmn.track_database{obj.tmn.indP};
             obj.trackLine = cell(max(mydatabase1.trackID),1);
             obj.trackCircle = cell(max(mydatabase1.trackID),1);

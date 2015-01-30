@@ -40,7 +40,6 @@ classdef cellularGPSTrackingManual_object < handle
             %% Load settings
             %
             obj.smda_database = readtable(fullfile(moviePath,'thumb_database.txt'),'Delimiter','\t');
-            obj.centroid_measurements = readtable(fullfile(moviePath,'centroid_measurements.txt'),'Delimiter','\t');
             obj.ity = cellularGPSTrackingManual_object_itinerary;
             obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
             obj.mcl = cellularGPSTrackingManual_object_makecell(moviePath);

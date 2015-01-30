@@ -838,10 +838,11 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.tmn.mcl.find_pointer_next_makecell;
                 return
             else
-                obj.tmn.mcl.pointer_makecell3 = eventdata.Indices(1,1);
-                if ~isempty(obj.tmn.mcl.makecell_ind{obj.tmn.mcl.pointer_makecell})
+                handles = guidata(obj.gui_main);
+                obj.tmn.mcl.pointer_makecell3 = handles.tabMakeCell_table.Data{eventdata.Indices(1,1),1};
+                if ~isempty(obj.tmn.mcl.makecell_ind{obj.tmn.mcl.pointer_makecell3})
                     obj.tmn.mcl.pointer_track2 = obj.tmn.mcl.pointer_track;
-                    obj.tmn.mcl.pointer_track = obj.tmn.mcl.makecell_ind{obj.tmn.mcl.pointer_makecell}(1);
+                    obj.tmn.mcl.pointer_track = obj.tmn.mcl.makecell_ind{obj.tmn.mcl.pointer_makecell3}(1);
                     obj.tmn.gui_imageViewer.highlightTrack;
                 end
             end
