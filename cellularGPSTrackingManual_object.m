@@ -40,6 +40,10 @@ classdef cellularGPSTrackingManual_object < handle
             %% Load settings
             %
             obj.smda_database = readtable(fullfile(moviePath,'thumb_database.txt'),'Delimiter','\t');
+            obj.indG = min(obj.smda_database.group_number);
+            obj.indP = min(obj.smda_database.position_number);
+            obj.indS = min(obj.smda_database.settings_number);
+            
             obj.ity = cellularGPSTrackingManual_object_itinerary;
             obj.ity.import(fullfile(moviePath,'smdaITF.txt'));
             obj.mcl = cellularGPSTrackingManual_object_makecell(moviePath);
