@@ -596,11 +596,11 @@ classdef cellularGPSTrackingManual_object_control < handle
                 obj.tmn.pointerGroup = sort(unique(eventdata.Indices(:,1)));
             end
             
-            myGroupOrder = obj.ity.order_group;
-            gInd = myGroupOrder(obj.pointerGroup(1));
-            if any(obj.pointerPosition > obj.ity.number_position(gInd))
+            myGroupOrder = obj.tmn.ity.order_group;
+            gInd = myGroupOrder(obj.tmn.pointerGroup(1));
+            if any(obj.tmn.pointerPosition > obj.tmn.ity.number_position(gInd))
                 % move pointer to first entry
-                obj.pointerPosition = 1;
+                obj.tmn.pointerPosition = 1;
             end
             
             obj.tabGPS_loop;
