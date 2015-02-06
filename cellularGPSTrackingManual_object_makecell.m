@@ -113,6 +113,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             if isempty(obj.makecell_ind{obj.pointer_makecell}) || ~ismember(obj.pointer_track,obj.makecell_ind{obj.pointer_makecell})
                 obj.makecell_ind{obj.pointer_makecell}(end+1) = obj.pointer_track;
                 obj.track_makecell(obj.pointer_track) = obj.pointer_makecell;
+                obj.makecell_logical(obj.pointer_makecell) = true;
             end
         end
         %% newCell
@@ -549,6 +550,9 @@ classdef cellularGPSTrackingManual_object_makecell < handle
             for i = 1:length(tracks)
                 cellNum = tracks{i}(1);
                 trackNum = obj.makecell_ind{cellNum}(1);
+                if trackNum == 0
+                    continue
+                end
                 obj.output_connectedTracks{i} = track_makecellTables{trackNum};
                 if length(tracks{i}) > 1
                     for j = 2:length(tracks{i})
@@ -557,6 +561,10 @@ classdef cellularGPSTrackingManual_object_makecell < handle
                         obj.output_connectedTracks{i} = vertcat(obj.output_connectedTracks{i},track_makecellTables{trackNum});
                     end
                 end
+            end
+            emptylogical = cellfun(@isempty,obj.output_connectedTracks);
+            if any(emptylogical)
+                obj.output_connectedTracks(emptylogical) = [];
             end
             %% output_connectedUniqueTracks
             %
