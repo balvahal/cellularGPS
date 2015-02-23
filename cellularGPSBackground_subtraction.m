@@ -37,6 +37,11 @@ if p.Results.channelNumber == 0
     return;
 end
 smdaDatabase = readtable(fullfile(moviePath,'smda_database.txt'),'Delimiter','\t');
+for i = 1:length(channelNumber) %floop 1
+    myind = find(smdaDatabase.settings_number == channelNumber(i),1,'first');
+    channelNumber(i) = smdaDatabase.channel_number(myind);
+end
+channelNumber = unique(channelNumber);
 channelName = cell(size(channelNumber));
 for i = 1:length(channelNumber) %floop 1
     myind = find(smdaDatabase.channel_number == channelNumber(i),1,'first');
