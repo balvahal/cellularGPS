@@ -9,6 +9,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
     properties
         pkTwo; %the cellularGPSTrackingManual_object
         imag3;
+        imag3path;
         image_width;
         image_height;
         gui_main;
@@ -54,9 +55,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             %%
             %
             obj.pkTwo = q.Results.pkTwo;
-            obj.imag3 = imread(fullfile(pkTwo.moviePathA,'RAW_DATA',pkTwo.smda_databaseSubsetA.filename{pkTwo.indImage}));
-            obj.image_width = size(obj.imag3,2);
-            obj.image_height = size(obj.imag3,1);
+
             %% Create a gui to enable pausing and stopping
             %    ___ _   _ ___    ___              _   _
             %   / __| | | |_ _|  / __|_ _ ___ __ _| |_(_)___ _ _
@@ -70,50 +69,18 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             %  |___/      |___|
             % Create the figure
             %
-            myunits = get(0,'units');
-            set(0,'units','pixels');
-            Pix_SS = get(0,'screensize');
-            set(0,'units','characters');
-            Char_SS = get(0,'screensize');
-            ppChar = Pix_SS./Char_SS;
-            ppChar = ppChar([3,4]);
-            set(0,'units',myunits);
-            
-            if obj.image_width > obj.image_height
-                if obj.image_width/obj.image_height >= Pix_SS(3)/Pix_SS(4)
-                    fwidth = 0.9*Pix_SS(3);
-                    fheight = fwidth*obj.image_height/obj.image_width;
-                else
-                    fheight = 0.9*Pix_SS(4);
-                    fwidth = fheight*obj.image_width/obj.image_height;
-                end
-            else
-                if obj.image_height/obj.image_width >= Pix_SS(4)/Pix_SS(3)
-                    fheight = 0.9*Pix_SS(4);
-                    fwidth = fheight*obj.image_width/obj.image_height;
-                else
-                    fwidth = 0.9*Pix_SS(3);
-                    fheight = fwidth*obj.image_height/obj.image_width;
-                    
-                end
-            end
-            
-            fwidth = fwidth/ppChar(1);
-            fheight = fheight/ppChar(2);
+
             
             f = figure('Visible','off','Units','characters','MenuBar','none',...
                 'Resize','off','Name','Image Viewer',...
-                'Renderer','OpenGL','Position',[(Char_SS(3)-fwidth)/2 (Char_SS(4)-fheight)/2 fwidth fheight],...
+                'Renderer','OpenGL',...
                 'CloseRequestFcn',{@obj.delete},...
                 'KeyPressFcn',{@obj.fKeyPressFcn});
             
             axesImageViewer = axes('Parent',f,...
                 'Units','characters',...
-                'Position',[0 0 fwidth  fheight],...
                 'YDir','reverse',...
-                'Visible','on',...
-                'XLim',[0.5,obj.image_width+0.5],...
-                'YLim',[0.5,obj.image_height+0.5]); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
+                'Visible','on'); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
             
             %% Visuals for Tracks
             %  __   ___              _      _ _
@@ -131,14 +98,12 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             %     'XLim',[1,master.image_width],'YLim',[1,master.image_height]);
             % cmapHighlight = colormap(haxesImageViewer,jet(16)); %63 matches the number of elements in an
             
-            axesText = axes('Parent',f,'Units','characters',...
-                'Position',[0 0 fwidth  fheight]);
+            axesText = axes('Parent',f,'Units','characters');
             axesText.NextPlot = 'add';
             axesText.Visible = 'off';
             axesText.YDir = 'reverse';
             
-            axesCircles = axes('Parent',f,'Units','characters',...
-                'Position',[0 0 fwidth  fheight]);
+            axesCircles = axes('Parent',f,'Units','characters');
             axesCircles.NextPlot = 'add';
             axesCircles.Visible = 'off';
             axesCircles.YDir = 'reverse';
@@ -147,8 +112,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             obj.trackText = {};
             obj.trackCircleSize = 11; %must be an odd number
             
-            displayedImage = image('Parent',axesImageViewer,...
-                'CData',obj.imag3);
+            displayedImage = image('Parent',axesImageViewer);
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -360,6 +324,59 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
             handles.axesText.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
+            
+            guidata(obj.gui_main,handles);
+        end
+        
+        %%
+        %
+        function obj = initialize(obj)
+            handles = guidata(obj.gui_main);
+            
+            obj.imag3 = imread(obj.imag3path); %fullfile(pkTwo.moviePathA,'RAW_DATA',pkTwo.smda_databaseSubsetA.filename{pkTwo.indImage})
+            obj.image_width = size(obj.imag3,2);
+            obj.image_height = size(obj.imag3,1);
+            
+                        myunits = get(0,'units');
+            set(0,'units','pixels');
+            Pix_SS = get(0,'screensize');
+            set(0,'units','characters');
+            Char_SS = get(0,'screensize');
+            ppChar = Pix_SS./Char_SS;
+            ppChar = ppChar([3,4]);
+            set(0,'units',myunits);
+            
+            if obj.image_width > obj.image_height
+                if obj.image_width/obj.image_height >= Pix_SS(3)/Pix_SS(4)
+                    fwidth = 0.9*Pix_SS(3);
+                    fheight = fwidth*obj.image_height/obj.image_width;
+                else
+                    fheight = 0.9*Pix_SS(4);
+                    fwidth = fheight*obj.image_width/obj.image_height;
+                end
+            else
+                if obj.image_height/obj.image_width >= Pix_SS(4)/Pix_SS(3)
+                    fheight = 0.9*Pix_SS(4);
+                    fwidth = fheight*obj.image_width/obj.image_height;
+                else
+                    fwidth = 0.9*Pix_SS(3);
+                    fheight = fwidth*obj.image_height/obj.image_width;
+                    
+                end
+            end
+            
+            fwidth = fwidth/ppChar(1);
+            fheight = fheight/ppChar(2);
+            
+            obj.gui_main.Position = [(Char_SS(3)-fwidth)/2 (Char_SS(4)-fheight)/2 fwidth fheight];
+            handles.axesImageViewer.Position = [0 0 fwidth  fheight];
+            handles.axesImageViewer.XLim = [0.5,obj.image_width+0.5];
+            handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
+            
+            handles.axesText.Position = [0 0 fwidth  fheight];
+            handles.axesCircles.Position = [0 0 fwidth  fheight];
+            
+            handles.displayedImage.CData = obj.imag3;
             
             guidata(obj.gui_main,handles);
         end
