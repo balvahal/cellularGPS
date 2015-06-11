@@ -53,16 +53,16 @@ classdef cellularGPSPickTwo_object < handle
         indImage = 1;
         stepSize = 1;
     end
-%     properties (SetAccess = private)
-%     end
-%     events
-%     end
+    %     properties (SetAccess = private)
+    %     end
+    %     events
+    %     end
     methods
         %%
         %
         function obj = cellularGPSPickTwo_object(moviePathA,moviePathB)
             obj.moviePathA = moviePathA;
-            obj.moviePathB = moviePathB;   
+            obj.moviePathB = moviePathB;
             %% Load settings
             %
             obj.smda_databaseA = readtable(fullfile(moviePathA,'smda_database.txt'),'Delimiter','\t');
@@ -80,7 +80,7 @@ classdef cellularGPSPickTwo_object < handle
             
             obj.ityB = cellularGPSTrackingManual_object_itinerary;
             obj.ityB.import(fullfile(moviePathB,'smdaITF.txt'));
-
+            
             obj.updateFilenameListImage;
             %% Launch gui
             %
@@ -89,11 +89,12 @@ classdef cellularGPSPickTwo_object < handle
             obj.gui_imageViewerA.kybrd_period = @obj.loop_stepRight;
             obj.gui_imageViewerA.initialize;
             obj.gui_imageViewerB = cellularGPSPickTwo_object_imageViewer(obj);
-                        obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
+            obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
+            obj.gui_imageViewerB.kybrd_period = @obj.loop_stepRight;
             obj.gui_imageViewerB.initialize;
-            obj.gui_control = cellularGPSPickTwo_object_control(obj);
-            obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
-            obj.gui_control.tabContrast_sliderMax_Callback
+            %obj.gui_control = cellularGPSPickTwo_object_control(obj);
+            %obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
+            %obj.gui_control.tabContrast_sliderMax_Callback
         end
         %%
         %
@@ -120,36 +121,40 @@ classdef cellularGPSPickTwo_object < handle
         %%
         %
         function obj = updateFilenameListImage(obj)
-            obj.smda_databaseLogicalA = obj.smda_databaseA.group_number == obj.indAG &...
-                obj.smda_databaseA.position_number == obj.indAP &...
-                obj.smda_databaseA.settings_number == obj.indAS;
+            obj.smda_databaseLogicalA = obj.smda_databaseA.timepoint == obj.indAT;
             mytable = obj.smda_databaseA(obj.smda_databaseLogicalA,:);
             obj.smda_databaseSubsetA = sortrows(mytable,{'timepoint'});
             
-            obj.smda_databaseLogicalB = obj.smda_databaseB.group_number == obj.indBG &...
-                obj.smda_databaseB.position_number == obj.indBP &...
-                obj.smda_databaseB.settings_number == obj.indBS;
+            obj.smda_databaseLogicalB = obj.smda_databaseB.group_number == obj.indBT;
             mytable = obj.smda_databaseB(obj.smda_databaseLogicalB,:);
             obj.smda_databaseSubsetB = sortrows(mytable,{'timepoint'});
         end
         %%
         %
         function obj = loop_stepRight(obj)
-                                obj.indImage = obj.indImage + obj.stepSize;
-                    if obj.indImage > height(obj.smda_databaseSubsetA)
-                        obj.indImage = height(obj.smda_databaseSubsetA);
-                    end
-                    handlesControl = guidata(obj.gui_control.gui_main);
-                    handlesControl.infoBk_editTimepoint.String = num2str(obj.indImage);
-                    guidata(obj.gui_control.gui_main,handlesControl);
-                    obj.loop_stepX;
+            obj.indImage = obj.indImage + obj.stepSize;
+            if obj.indImage > height(obj.smda_databaseSubsetA)
+                obj.indImage = height(obj.smda_databaseSubsetA);
+            end
+            %handlesControl = guidata(obj.gui_control.gui_main);
+            %handlesControl.infoBk_editTimepoint.String = num2str(obj.indImage);
+            %guidata(obj.gui_control.gui_main,handlesControl);
+            obj.loop_stepX;
         end
         function obj = loop_stepX(obj)
-            handles = guidata(obj.gui_main);
-            obj.imag3 = imread(fullfile(obj.pkTwo.moviePath,'.thumb',obj.pkTwo.smda_databaseSubset.filename{obj.pkTwo.indImage}));
-            handles.displayedImage.CData = obj.imag3;
-            obj.updateLimits;
-            guidata(obj.gui_main,handles);
+            handlesA = guidata(obj.gui_imageViewerA.gui_main);
+            obj.gui_imageViewerA.imag3path = fullfile(obj.moviePathA,'RAW_DATA',obj.smda_databaseSubsetA.filename{obj.indImage});
+            obj.gui_imageViewerA.imag3 = imread(obj.gui_imageViewerA.imag3path);
+            handlesA.displayedImage.CData = obj.gui_imageViewerA.imag3;
+            obj.gui_imageViewerA.updateLimits;
+            guidata(obj.gui_imageViewerA.gui_main,handlesA);
+            
+            handlesB = guidata(obj.gui_imageViewerB.gui_main);
+            obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
+            obj.gui_imageViewerB.imag3 = imread(obj.gui_imageViewerB.imag3path);
+            handlesB.displayedImage.CData = obj.gui_imageViewerB.imag3;
+            obj.gui_imageViewerB.updateLimits;
+            guidata(obj.gui_imageViewerB.gui_main,handlesB);
             
             %%%
             %   _____            _    __   ___
