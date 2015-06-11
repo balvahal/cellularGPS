@@ -88,6 +88,8 @@ classdef cellularGPSPickTwo_object < handle
             obj.gui_imageViewerA.imag3path = fullfile(obj.moviePathA,'RAW_DATA',obj.smda_databaseSubsetA.filename{obj.indImage});
             obj.gui_imageViewerA.initialize;
             obj.gui_imageViewerB = cellularGPSPickTwo_object_imageViewer(obj);
+                        obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
+            obj.gui_imageViewerB.initialize;
             obj.gui_control = cellularGPSPickTwo_object_control(obj);
             obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
             obj.gui_control.tabContrast_sliderMax_Callback
