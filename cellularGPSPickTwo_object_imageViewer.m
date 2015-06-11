@@ -30,6 +30,8 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         trackTextFontSize = 9;
         trackTextMargin = 1;
         
+        kybrd_period
+          
         connectBool = false;
     end
     %% Methods
@@ -156,14 +158,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         function obj = fKeyPressFcn(obj,~,keyInfo)
             switch keyInfo.Key
                 case 'period'
-                    obj.pkTwo.indImage = obj.pkTwo.indImage + obj.pkTwo.stepSize;
-                    if obj.pkTwo.indImage > height(obj.pkTwo.smda_databaseSubset)
-                        obj.pkTwo.indImage = height(obj.pkTwo.smda_databaseSubset);
-                    end
-                    handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                    handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-                    guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                    obj.loop_stepRight;
+                    obj.kybrd_period();
                 case 'comma'
                     obj.pkTwo.indImage = obj.pkTwo.indImage - obj.pkTwo.stepSize;
                     if obj.pkTwo.indImage < 1
