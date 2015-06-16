@@ -31,6 +31,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         trackTextMargin = 1;
         
         kybrd_period
+        kybrd_comma
           
         connectBool = false;
     end
@@ -160,14 +161,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
                 case 'period'
                     obj.kybrd_period();
                 case 'comma'
-                    obj.pkTwo.indImage = obj.pkTwo.indImage - obj.pkTwo.stepSize;
-                    if obj.pkTwo.indImage < 1
-                        obj.pkTwo.indImage = 1;
-                    end
-                    handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                    handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-                    guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                    obj.loop_stepLeft;
+                    obj.kybrd_comma();
                 case 'hyphen'
                     %% delete a track
                     %

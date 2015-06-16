@@ -87,10 +87,12 @@ classdef cellularGPSPickTwo_object < handle
             obj.gui_imageViewerA = cellularGPSPickTwo_object_imageViewer(obj);
             obj.gui_imageViewerA.imag3path = fullfile(obj.moviePathA,'RAW_DATA',obj.smda_databaseSubsetA.filename{obj.indImage});
             obj.gui_imageViewerA.kybrd_period = @obj.loop_stepRight;
+            obj.gui_imageViewerA.kybrd_comma = @obj.loop_stepLeft;
             obj.gui_imageViewerA.initialize;
             obj.gui_imageViewerB = cellularGPSPickTwo_object_imageViewer(obj);
             obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
             obj.gui_imageViewerB.kybrd_period = @obj.loop_stepRight;
+            obj.gui_imageViewerB.kybrd_comma = @obj.loop_stepLeft;
             obj.gui_imageViewerB.initialize;
             %obj.gui_control = cellularGPSPickTwo_object_control(obj);
             %obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
@@ -141,6 +143,20 @@ classdef cellularGPSPickTwo_object < handle
             %guidata(obj.gui_control.gui_main,handlesControl);
             obj.loop_stepX;
         end
+        %%
+        %
+        function obj = loop_stepLeft(obj)
+            obj.indImage = obj.indImage - obj.stepSize;
+            if obj.indImage < 1
+                obj.indImage = 1;
+            end
+            %                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
+            %                     handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
+            %                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
+            obj.loop_stepX;
+        end
+        %%
+        %
         function obj = loop_stepX(obj)
             handlesA = guidata(obj.gui_imageViewerA.gui_main);
             obj.gui_imageViewerA.imag3path = fullfile(obj.moviePathA,'RAW_DATA',obj.smda_databaseSubsetA.filename{obj.indImage});
@@ -155,55 +171,6 @@ classdef cellularGPSPickTwo_object < handle
             handlesB.displayedImage.CData = obj.gui_imageViewerB.imag3;
             obj.gui_imageViewerB.updateLimits;
             guidata(obj.gui_imageViewerB.gui_main,handlesB);
-            
-            %%%
-            %   _____            _    __   ___
-            %  |_   _| _ __ _ __| |__ \ \ / (_)___
-            %    | || '_/ _` / _| / /  \ V /| (_-<
-            %    |_||_| \__,_\__|_\_\   \_/ |_/__/
-            %
-            if obj.pkTwo.gui_control.menu_viewTrackBool
-                switch obj.pkTwo.gui_control.menu_viewTime
-                    case 'all'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if ~obj.pkTwo.mcl.track_logical(i)
-                                continue
-                            end
-                            if obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            else
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            end
-                        end
-                    case 'now'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if ~obj.pkTwo.mcl.track_logical(i)
-                                continue
-                            end
-                            if obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            else
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            end
-                        end
-                end
-            end
         end
     end
 end
