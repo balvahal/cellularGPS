@@ -84,7 +84,6 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
                 'Units','characters',...
                 'YDir','reverse',...
                 'Visible','on'); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
-            
             %% Visuals for Tracks
             %  __   ___              _      _ _
             %  \ \ / (_)____  _ __ _| |___ | | |
@@ -116,6 +115,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             obj.trackCircleSize = 11; %must be an odd number
             
             displayedImage = image('Parent',axesImageViewer);
+            displayedImage.ButtonDownFcn = @obj.clickme;
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -957,6 +957,11 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
                 end
             end
             obj.trackText{trackID}.String = myString;
+        end
+        %%
+        %
+        function obj = clickme(obj,src,evt)
+            disp('hello');
         end
     end
 end
