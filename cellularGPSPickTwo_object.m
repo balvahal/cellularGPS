@@ -26,6 +26,8 @@ classdef cellularGPSPickTwo_object < handle
         smda_databaseB
         smda_databaseLogicalB
         smda_databaseSubsetB
+        connect_database = {};
+        connect_database_template_struct
         %%% GUIS
         %
         gui_imageViewerA
@@ -50,6 +52,7 @@ classdef cellularGPSPickTwo_object < handle
         pointerGroupB = 1;
         pointerPositionB = 1;
         pointerSettingsB = 1;
+        pointerConnectDatabase = 1;
         indImage = 1;
         stepSize = 1;
     end
@@ -97,6 +100,11 @@ classdef cellularGPSPickTwo_object < handle
             %obj.gui_control = cellularGPSPickTwo_object_control(obj);
             %obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
             %obj.gui_control.tabContrast_sliderMax_Callback
+            
+            %% template struct
+            %
+            connect_database_template_struct.rowcolA = [1,1];
+            connect_database_template_struct.rowcolB = [1,1];
         end
         %%
         %
@@ -171,6 +179,25 @@ classdef cellularGPSPickTwo_object < handle
             handlesB.displayedImage.CData = obj.gui_imageViewerB.imag3;
             obj.gui_imageViewerB.updateLimits;
             guidata(obj.gui_imageViewerB.gui_main,handlesB);
+        end
+        %%
+        %
+        function obj = connectCheck(obj)
+            if obj.gui_imageViewerA.connectBool && obj.gui_imageViewerB.connectBool
+                disp('a fruitful union');
+                obj.gui_imageViewerB.connectBool = false;
+                obj.gui_imageViewerA.connectBool = false;
+                obj.pointerConnectDatabase = obj.pointerConnectDatabase + 1;
+            else
+                disp('not ready');
+            end
+        end
+        %%
+        %
+        function obj = clickme_rec(obj,~,evt)
+            if evt.Button == 3
+               disp('delete'); 
+            end
         end
     end
 end

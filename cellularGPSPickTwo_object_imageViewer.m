@@ -30,6 +30,8 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         trackTextFontSize = 9;
         trackTextMargin = 1;
         
+        rowcol = [1,1];
+        
         kybrd_period
         kybrd_comma
           
@@ -100,6 +102,11 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             %     'XLim',[1,master.image_width],'YLim',[1,master.image_height]);
             % cmapHighlight = colormap(haxesImageViewer,jet(16)); %63 matches the number of elements in an
             
+
+            
+            displayedImage = image('Parent',axesImageViewer);
+            displayedImage.ButtonDownFcn = @obj.clickme_image;
+            
             axesText = axes('Parent',f,'Units','characters');
             axesText.NextPlot = 'add';
             axesText.Visible = 'off';
@@ -113,9 +120,6 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             obj.trackCircle = {};
             obj.trackText = {};
             obj.trackCircleSize = 11; %must be an odd number
-            
-            displayedImage = image('Parent',axesImageViewer);
-            displayedImage.ButtonDownFcn = @obj.clickme;
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -361,8 +365,11 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             handles.axesImageViewer.Position = [0 0 fwidth  fheight];
             handles.axesImageViewer.XLim = [0.5,obj.image_width+0.5];
             handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
-            
+            handles.axesText.XLim = handles.axesImageViewer.XLim;
+            handles.axesText.YLim = handles.axesImageViewer.YLim;
             handles.axesText.Position = [0 0 fwidth  fheight];
+            handles.axesCircles.XLim = handles.axesImageViewer.XLim;
+            handles.axesCircles.YLim = handles.axesImageViewer.YLim;
             handles.axesCircles.Position = [0 0 fwidth  fheight];
             
             handles.displayedImage.CData = obj.imag3;
@@ -960,8 +967,23 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         end
         %%
         %
-        function obj = clickme(obj,src,evt)
-            disp('hello');
+        function obj = clickme_image(obj,~,evt)
+            obj.connectBool = true;
+            obj.rowcol = round(evt.IntersectionPoint);
+            
+            handles = guidata(obj.gui_main);
+            
+                myrec = rectangle('Parent',handles.axesCircles);
+                myrec.UserData = obj.pkTwo.pointerConnectDatabase;
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = [0.9,0.54,0.8];
+                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
+                obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
+            
+            obj.pkTwo.connectCheck;
+            str = sprintf('row: %d ... col: %d',obj.rowcol(1),obj.rowcol(2));
+            disp(str);
         end
     end
 end
