@@ -194,9 +194,10 @@ classdef cellularGPSPickTwo_object < handle
         end
         %%
         %
-        function obj = clickme_rec(obj,~,evt)
+        function obj = clickme_rec(obj,src,evt)
             if evt.Button == 3
-               disp('delete'); 
+               disp('delete');
+               
             end
         end
     end

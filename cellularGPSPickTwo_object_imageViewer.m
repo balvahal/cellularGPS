@@ -973,17 +973,19 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             
             handles = guidata(obj.gui_main);
             
-                myrec = rectangle('Parent',handles.axesCircles);
-                myrec.UserData = obj.pkTwo.pointerConnectDatabase;
-                myrec.Curvature = [1,1];
-                myrec.FaceColor = [0.9,0.54,0.8];
-                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
-                obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
+            myrec = rectangle('Parent',handles.axesCircles);
+            myrec.UserData = obj.pkTwo.pointerConnectDatabase;
+            myrec.Curvature = [1,1];
+            myrec.FaceColor = [0.9,0.54,0.8];
+            myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+            myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
+            obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
             
             obj.pkTwo.connectCheck;
             str = sprintf('row: %d ... col: %d',obj.rowcol(1),obj.rowcol(2));
             disp(str);
+            
+            obj.pkTwo.pointerConnectDatabase = obj.pkTwo.pointerConnectDatabase + 1;
         end
     end
 end
