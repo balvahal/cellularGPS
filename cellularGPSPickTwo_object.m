@@ -53,6 +53,7 @@ classdef cellularGPSPickTwo_object < handle
         pointerPositionB = 1;
         pointerSettingsB = 1;
         pointerConnectDatabase = 1;
+        pointerConnectDatabase1 = 1;
         indImage = 1;
         stepSize = 1;
     end
@@ -184,18 +185,62 @@ classdef cellularGPSPickTwo_object < handle
         %
         function obj = connectCheck(obj)
             if obj.gui_imageViewerA.connectBool && obj.gui_imageViewerB.connectBool
-                disp('a fruitful union');
+                str = sprintf('conncetion success %d',obj.pointerConnectDatabase);
+                disp(str);
+                
+                obj.connect_database_template_struct(obj.pointerConnectDatabase).rowB = obj.gui_imageViewerB.rowcol(1);
+                obj.connect_database_template_struct(obj.pointerConnectDatabase).colB = obj.gui_imageViewerB.rowcol(2);
+                obj.connect_database_template_struct(obj.pointerConnectDatabase).rowA = obj.gui_imageViewerA.rowcol(1);
+                obj.connect_database_template_struct(obj.pointerConnectDatabase).colA = obj.gui_imageViewerA.rowcol(2);
+                
                 obj.gui_imageViewerB.connectBool = false;
                 obj.gui_imageViewerA.connectBool = false;
-                obj.pointerConnectDatabase = obj.pointerConnectDatabase + 1;
+
+                
+                myrec = obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase};
+                myrec.FaceColor = obj.gui_imageViewerB.circleColor2;
+                myrec = obj.gui_imageViewerA.trackCircle{obj.pointerConnectDatabase};
+                myrec.FaceColor = obj.gui_imageViewerA.circleColor2;
+                
+                obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
             else
-                disp('not ready');
+                
             end
         end
         %%
         %
         function obj = clickme_rec(obj,src,evt)
-            if evt.Button == 3
+            if evt.Button == 1
+                if obj.pointerConnectDatabase == src.UserData;
+                    str = sprintf('connection %d is unselected',src.UserData);
+                    disp(str)
+                    myrec = obj.gui_imageViewerB.trackCircle{src.UserData};
+                    myrec.FaceColor = obj.gui_imageViewerB.circleColor2;
+                    myrec = obj.gui_imageViewerA.trackCircle{src.UserData};
+                    myrec.FaceColor = obj.gui_imageViewerA.circleColor2;
+                    obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
+                    obj.gui_imageViewerB.connectBool = false;
+                    obj.gui_imageViewerA.connectBool = false;
+                else
+                    str = sprintf('connection %d is selected',src.UserData);
+                    disp(str)
+                    obj.pointerConnectDatabase = src.UserData;
+                    obj.gui_imageViewerB.connectBool = false;
+                    obj.gui_imageViewerA.connectBool = false;
+                    
+                    myrec = obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase1};
+                    myrec.FaceColor = obj.gui_imageViewerB.circleColor2;
+                    myrec = obj.gui_imageViewerA.trackCircle{obj.pointerConnectDatabase1};
+                    myrec.FaceColor = obj.gui_imageViewerA.circleColor2;
+                    
+                    myrec = obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase};
+                    myrec.FaceColor = obj.gui_imageViewerB.circleColor1;
+                    myrec = obj.gui_imageViewerA.trackCircle{obj.pointerConnectDatabase};
+                    myrec.FaceColor = obj.gui_imageViewerA.circleColor1;
+                    
+                    obj.pointerConnectDatabase1 = obj.pointerConnectDatabase;
+                end
+            elseif evt.Button == 3
                disp('delete');
                
             end

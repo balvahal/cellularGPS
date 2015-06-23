@@ -14,6 +14,8 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         image_height;
         gui_main;
         
+        circleColor1 = [255,215,50]/255;
+        circleColor2 = [255,50,50]/255;
         trackCircle
         trackCenRow
         trackCenCol
@@ -119,7 +121,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             
             obj.trackCircle = {};
             obj.trackText = {};
-            obj.trackCircleSize = 11; %must be an odd number
+            obj.trackCircleSize = 17; %must be an odd number
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -972,20 +974,22 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             obj.rowcol = round(evt.IntersectionPoint);
             
             handles = guidata(obj.gui_main);
-            
-            myrec = rectangle('Parent',handles.axesCircles);
-            myrec.UserData = obj.pkTwo.pointerConnectDatabase;
-            myrec.Curvature = [1,1];
-            myrec.FaceColor = [0.9,0.54,0.8];
-            myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-            myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
-            obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
-            
+            if length(obj.trackCircle) >= obj.pkTwo.pointerConnectDatabase && isa(obj.trackCircle{obj.pkTwo.pointerConnectDatabase},'matlab.graphics.primitive.Rectangle')
+                myrec = obj.trackCircle{obj.pkTwo.pointerConnectDatabase};
+                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                myrec.FaceColor = obj.circleColor1;
+            else
+                myrec = rectangle('Parent',handles.axesCircles);
+                myrec.UserData = obj.pkTwo.pointerConnectDatabase;
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = obj.circleColor1;
+                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
+                myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
+                obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
+            end
             obj.pkTwo.connectCheck;
             str = sprintf('row: %d ... col: %d',obj.rowcol(1),obj.rowcol(2));
             disp(str);
-            
-            obj.pkTwo.pointerConnectDatabase = obj.pkTwo.pointerConnectDatabase + 1;
         end
     end
 end
