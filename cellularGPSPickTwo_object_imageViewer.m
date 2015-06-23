@@ -304,7 +304,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
         %
         function obj = updateLimits(obj)
             handles = guidata(obj.gui_main);
-            
+                       
             handles.axesTracks.YLim = [1,obj.pkTwo.ityA.imageHeightNoBin/...
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
             handles.axesTracks.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
@@ -319,6 +319,13 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
             handles.axesText.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
+            
+            handles.axesImageViewer.XLim = [0.5,obj.image_width+0.5];
+            handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
+            handles.axesText.XLim = handles.axesImageViewer.XLim;
+            handles.axesText.YLim = handles.axesImageViewer.YLim;
+            handles.axesCircles.XLim = handles.axesImageViewer.XLim;
+            handles.axesCircles.YLim = handles.axesImageViewer.YLim;
             
             guidata(obj.gui_main,handles);
         end

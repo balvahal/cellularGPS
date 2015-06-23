@@ -101,11 +101,6 @@ classdef cellularGPSPickTwo_object < handle
             %obj.gui_control = cellularGPSPickTwo_object_control(obj);
             %obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
             %obj.gui_control.tabContrast_sliderMax_Callback
-            
-            %% template struct
-            %
-            connect_database_template_struct.rowcolA = [1,1];
-            connect_database_template_struct.rowcolB = [1,1];
         end
         %%
         %
@@ -244,6 +239,12 @@ classdef cellularGPSPickTwo_object < handle
                disp('delete');
                
             end
+        end
+        %%
+        %
+        function obj = export(obj)
+            str = sprintf('data%d.mat',obj.indImage);
+            save(fullfile(obj.moviePathA,str),obj.connect_database_template_struct);
         end
     end
 end
