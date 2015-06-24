@@ -244,7 +244,9 @@ classdef cellularGPSPickTwo_object < handle
         %
         function obj = export(obj)
             str = sprintf('data%d.mat',obj.indImage);
-            save(fullfile(obj.moviePathA,str),obj.connect_database_template_struct);
+            mytable = obj.connect_database_template_struct;
+            save(fullfile(obj.moviePathA,str),'mytable');
+            
         end
     end
 end

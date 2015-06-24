@@ -149,7 +149,7 @@ classdef cellularGPSPickTwo_object_imageViewer < handle
             % struct and make the gui visible for the first time. Other commands or
             % functions can also be executed here if certain variables or parameters
             % need to be computed and set.
-            obj.updateLimits;
+            % obj.updateLimits;
             %%%
             % make the gui visible
             set(f,'Visible','on');
