@@ -206,7 +206,13 @@ classdef cellularGPSPickTwo_object < handle
         %
         function obj = clickme_rec(obj,src,evt)
             if evt.Button == 1
-                if obj.pointerConnectDatabase == src.UserData;
+                if xor(src.UserData > length(obj.gui_imageViewerB.trackCircle),src.UserData > length(obj.gui_imageViewerA.trackCircle)) || xor(isempty(obj.gui_imageViewerB.trackCircle{src.UserData}),isempty(obj.gui_imageViewerA.trackCircle{src.UserData}))
+                    %do nothing
+                    disp('do nothing');
+                elseif xor(obj.pointerConnectDatabase > length(obj.gui_imageViewerB.trackCircle),obj.pointerConnectDatabase > length(obj.gui_imageViewerA.trackCircle)) || xor(isempty(obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase}),isempty(obj.gui_imageViewerA.trackCircle{obj.pointerConnectDatabase}))
+                    %do nothing
+                    disp('do nothing');
+                elseif obj.pointerConnectDatabase == src.UserData;
                     str = sprintf('connection %d is unselected',src.UserData);
                     disp(str)
                     myrec = obj.gui_imageViewerB.trackCircle{src.UserData};
@@ -236,17 +242,76 @@ classdef cellularGPSPickTwo_object < handle
                     obj.pointerConnectDatabase1 = obj.pointerConnectDatabase;
                 end
             elseif evt.Button == 3
-               disp('delete');
-               
+               maybenumber = src.UserData;
+               if length(obj.gui_imageViewerB.trackCircle) < src.UserData
+                   %do nothing
+               elseif ~isempty(obj.gui_imageViewerB.trackCircle{src.UserData})
+                    delete(obj.gui_imageViewerB.trackCircle{src.UserData});
+                    obj.pointerConnectDatabase = maybenumber;
+                    if length(obj.gui_imageViewerB.trackCircle) == maybenumber
+                        obj.gui_imageViewerB.trackCircle(end) = [];
+                    end
+               end
+               if length(obj.gui_imageViewerA.trackCircle) < src.UserData
+                   %do nothing
+               elseif~isempty(obj.gui_imageViewerA.trackCircle{src.UserData})
+                   delete(obj.gui_imageViewerA.trackCircle{src.UserData})
+                   obj.pointerConnectDatabase = maybenumber;
+                   if length(obj.gui_imageViewerA.trackCircle) == maybenumber
+                       obj.gui_imageViewerA.trackCircle(end) = [];
+                   end
+               end
             end
         end
         %%
         %
-        function obj = export(obj)
+        function obj = exportTable(obj)
             str = sprintf('data%d.mat',obj.indImage);
-            mytable = obj.connect_database_template_struct;
+            mytable = obj.connect_database_template_struct; %#ok<NASGU>
             save(fullfile(obj.moviePathA,str),'mytable');
+        end
+        %%
+        %
+        function obj = importTable(obj)
+            str = sprintf('data%d.mat',obj.indImage);
+            S = load(fullfile(obj.moviePathA,str),'mytable');
+            obj.connect_database_template_struct = S.mytable;
+            obj.refreshSpots;
+        end
+        %%
+        %
+        function obj = refreshSpots(obj)
+            %%
+            % A
+            handles = guidata(obj.gui_imageViewerA.gui_main);
+            cellfun(@delete,obj.gui_imageViewerA.trackCircle);
+            obj.gui_imageViewerA.trackCircle = {};
+            for i = 1:length(obj.connect_database_template_struct)
+                myrec = rectangle('Parent',handles.axesCircles);
+                myrec.UserData = i;
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = obj.gui_imageViewerA.circleColor2;
+                myrec.Position = [obj.connect_database_template_struct(i).rowA - (obj.gui_imageViewerA.trackCircleSize-1)/2, obj.connect_database_template_struct(i).colA - (obj.gui_imageViewerA.trackCircleSize-1)/2, obj.gui_imageViewerA.trackCircleSize, obj.gui_imageViewerA.trackCircleSize];
+                myrec.ButtonDownFcn = @(src,evt) obj.clickme_rec(src,evt);
+                obj.gui_imageViewerA.trackCircle{i} = myrec;
+            end
+            %%
+            % B
+            handles = guidata(obj.gui_imageViewerB.gui_main);
+            cellfun(@delete,obj.gui_imageViewerB.trackCircle);
+            obj.gui_imageViewerB.trackCircle = {};
+            for i = 1:length(obj.connect_database_template_struct)
+                myrec = rectangle('Parent',handles.axesCircles);
+                myrec.UserData = i;
+                myrec.Curvature = [1,1];
+                myrec.FaceColor = obj.gui_imageViewerB.circleColor2;
+                myrec.Position = [obj.connect_database_template_struct(i).rowB - (obj.gui_imageViewerB.trackCircleSize-1)/2, obj.connect_database_template_struct(i).colB - (obj.gui_imageViewerB.trackCircleSize-1)/2, obj.gui_imageViewerB.trackCircleSize, obj.gui_imageViewerB.trackCircleSize];
+                myrec.ButtonDownFcn = @(src,evt) obj.clickme_rec(src,evt);
+                obj.gui_imageViewerB.trackCircle{i} = myrec;
+            end
             
+            obj.pointerConnectDatabase1 = 1;
+            obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
         end
     end
 end
