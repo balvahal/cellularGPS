@@ -93,6 +93,11 @@ classdef cellularGPSPickTwo_object < handle
             obj.gui_imageViewerA.kybrd_period = @obj.loop_stepRight;
             obj.gui_imageViewerA.kybrd_comma = @obj.loop_stepLeft;
             obj.gui_imageViewerA.initialize;
+            handles = guidata(obj.gui_imageViewerA.gui_main);
+            handles.displayedImage.CDataMapping = 'scaled';
+            handles.axesImageViewer.CLim = [500 2000];
+            colormap(handles.axesImageViewer,'gray');
+            
             obj.gui_imageViewerB = cellularGPSPickTwo_object_imageViewer(obj);
             obj.gui_imageViewerB.imag3path = fullfile(obj.moviePathB,'RAW_DATA',obj.smda_databaseSubsetB.filename{obj.indImage});
             obj.gui_imageViewerB.kybrd_period = @obj.loop_stepRight;
@@ -138,6 +143,8 @@ classdef cellularGPSPickTwo_object < handle
         %%
         %
         function obj = loop_stepRight(obj)
+            obj.matchDatabase;
+            obj.exportTable;
             obj.indImage = obj.indImage + obj.stepSize;
             if obj.indImage > height(obj.smda_databaseSubsetA)
                 obj.indImage = height(obj.smda_databaseSubsetA);
@@ -146,10 +153,18 @@ classdef cellularGPSPickTwo_object < handle
             %handlesControl.infoBk_editTimepoint.String = num2str(obj.indImage);
             %guidata(obj.gui_control.gui_main,handlesControl);
             obj.loop_stepX;
+            if exist(fullfile(obj.moviePathA,sprintf('data%d.mat',obj.indImage)),'file')
+                obj.importTable;
+            else
+                obj.connect_database_template_struct = [];
+            end
+            obj.refreshSpots;
         end
         %%
         %
         function obj = loop_stepLeft(obj)
+            obj.matchDatabase;
+            obj.exportTable;
             obj.indImage = obj.indImage - obj.stepSize;
             if obj.indImage < 1
                 obj.indImage = 1;
@@ -158,6 +173,12 @@ classdef cellularGPSPickTwo_object < handle
             %                     handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
             %                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
             obj.loop_stepX;
+            if exist(fullfile(obj.moviePathA,sprintf('data%d.mat',obj.indImage)),'file')
+            obj.importTable;
+            else
+                obj.connect_database_template_struct = [];
+            end
+            obj.refreshSpots;
         end
         %%
         %
@@ -252,6 +273,7 @@ classdef cellularGPSPickTwo_object < handle
                             %do nothing
                         elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
                             delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                            obj.gui_imageViewerB.trackCircle{maybenumber} = [];
                             obj.pointerConnectDatabase = maybenumber;
                             if length(obj.gui_imageViewerB.trackCircle) == maybenumber
                                 obj.gui_imageViewerB.trackCircle(end) = [];
@@ -261,6 +283,7 @@ classdef cellularGPSPickTwo_object < handle
                             %do nothing
                         elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
                             delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            obj.gui_imageViewerA.trackCircle{maybenumber} = [];
                             obj.pointerConnectDatabase = maybenumber;
                             if length(obj.gui_imageViewerA.trackCircle) == maybenumber
                                 obj.gui_imageViewerA.trackCircle(end) = [];
@@ -278,6 +301,7 @@ classdef cellularGPSPickTwo_object < handle
                             %do nothing
                         elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
                             delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                            obj.gui_imageViewerB.trackCircle{maybenumber} = [];
                             obj.pointerConnectDatabase = maybenumber;
                             if length(obj.gui_imageViewerB.trackCircle) == maybenumber
                                 obj.gui_imageViewerB.trackCircle(end) = [];
@@ -287,6 +311,7 @@ classdef cellularGPSPickTwo_object < handle
                             %do nothing
                         elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
                             delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            obj.gui_imageViewerA.trackCircle{maybenumber} = [];
                             obj.pointerConnectDatabase = maybenumber;
                             if length(obj.gui_imageViewerA.trackCircle) == maybenumber
                                 obj.gui_imageViewerA.trackCircle(end) = [];
@@ -303,6 +328,7 @@ classdef cellularGPSPickTwo_object < handle
                         %do nothing
                     elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
                         delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                        obj.gui_imageViewerB.trackCircle{maybenumber} = [];
                         obj.pointerConnectDatabase = maybenumber;
                         if length(obj.gui_imageViewerB.trackCircle) == maybenumber
                             obj.gui_imageViewerB.trackCircle(end) = [];
@@ -312,6 +338,7 @@ classdef cellularGPSPickTwo_object < handle
                         %do nothing
                     elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
                         delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                        obj.gui_imageViewerA.trackCircle{maybenumber} = [];
                         obj.pointerConnectDatabase = maybenumber;
                         if length(obj.gui_imageViewerA.trackCircle) == maybenumber
                             obj.gui_imageViewerA.trackCircle(end) = [];
@@ -373,6 +400,16 @@ classdef cellularGPSPickTwo_object < handle
             obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
             obj.gui_imageViewerA.connectBool = false;
             obj.gui_imageViewerB.connectBool = false;
+        end
+        %%
+        %
+        function obj = matchDatabase(obj)
+            mylogic = cellfun(@isempty,obj.gui_imageViewerB.trackCircle);
+            obj.connect_database_template_struct(mylogic) = [];
+            obj.gui_imageViewerB.trackCircle(mylogic) = [];
+            obj.gui_imageViewerA.trackCircle(mylogic) = [];
+            obj.pointerConnectDatabase1 = 1;
+            obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
         end
     end
 end
