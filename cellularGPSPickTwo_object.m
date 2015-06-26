@@ -190,7 +190,7 @@ classdef cellularGPSPickTwo_object < handle
                 
                 obj.gui_imageViewerB.connectBool = false;
                 obj.gui_imageViewerA.connectBool = false;
-
+                
                 
                 myrec = obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase};
                 myrec.FaceColor = obj.gui_imageViewerB.circleColor2;
@@ -206,12 +206,13 @@ classdef cellularGPSPickTwo_object < handle
         %
         function obj = clickme_rec(obj,src,evt)
             if evt.Button == 1
-                if xor(src.UserData > length(obj.gui_imageViewerB.trackCircle),src.UserData > length(obj.gui_imageViewerA.trackCircle)) || xor(isempty(obj.gui_imageViewerB.trackCircle{src.UserData}),isempty(obj.gui_imageViewerA.trackCircle{src.UserData}))
+                if xor(src.UserData > length(obj.gui_imageViewerB.trackCircle),src.UserData > length(obj.gui_imageViewerA.trackCircle)) || ...
+                        xor(obj.pointerConnectDatabase > length(obj.gui_imageViewerB.trackCircle),obj.pointerConnectDatabase > length(obj.gui_imageViewerA.trackCircle))
                     %do nothing
-                    disp('do nothing');
-                elseif xor(obj.pointerConnectDatabase > length(obj.gui_imageViewerB.trackCircle),obj.pointerConnectDatabase > length(obj.gui_imageViewerA.trackCircle)) || xor(isempty(obj.gui_imageViewerB.trackCircle{obj.pointerConnectDatabase}),isempty(obj.gui_imageViewerA.trackCircle{obj.pointerConnectDatabase}))
+                    disp('do nothing, because there is an unassigned spot, part1');
+                elseif xor(isempty(obj.gui_imageViewerB.trackCircle{src.UserData}),isempty(obj.gui_imageViewerA.trackCircle{src.UserData}))
                     %do nothing
-                    disp('do nothing');
+                    disp('do nothing, because there is an unassigned spot, part2');
                 elseif obj.pointerConnectDatabase == src.UserData;
                     str = sprintf('connection %d is unselected',src.UserData);
                     disp(str)
@@ -242,25 +243,83 @@ classdef cellularGPSPickTwo_object < handle
                     obj.pointerConnectDatabase1 = obj.pointerConnectDatabase;
                 end
             elseif evt.Button == 3
-               maybenumber = src.UserData;
-               if length(obj.gui_imageViewerB.trackCircle) < src.UserData
-                   %do nothing
-               elseif ~isempty(obj.gui_imageViewerB.trackCircle{src.UserData})
-                    delete(obj.gui_imageViewerB.trackCircle{src.UserData});
-                    obj.pointerConnectDatabase = maybenumber;
-                    if length(obj.gui_imageViewerB.trackCircle) == maybenumber
-                        obj.gui_imageViewerB.trackCircle(end) = [];
+                maybenumber = src.UserData;
+                if xor(src.UserData > length(obj.gui_imageViewerB.trackCircle),src.UserData > length(obj.gui_imageViewerA.trackCircle)) || ...
+                        xor(obj.pointerConnectDatabase > length(obj.gui_imageViewerB.trackCircle),obj.pointerConnectDatabase > length(obj.gui_imageViewerA.trackCircle))
+                    
+                    if src.UserData == obj.pointerConnectDatabase
+                        if length(obj.gui_imageViewerB.trackCircle) < maybenumber
+                            %do nothing
+                        elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
+                            delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                            obj.pointerConnectDatabase = maybenumber;
+                            if length(obj.gui_imageViewerB.trackCircle) == maybenumber
+                                obj.gui_imageViewerB.trackCircle(end) = [];
+                            end
+                        end
+                        if length(obj.gui_imageViewerA.trackCircle) < maybenumber
+                            %do nothing
+                        elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            obj.pointerConnectDatabase = maybenumber;
+                            if length(obj.gui_imageViewerA.trackCircle) == maybenumber
+                                obj.gui_imageViewerA.trackCircle(end) = [];
+                            end
+                        end
+                        obj.gui_imageViewerA.connectBool = false;
+                        obj.gui_imageViewerB.connectBool = false;
+                    else
+                        %do nothing
+                        disp('do nothing, because there is an unassigned spot, part1');
                     end
-               end
-               if length(obj.gui_imageViewerA.trackCircle) < src.UserData
-                   %do nothing
-               elseif~isempty(obj.gui_imageViewerA.trackCircle{src.UserData})
-                   delete(obj.gui_imageViewerA.trackCircle{src.UserData})
-                   obj.pointerConnectDatabase = maybenumber;
-                   if length(obj.gui_imageViewerA.trackCircle) == maybenumber
-                       obj.gui_imageViewerA.trackCircle(end) = [];
-                   end
-               end
+                elseif xor(isempty(obj.gui_imageViewerB.trackCircle{src.UserData}),isempty(obj.gui_imageViewerA.trackCircle{src.UserData}))
+                    if src.UserData == obj.pointerConnectDatabase
+                        if length(obj.gui_imageViewerB.trackCircle) < maybenumber
+                            %do nothing
+                        elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
+                            delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                            obj.pointerConnectDatabase = maybenumber;
+                            if length(obj.gui_imageViewerB.trackCircle) == maybenumber
+                                obj.gui_imageViewerB.trackCircle(end) = [];
+                            end
+                        end
+                        if length(obj.gui_imageViewerA.trackCircle) < maybenumber
+                            %do nothing
+                        elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                            obj.pointerConnectDatabase = maybenumber;
+                            if length(obj.gui_imageViewerA.trackCircle) == maybenumber
+                                obj.gui_imageViewerA.trackCircle(end) = [];
+                            end
+                        end
+                        obj.gui_imageViewerA.connectBool = false;
+                        obj.gui_imageViewerB.connectBool = false;
+                    else
+                        %do nothing
+                        disp('do nothing, because there is an unassigned spot, part2');
+                    end
+                else
+                    if length(obj.gui_imageViewerB.trackCircle) < maybenumber
+                        %do nothing
+                    elseif ~isempty(obj.gui_imageViewerB.trackCircle{maybenumber})
+                        delete(obj.gui_imageViewerB.trackCircle{maybenumber});
+                        obj.pointerConnectDatabase = maybenumber;
+                        if length(obj.gui_imageViewerB.trackCircle) == maybenumber
+                            obj.gui_imageViewerB.trackCircle(end) = [];
+                        end
+                    end
+                    if length(obj.gui_imageViewerA.trackCircle) < maybenumber
+                        %do nothing
+                    elseif~isempty(obj.gui_imageViewerA.trackCircle{maybenumber})
+                        delete(obj.gui_imageViewerA.trackCircle{maybenumber})
+                        obj.pointerConnectDatabase = maybenumber;
+                        if length(obj.gui_imageViewerA.trackCircle) == maybenumber
+                            obj.gui_imageViewerA.trackCircle(end) = [];
+                        end
+                    end
+                    obj.gui_imageViewerA.connectBool = false;
+                    obj.gui_imageViewerB.connectBool = false;
+                end
             end
         end
         %%
@@ -312,6 +371,8 @@ classdef cellularGPSPickTwo_object < handle
             
             obj.pointerConnectDatabase1 = 1;
             obj.pointerConnectDatabase = length(obj.connect_database_template_struct) + 1;
+            obj.gui_imageViewerA.connectBool = false;
+            obj.gui_imageViewerB.connectBool = false;
         end
     end
 end
