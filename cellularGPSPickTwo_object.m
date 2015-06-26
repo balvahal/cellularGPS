@@ -405,6 +405,10 @@ classdef cellularGPSPickTwo_object < handle
         %
         function obj = matchDatabase(obj)
             mylogic = cellfun(@isempty,obj.gui_imageViewerB.trackCircle);
+            mydiff = length(obj.connect_database_template_struct) - length(mylogic);
+            if mydiff > 0
+                obj.connect_database_template_struct(end-mydiff+1:end) = [];
+            end
             obj.connect_database_template_struct(mylogic) = [];
             obj.gui_imageViewerB.trackCircle(mylogic) = [];
             obj.gui_imageViewerA.trackCircle(mylogic) = [];
