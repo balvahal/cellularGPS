@@ -106,6 +106,12 @@ classdef cellularGPSPickTwo_object < handle
             %obj.gui_control = cellularGPSPickTwo_object_control(obj);
             %obj.gui_control.tabContrast_axesContrast_ButtonDownFcn;
             %obj.gui_control.tabContrast_sliderMax_Callback
+            if exist(fullfile(obj.moviePathA,sprintf('data%d.mat',obj.indImage)),'file')
+                obj.importTable;
+            else
+                obj.connect_database_template_struct = [];
+            end
+            obj.refreshSpots;
         end
         %%
         %
