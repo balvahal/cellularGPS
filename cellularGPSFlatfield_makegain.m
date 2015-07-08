@@ -67,13 +67,13 @@ toc
 % Images from the lab typically end up being 1344 x 1024 or 672 x 512,
 % depending on whether or not there is binning. The size of the image will
 % influence the size of the filters used to smooth the image.
-if hei >= 1344 || wid >= 1344
-    h = fspecial('average',[31 31]);
-    gainIM=imfilter(gainIM,h,'replicate');
-else
-    h = fspecial('average',[15 15]);
-    gainIM=imfilter(gainIM,h,'replicate');
-end
+% if hei >= 1344 || wid >= 1344
+%     h = fspecial('average',[31 31]);
+%     gainIM=imfilter(gainIM,h,'replicate');
+% else
+%     h = fspecial('average',[15 15]);
+%     gainIM=imfilter(gainIM,h,'replicate');
+% end
 %%
 % The image is normalized by the mean. But numbers between 0 and 1 cannot
 % be directly stored in an 16-bit image. Therefore, the weights are scaled
