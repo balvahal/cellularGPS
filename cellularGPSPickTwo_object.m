@@ -65,6 +65,7 @@ classdef cellularGPSPickTwo_object < handle
         %%
         %
         function obj = cellularGPSPickTwo_object(moviePathA,moviePathB)
+            
             obj.moviePathA = moviePathA;
             obj.moviePathB = moviePathB;
             %% Load settings
