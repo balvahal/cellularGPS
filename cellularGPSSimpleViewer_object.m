@@ -311,7 +311,7 @@ classdef cellularGPSSimpleViewer_object < handle
             %%%
             %
             obj.smda_database = readtable(fullfile(obj.moviePath,'smda_database.txt'),'Delimiter','\t');
-            %%%
+            %% display image relative to the viewing screen
             %
             handles = guidata(obj.gui_main);
             obj.imag3path = fullfile(obj.imag3dir,obj.smda_database.filename{obj.indImag3});
@@ -347,22 +347,64 @@ classdef cellularGPSSimpleViewer_object < handle
                 end
             end
             
-            fwidth = fwidth/ppChar(1);
-            fheight = fheight/ppChar(2);
+            handles.fwidth = fwidth/ppChar(1);
+            handles.fheight = fheight/ppChar(2);
+            handles.ppChar = ppChar;
+            handles.Char_SS = Char_SS;
+            handles.Pix_SS = Pix_SS;
             
-            obj.gui_main.Position = [(Char_SS(3)-fwidth)/2 (Char_SS(4)-fheight)/2 fwidth fheight];
-            handles.axesImageViewer.Position = [0 0 fwidth  fheight];
+            obj.gui_main.Position = [(Char_SS(3)-handles.fwidth)/2 (Char_SS(4)-handles.fheight)/2 handles.fwidth handles.fheight];
+            handles.axesImageViewer.Position = [0 0 handles.fwidth  handles.fheight];
             handles.axesImageViewer.XLim = [0.5,obj.image_width+0.5];
             handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
-            handles.axesText.XLim = handles.axesImageViewer.XLim;
-            handles.axesText.YLim = handles.axesImageViewer.YLim;
-            handles.axesText.Position = [0 0 fwidth  fheight];
-            handles.axesCircles.XLim = handles.axesImageViewer.XLim;
-            handles.axesCircles.YLim = handles.axesImageViewer.YLim;
-            handles.axesCircles.Position = [0 0 fwidth  fheight];
             
+            handles.displayedImage.CDataMapping = 'scaled';
             handles.displayedImage.CData = obj.imag3;
+            obj.gui_main.Colormap = colormap(gray(256));
             
+            guidata(obj.gui_main,handles);
+        end
+        %%
+        %
+        function obj = resize_guiMain(obj,fwidth,varargin)
+            %%%
+            % parse the input
+            handles = guidata(obj.gui_main);
+            q = inputParser;
+            addRequired(q, 'obj', @(x) isa(x,'cellularGPSSimpleViewer_object'));
+            addOptional(q, 'fwidth',handles.fwidth, @(x)isnumeric(fwidth));
+            addParameter(q, 'scale', 1, @isnumeric);
+            addParameter(q, 'units', 'characters', @(x) any(strcmp(x,{'characters', 'pixels'})));
+            parse(q,obj,fwidth,varargin{:});
+            
+            %%%
+            % update new height and width
+            if strcmp(q.Results.units,'pixels')
+                handles.fwidth = handles.fwidth/handles.ppChar(1);
+                handles.fheight = handles.fwidth/handles.ppChar(2)*obj.image_height/obj.image_width;
+            else
+                handles.fwidth = q.Results.fwidth;
+                handles.fheight = handles.fwidth*handles.ppChar(1)/handles.ppChar(2)*obj.image_height/obj.image_width;
+            end
+            
+            if q.Results.scale ~= 1
+                handles.fwidth = handles.fwidth*q.Results.scale;
+                handles.fheight = handles.fheight*q.Results.scale;
+            end
+            
+            %%
+            % update main figure
+            obj.gui_main.Position = [(handles.Char_SS(3)-handles.fwidth)/2 (handles.Char_SS(4)-handles.fheight)/2 handles.fwidth handles.fheight];
+            %%%
+            % update the axes in the main figure
+            h = findobj(obj.gui_main,'Type','axes');
+            if numel(h) == 1
+                h.Position = [0 0 handles.fwidth  handles.fheight];
+            else
+                for i = 1:length(h)
+                    h{i}.Position = [0 0 handles.fwidth  handles.fheight];
+                end
+            end
             guidata(obj.gui_main,handles);
         end
         %%
