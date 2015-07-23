@@ -40,6 +40,10 @@ classdef cellularGPSSimpleViewer_contrast < handle
         smda_itinerary;
         smda_database;
         moviePath;
+
+        viewer;
+        
+        contrastHistogram;
     end
     %% Methods
     %   __  __     _   _            _
@@ -143,9 +147,17 @@ classdef cellularGPSSimpleViewer_contrast < handle
             set(f,'Visible','on');
         end
         %%
+        % set the viewer object for this to work
+        function obj = initialize(obj)
+        %%
+        %
+        function obj = refresh(obj)
+            
+        end
+        %%
         %
         function obj = tabContrast_findImageHistogram(obj)
-%            [obj.contrastHistogram,~] = histcounts(reshape(obj.tmn.gui_imageViewer.imag3,1,[]),-0.5:1:255.5);
+            [obj.contrastHistogram,~] = histcounts(reshape(obj.imag3,1,[]),-0.5:1:255.5);
         end
         %%
         %

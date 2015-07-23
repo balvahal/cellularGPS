@@ -40,6 +40,8 @@ classdef cellularGPSSimpleViewer_object < handle
         smda_itinerary;
         smda_database;
         moviePath;
+        
+        contrast;
     end
     %% Methods
     %   __  __     _   _            _
@@ -122,6 +124,9 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.kybrd_cmd.w = @cellularGPSSimpleViewer_kybrd_w;
             obj.kybrd_cmd.z = @cellularGPSSimpleViewer_kybrd_z;
             obj.kybrd_cmd.x = @cellularGPSSimpleViewer_kybrd_x;
+            %%
+            %
+            obj.contrast = cellularGPSSimpleViewer_contrast;
         end
         %% delete
         % for a clean delete make sure the objects that are stored as
@@ -149,136 +154,6 @@ classdef cellularGPSSimpleViewer_object < handle
                     obj.kybrd_cmd.z(obj);
                 case 'x'
                     obj.kybrd_cmd.x(obj);
-%                 case 'hyphen'
-%                     %% delete a track
-%                     %
-%                     obj.pkTwo.makecell_mode = 'delete';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonDelete.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 'rightarrow'
-%                     
-%                 case 'leftarrow'
-%                     
-%                 case 'downarrow'
-%                     
-%                 case 'uparrow'
-%                     
-%                 case 'backspace'
-%                     
-%                 case 'd'
-%                     %% timepoint at end of track
-%                     %
-%                     oldIndImage = obj.pkTwo.indImage;
-%                     obj.pkTwo.indImage = find(obj.trackCenLogical(obj.pkTwo.mcl.pointer_track,:),1,'last');
-%                     firstInd =  find(obj.trackCenLogical(obj.pkTwo.mcl.pointer_track,:),1,'first');
-%                     if oldIndImage >= obj.pkTwo.indImage
-%                         obj.pkTwo.indImage = oldIndImage + 1;
-%                         if obj.pkTwo.indImage > height(obj.pkTwo.smda_databaseSubset)
-%                             obj.pkTwo.indImage = height(obj.pkTwo.smda_databaseSubset);
-%                             return
-%                         end
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepRight;
-%                     elseif oldIndImage < firstInd
-%                         obj.pkTwo.indImage = firstInd;
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepX;
-%                     else
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepX;
-%                     end
-%                 case 'a'
-%                     %% timepoint at start of track
-%                     %
-%                     oldIndImage = obj.pkTwo.indImage;
-%                     obj.pkTwo.indImage = find(obj.trackCenLogical(obj.pkTwo.mcl.pointer_track,:),1,'first');
-%                     lastInd = find(obj.trackCenLogical(obj.pkTwo.mcl.pointer_track,:),1,'last');
-%                     if oldIndImage <= obj.pkTwo.indImage
-%                         obj.pkTwo.indImage = oldIndImage - 1;
-%                         if obj.pkTwo.indImage < 1
-%                             obj.pkTwo.indImage = 1;
-%                             return
-%                         end
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepLeft;
-%                     elseif oldIndImage > lastInd
-%                         obj.pkTwo.indImage = lastInd;
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepX;
-%                     else
-%                         handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                         handlesControl.infoBk_editTimepoint.String = num2str(obj.pkTwo.indImage);
-%                         guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                         obj.loop_stepX;
-%                     end
-%                 case 'b'
-%                     %% break a track into two tracks
-%                     %
-%                     obj.pkTwo.makecell_mode = 'break';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonBreak.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 'c'
-%                     %% create a new cell
-%                     %
-%                     obj.pkTwo.gui_control.tabMakeCell_pushbuttonNewCell_Callback;
-%                     obj.pkTwo.mcl.pointer_makecell3 = obj.pkTwo.mcl.pointer_makecell;
-%                 case 'j'
-%                     %% join two tracks
-%                     %
-%                     obj.pkTwo.makecell_mode = 'join';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonJoin.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 'n'
-%                     %% do nothing
-%                     %
-%                     obj.pkTwo.makecell_mode = 'none';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 'm'
-%                     %% chose mother cell
-%                     %
-%                     obj.pkTwo.makecell_mode = 'mother';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonMother.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 't'
-%                     %% add a track to a cell
-%                     %
-%                     obj.pkTwo.makecell_mode = 'track 2 cell';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonAddTrack2Cell.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-%                 case 'escape'
-%                     %% reset conditional properties
-%                     %
-%                     obj.trackJoinBool = false;
-%                     obj.makecellMotherBool = false;
-%                     obj.pkTwo.makecell_mode = 'none';
-%                     handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-%                     handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-%                     obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-%                     handlesControl.infoBk_textMessage.String = sprintf('Aborted! System is reset.');
-%                     guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
             end
         end
         %%
@@ -414,6 +289,11 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.gui_main.Colormap = colormap(gray(256));
             
             guidata(obj.gui_main,handles);
+            %%
+            %
+            obj.contrast.viewer = obj;
+            obj.contrast.initialize;
+            obj.contrast.refresh;
         end
         %%
         %
