@@ -26,8 +26,19 @@ classdef cellularGPSSimpleViewer_object < handle
         kybrd_cmd; %a struct of function handles for keyboard commands
         
         indImag3 = 1;
+        indT = 1;
+        indG = 1;
+        indP = 1;
+        indS = 1;
+        
+        tblG;
+        tblP;
+        tblS;
+        tblRegister;
+        
         stepSize = 1;
         
+        smda_itinerary;
         smda_database;
         moviePath;
     end
@@ -106,6 +117,12 @@ classdef cellularGPSSimpleViewer_object < handle
             %
             obj.kybrd_cmd.period = @cellularGPSSimpleViewer_kybrd_period;
             obj.kybrd_cmd.comma = @cellularGPSSimpleViewer_kybrd_comma;
+            obj.kybrd_cmd.a = @cellularGPSSimpleViewer_kybrd_a;
+            obj.kybrd_cmd.s = @cellularGPSSimpleViewer_kybrd_s;
+            obj.kybrd_cmd.q = @cellularGPSSimpleViewer_kybrd_q;
+            obj.kybrd_cmd.w = @cellularGPSSimpleViewer_kybrd_w;
+            obj.kybrd_cmd.z = @cellularGPSSimpleViewer_kybrd_z;
+            obj.kybrd_cmd.x = @cellularGPSSimpleViewer_kybrd_x;
         end
         %% delete
         % for a clean delete make sure the objects that are stored as
@@ -121,6 +138,18 @@ classdef cellularGPSSimpleViewer_object < handle
                     obj.kybrd_cmd.period(obj);
                 case 'comma'
                     obj.kybrd_cmd.comma(obj);
+                case 'a'
+                    obj.kybrd_cmd.a(obj);
+                case 's'
+                    obj.kybrd_cmd.s(obj);
+                case 'q'
+                    obj.kybrd_cmd.q(obj);
+                case 'w'
+                    obj.kybrd_cmd.w(obj);
+                case 'z'
+                    obj.kybrd_cmd.z(obj);
+                case 'x'
+                    obj.kybrd_cmd.x(obj);
 %                 case 'hyphen'
 %                     %% delete a track
 %                     %
@@ -255,6 +284,15 @@ classdef cellularGPSSimpleViewer_object < handle
         end
         %%
         %
+        function obj = update_mainImage(obj)
+            handles = guidata(obj.gui_main);
+            obj.imag3path = fullfile(obj.imag3dir,obj.tblRegister.filename{obj.indT});
+            obj.imag3 = imread(obj.imag3path);
+            handles.displayedImage.CData = obj.imag3;
+            guidata(obj.gui_main,handles);
+        end
+        %%
+        %
         function obj = updateLimits(obj)
             handles = guidata(obj.gui_main);
                        
@@ -311,11 +349,27 @@ classdef cellularGPSSimpleViewer_object < handle
             %%%
             %
             obj.smda_database = readtable(fullfile(obj.moviePath,'smda_database.txt'),'Delimiter','\t');
+            obj.smda_itinerary = SuperMDAItineraryTimeFixed_object;
+            obj.smda_itinerary.import(fullfile(obj.moviePath,'smdaITF.txt'));
             %% display image relative to the viewing screen
             %
             handles = guidata(obj.gui_main);
-            obj.imag3path = fullfile(obj.imag3dir,obj.smda_database.filename{obj.indImag3});
-            obj.imag3 = imread(obj.imag3path); %fullfile(pkTwo.moviePathA,'RAW_DATA',pkTwo.smda_databaseSubsetA.filename{pkTwo.indImage})
+            G = obj.smda_itinerary.order_group(obj.indG);
+            P = obj.smda_itinerary.order_position{G};
+            P = P(obj.indP);
+            S = obj.smda_itinerary.order_settings{P};
+            S = S(obj.indS);
+            smda_databaseLogical = obj.smda_database.group_number == G...
+                & obj.smda_database.position_number == P...
+                & obj.smda_database.settings_number == S;
+            mytable = obj.smda_database(smda_databaseLogical,:);
+            obj.tblRegister = sortrows(mytable,{'timepoint'});
+            if obj.indT > height(obj.tblRegister)
+                obj.indT = height(obj.tblRegister);
+            end
+            
+            obj.update_mainImage;
+            
             obj.image_width = size(obj.imag3,2);
             obj.image_height = size(obj.imag3,1);
             
@@ -343,7 +397,6 @@ classdef cellularGPSSimpleViewer_object < handle
                 else
                     fwidth = 0.9*Pix_SS(3);
                     fheight = fwidth*obj.image_height/obj.image_width;
-                    
                 end
             end
             
@@ -359,7 +412,6 @@ classdef cellularGPSSimpleViewer_object < handle
             handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
             
             handles.displayedImage.CDataMapping = 'scaled';
-            handles.displayedImage.CData = obj.imag3;
             obj.gui_main.Colormap = colormap(gray(256));
             
             guidata(obj.gui_main,handles);
