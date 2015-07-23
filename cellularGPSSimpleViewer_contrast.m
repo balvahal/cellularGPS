@@ -18,8 +18,6 @@ classdef cellularGPSSimpleViewer_contrast < handle
     %
     properties
         imag3; %named with a number so it doesn't interfere with the built-in _image_ command.
-        imag3dir;
-        imag3path;
         image_width;
         image_height;
         gui_main; %the main viewer figure handle
@@ -44,6 +42,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
         viewer;
         
         contrastHistogram;
+        histogramEdges;
     end
     %% Methods
     %   __  __     _   _            _
@@ -67,8 +66,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
             Char_SS = get(0,'screensize');
             ppChar = Pix_SS./Char_SS;
             set(0,'units',myunits);
-            fwidth = 136.6; %683/ppChar(3);
-            fheight = 70; %910/ppChar(4);
+            fwidth = 68.3; %683/ppChar(3);
+            fheight = 35; %910/ppChar(4);
             fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             f = figure('Visible','off','Units','characters','MenuBar','none','Position',[fx fy fwidth fheight],...
@@ -76,152 +75,179 @@ classdef cellularGPSSimpleViewer_contrast < handle
             
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
-            hwidth = 104;
-            hheight = 40;
-            hx = (fwidth-hwidth)/2;
-            hy = 10;
-            tabContrast_axesContrast = axes('Parent',f,'Units','characters',...
+            hwidth = 52;
+            hheight = 20;
+            hx = (fwidth-hwidth)*0.6;
+            hy = 8;
+            Contrast_axesContrast = axes('Parent',f,'Units','characters',...
                 'Position',[hx hy hwidth hheight]);
-            tabContrast_axesContrast.NextPlot = 'add';
-            tabContrast_axesContrast.ButtonDownFcn = @obj.tabContrast_axesContrast_ButtonDownFcn;
+            Contrast_axesContrast.NextPlot = 'add';
+            Contrast_axesContrast.ButtonDownFcn = @obj.Contrast_axesContrast_ButtonDownFcn;
             %%% semilogy plot
             %
-            obj.tabContrast_findImageHistogram;
-%             tabContrast_plot = semilogy(tabContrast_axesContrast,(0:255),obj.contrastHistogram,...
-%                 'Color',[0 0 0]/255,...
-%                 'LineWidth',3);
-            tabContrast_axesContrast.YScale = 'log';
-            tabContrast_axesContrast.XLim = [0,255];
-            tabContrast_axesContrast.YLim(1) = 0;
-            xlabel('Intensity');
-            ylabel('Pixel Count');
+            Contrast_plot = semilogy(Contrast_axesContrast,(0:255),rand(256,1),...
+                'Color',[0 0 0]/255,...
+                'LineWidth',3);
+            Contrast_axesContrast.YScale = 'log';
+            Contrast_axesContrast.XLim = [0,255];
+            Contrast_axesContrast.YLim(1) = 0;
+            Contrast_axesContrast.FontSize = 8;
+            Contrast_axesContrast.XLabel.String = 'Intensity';
+            Contrast_axesContrast.YLabel.String = 'Pixel Count';
             %% Create controls
             %  two slider bars
-            hwidth = 112;
-            hheight = 2;
+            hwidth = 56;
+            hheight = 1.5;
             hx = (fwidth-hwidth)/2;
-            hy = 5;
+            hy = 3.25;
             %%% sliderMax
             %
             sliderStep = 1/(256 - 1);
-            tabContrast_sliderMax = uicontrol('Parent',f,'Style','slider','Units','characters',...
+            Contrast_sliderMax = uicontrol('Parent',f,'Style','slider','Units','characters',...
                 'Min',0,'Max',1,'BackgroundColor',[255 255 255]/255,...
                 'Value',1,'SliderStep',[sliderStep sliderStep],'Position',[hx hy hwidth hheight],...
-                'Callback',{@obj.tabContrast_sliderMax_Callback});
+                'Callback',{@obj.Contrast_sliderMax_Callback});
             
             hx = (fwidth-hwidth)/2;
-            hy = 2;
+            hy = 1;
             %%% sliderMin
             %
             sliderStep = 1/(256 - 1);
-            tabContrast_sliderMin= uicontrol('Parent',f,'Style','slider','Units','characters',...
+            Contrast_sliderMin= uicontrol('Parent',f,'Style','slider','Units','characters',...
                 'Min',0,'Max',1,'BackgroundColor',[255 255 255]/255,...
                 'Value',0,'SliderStep',[sliderStep sliderStep],'Position',[hx hy hwidth hheight],...
-                'Callback',{@obj.tabContrast_sliderMin_Callback});
+                'Callback',{@obj.Contrast_sliderMin_Callback});
             %% Lines for the min and max contrast levels
             %
-            hwidth = 104;
-            hheight = 40;
-            hx = (fwidth-hwidth)/2;
-            hy = 10;
-            tabContrast_haxesLine = axes('Parent',f,'Units','characters',...
+            hwidth = 52;
+            hheight = 20;
+            hx = (fwidth-hwidth)*0.6;
+            hy = 8;
+            Contrast_haxesLine = axes('Parent',f,'Units','characters',...
                 'Position',[hx hy hwidth hheight]);
-            tabContrast_haxesLine.NextPlot = 'add';
-            tabContrast_haxesLine.Visible = 'off';
-            tabContrast_haxesLine.YLim = [0,1];
-            tabContrast_haxesLine.XLim = [0,1];
-            tabContrast_lineMin = line;
-            tabContrast_lineMin.Parent = tabContrast_haxesLine;
-            tabContrast_lineMin.Color = [29 97 175]/255;
-            tabContrast_lineMin.LineWidth = 3;
-            tabContrast_lineMin.LineStyle = ':';
-            tabContrast_lineMin.YData = [0,1];
-            tabContrast_lineMax = line;
-            tabContrast_lineMax.Parent = tabContrast_haxesLine;
-            tabContrast_lineMax.Color = [255 103 97]/255;
-            tabContrast_lineMax.LineWidth = 3;
-            tabContrast_lineMax.LineStyle = ':';
-            tabContrast_lineMax.YData = [0,1];
+            Contrast_haxesLine.NextPlot = 'add';
+            Contrast_haxesLine.Visible = 'off';
+            Contrast_haxesLine.YLim = [0,1];
+            Contrast_haxesLine.XLim = [0,1];
+            Contrast_lineMin = line;
+            Contrast_lineMin.Parent = Contrast_haxesLine;
+            Contrast_lineMin.Color = [29 97 175]/255;
+            Contrast_lineMin.LineWidth = 3;
+            Contrast_lineMin.LineStyle = ':';
+            Contrast_lineMin.YData = [0,1];
+            Contrast_lineMax = line;
+            Contrast_lineMax.Parent = Contrast_haxesLine;
+            Contrast_lineMax.Color = [255 103 97]/255;
+            Contrast_lineMax.LineWidth = 3;
+            Contrast_lineMax.LineStyle = ':';
+            Contrast_lineMax.YData = [0,1];
             %%
             % make the gui visible
             set(f,'Visible','on');
+            obj.gui_main = f;
+            
+            handles.Contrast_haxesLine = Contrast_haxesLine;
+            handles.Contrast_lineMin = Contrast_lineMin;
+            handles.Contrast_lineMax = Contrast_lineMax;
+            handles.Contrast_plot = Contrast_plot;
+            handles.Contrast_axesContrast = Contrast_axesContrast;
+            handles.Contrast_sliderMax = Contrast_sliderMax;
+            handles.Contrast_sliderMin = Contrast_sliderMin;
+            guidata(obj.gui_main,handles);
         end
         %%
         % set the viewer object for this to work
         function obj = initialize(obj)
+            obj.imag3 = reshape(obj.viewer.imag3,1,[]);
+            obj.autoEdges;
+            %%%
+            % create the contrast histogram to be displayed in the axes
+            handles = guidata(obj.gui_main);
+            obj.Contrast_findImageHistogram;
+            handles.Contrast_plot.YData = obj.contrastHistogram;
+            obj.ContrastLineUpdate;
+            guidata(obj.gui_main,handles);
+        end
         %%
         %
         function obj = refresh(obj)
             
         end
         %%
-        %
-        function obj = tabContrast_findImageHistogram(obj)
-            [obj.contrastHistogram,~] = histcounts(reshape(obj.imag3,1,[]),-0.5:1:255.5);
+        % A simple way to determine the edges of the histogram
+        function obj = autoEdges(obj)
+            mymax = double(quantile(obj.imag3,0.95));
+            mymin = double(quantile(obj.imag3,0.05));
+            obj.histogramEdges = mymin-0.5:(mymax-mymin)/256:mymax+0.5;
         end
         %%
         %
-        function obj = tabContrast_axesContrast_ButtonDownFcn(obj,~,~)
+        function obj = Contrast_findImageHistogram(obj)
+            [obj.contrastHistogram,~] = histcounts(obj.imag3,obj.histogramEdges);
+        end
+        %%
+        %
+        function obj = Contrast_axesContrast_ButtonDownFcn(obj,~,~)
             %%%
             % create the contrast histogram to be displayed in the axes
             handles = guidata(obj.gui_main);
-            obj.tabContrast_findImageHistogram;
-            handles.tabContrast_plot.YData = obj.contrastHistogram;
-            obj.tabContrastLineUpdate;
+            obj.Contrast_findImageHistogram;
+            handles.Contrast_plot.YData = obj.contrastHistogram/max(obj.contrastHistogram);
+            obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
         %
-        function obj = tabContrast_sliderMax_Callback(obj,~,~)
+        function obj = Contrast_sliderMax_Callback(obj,~,~)
             handles = guidata(obj.gui_main);
-            sstep = handles.tabContrast_sliderMax.SliderStep;
-            mymax = handles.tabContrast_sliderMax.Value;
-            mymin = handles.tabContrast_sliderMin.Value;
+            sstep = handles.Contrast_sliderMax.SliderStep;
+            mymax = handles.Contrast_sliderMax.Value;
+            mymin = handles.Contrast_sliderMin.Value;
             if mymax == 0
-                handles.tabContrast_sliderMax.Value = sstep(1);
-                handles.tabContrast_sliderMin.Value = 0;
+                handles.Contrast_sliderMax.Value = sstep(1);
+                handles.Contrast_sliderMin.Value = 0;
             elseif mymax <= mymin
-                handles.tabContrast_sliderMin.Value = mymax-sstep(1);
+                handles.Contrast_sliderMin.Value = mymax-sstep(1);
             end
-            obj.tabContrast_newColormapFromContrastHistogram;
-            obj.tabContrastLineUpdate;
+            obj.Contrast_newColormapFromContrastHistogram;
+            obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
         %
-        function obj = tabContrast_sliderMin_Callback(obj,~,~)
+        function obj = Contrast_sliderMin_Callback(obj,~,~)
             handles = guidata(obj.gui_main);
-            sstep = handles.tabContrast_sliderMax.SliderStep;
-            mymax = handles.tabContrast_sliderMax.Value;
-            mymin = handles.tabContrast_sliderMin.Value;
+            sstep = handles.Contrast_sliderMax.SliderStep;
+            mymax = handles.Contrast_sliderMax.Value;
+            mymin = handles.Contrast_sliderMin.Value;
             if mymin == 1
-                handles.tabContrast_sliderMax.Value = 1;
-                handles.tabContrast_sliderMin.Value = 1-sstep(1);
+                handles.Contrast_sliderMax.Value = 1;
+                handles.Contrast_sliderMin.Value = 1-sstep(1);
             elseif mymin >= mymax
-                handles.tabContrast_sliderMax.Value = mymin+sstep(1);
+                handles.Contrast_sliderMax.Value = mymin+sstep(1);
             end
-            obj.tabContrast_newColormapFromContrastHistogram;
-            obj.tabContrastLineUpdate;
+            obj.Contrast_newColormapFromContrastHistogram;
+            obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
         %
-        function obj = tabContrastLineUpdate(obj)
+        function obj = ContrastLineUpdate(obj)
             handles = guidata(obj.gui_main);
-            handles.tabContrast_lineMin.XData = [handles.tabContrast_sliderMin.Value,handles.tabContrast_sliderMin.Value];
-            handles.tabContrast_lineMax.XData = [handles.tabContrast_sliderMax.Value,handles.tabContrast_sliderMax.Value];
+            handles.Contrast_lineMin.XData = [handles.Contrast_sliderMin.Value,handles.Contrast_sliderMin.Value];
+            handles.Contrast_lineMax.XData = [handles.Contrast_sliderMax.Value,handles.Contrast_sliderMax.Value];
             guidata(obj.gui_main,handles);
         end
         %% newColormapFromContrastHistogram
         % Assumes image is uint8 0-255.
-        function obj = tabContrast_newColormapFromContrastHistogram(obj)
+        function obj = Contrast_newColormapFromContrastHistogram(obj)
             handles = guidata(obj.gui_main);
-            sstep = handles.tabContrast_sliderMin.SliderStep;
-            mymin = ceil(handles.tabContrast_sliderMin.Value/sstep(1));
-            mymax = ceil(handles.tabContrast_sliderMax.Value/sstep(1));
+            sstep = handles.Contrast_sliderMin.SliderStep;
+            mymin = ceil(handles.Contrast_sliderMin.Value/sstep(1));
+            mymax = ceil(handles.Contrast_sliderMax.Value/sstep(1));
             cmap = colormap(gray(mymax-mymin+1));
             cmap = vertcat(zeros(mymin,3),cmap,ones(255-mymax,3));
-            obj.tmn.gui_imageViewer.gui_main.Colormap = cmap;
+            obj.viewer.gui_main.Colormap = cmap;
         end
     end
 end
