@@ -192,7 +192,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             % create the contrast histogram to be displayed in the axes
             handles = guidata(obj.gui_main);
             obj.Contrast_findImageHistogram;
-            handles.Contrast_plot.YData = obj.contrastHistogram/max(obj.contrastHistogram);
+            handles.Contrast_plot.YData = obj.contrastHistogram;
             obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
