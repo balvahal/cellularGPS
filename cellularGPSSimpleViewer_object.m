@@ -24,8 +24,7 @@ classdef cellularGPSSimpleViewer_object < handle
         image_height;
         gui_main; %the main viewer figure handle
         kybrd_cmd; %a struct of function handles for keyboard commands
-        
-        indImag3 = 1;
+       
         indT = 1;
         indG = 1;
         indP = 1;
