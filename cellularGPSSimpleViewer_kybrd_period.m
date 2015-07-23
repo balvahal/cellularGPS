@@ -1,16 +1,13 @@
 function [sv] = cellularGPSSimpleViewer_kybrd_period(sv)
-            sv.indImag3 = sv.indImag3 + sv.stepSize;
-            if sv.indImage > height(obj.smda_databaseSubsetA)
-                sv.indImage = height(obj.smda_databaseSubsetA);
-            end
-            %handlesControl = guidata(obj.gui_control.gui_main);
-            %handlesControl.infoBk_editTimepoint.String = num2str(obj.indImage);
-            %guidata(obj.gui_control.gui_main,handlesControl);
-            obj.loop_stepX;
-            if exist(fullfile(obj.moviePathA,sprintf('data%d.mat',obj.indImage)),'file')
-                obj.importTable;
-            else
-                obj.connect_database_template_struct = [];
-            end
-            obj.refreshSpots;
+sv.indT = sv.indT + 1;
+if sv.indT > height(sv.tblRegister)
+    sv.indT = height(sv.tblRegister);
+    return
+end
+T = sv.tblRegister.timepoint(sv.indT);
+sv.update_mainImage;
+%%
+% user update
+str = sprintf('Keyboard ''comma''. TIME %d',T);
+disp(str);
 end
