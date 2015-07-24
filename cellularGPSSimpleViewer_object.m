@@ -42,6 +42,7 @@ classdef cellularGPSSimpleViewer_object < handle
         moviePath;
         
         contrast;
+        rgbBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -162,6 +163,16 @@ classdef cellularGPSSimpleViewer_object < handle
             handles = guidata(obj.gui_main);
             obj.imag3path = fullfile(obj.imag3dir,obj.tblRegister.filename{obj.indT});
             obj.imag3 = imread(obj.imag3path);
+            mydims = ndims(obj.imag3);
+            if mydims == 3
+                obj.rgbBool = true;
+                handlesContrast = guidata(obj.contrast.gui_main);
+                mymin = handlesContrast.sliderMin.Value;
+                mymax = handlesContrast.sliderMax.Value;
+                obj.imag3 = imadjust(obj.imag3,[mymin mymin mymin; mymax mymax mymax],[]);
+            else
+                obj.rgbBool = false;
+            end
             handles.displayedImage.CData = obj.imag3;
             guidata(obj.gui_main,handles);
         end
@@ -286,7 +297,7 @@ classdef cellularGPSSimpleViewer_object < handle
             handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
             
             handles.displayedImage.CDataMapping = 'scaled';
-            obj.gui_main.Colormap = colormap(gray(256));
+            obj.gui_main.Colormap = colormap(gray(1024));
             
             guidata(obj.gui_main,handles);
             %%
@@ -338,317 +349,7 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             guidata(obj.gui_main,handles);
         end
-        %%
-        %
-        function obj = loadNewTracks(obj)
-            handles = guidata(obj.gui_main);
-            handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-            handlesControl.infoBk_textMessage.String = sprintf('Loading new tracks...');
-            drawnow;
-            %%
-            % process centroid data
-            obj.pkTwo.mcl.import(obj.pkTwo.indP);
-            obj.pkTwo.mcl.moviePath = obj.pkTwo.moviePath;
-            mydatabase = obj.pkTwo.mcl.track_database;
-            numOfT = obj.pkTwo.ity.number_of_timepoints;
-            myCenRow = zeros(max(mydatabase.trackID),numOfT);
-            myCenCol = zeros(max(mydatabase.trackID),numOfT);
-            myCenLogical = false(size(myCenRow));
-            handlesControl.infoBk_textMessage.String = sprintf('Tracks identified with\n%d centroids',height(mydatabase));
-            drawnow;
-            for v = 1:height(mydatabase)
-                mytimepoint = mydatabase.timepoint(v);
-                mytrackID = mydatabase.trackID(v);
-                myCenRow(mytrackID,mytimepoint) = mydatabase.centroid_row(v);
-                myCenCol(mytrackID,mytimepoint) = mydatabase.centroid_col(v);
-                myCenLogical(mytrackID,mytimepoint) = true;
-            end
-            %%%
-            % Assignment to the object was required to be after the parfor.
-            obj.trackCenRow = myCenRow;
-            obj.trackCenCol = myCenCol;
-            obj.trackCenLogical = myCenLogical;
-            
-            obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-            
-            %% Recalculate tracks
-            % Assumes image size remains the same for this settings
-            for i = 1:length(obj.trackCircle)
-                if isa(obj.trackCircle{i},'matlab.graphics.primitive.Rectangle')
-                    delete(obj.trackCircle{i});
-                end
-                if isa(obj.trackText{i},'matlab.graphics.primitive.Text')
-                    delete(obj.trackText{i});
-                end
-            end
-            mydatabase1 = obj.pkTwo.track_database{obj.pkTwo.indP};
-            obj.trackCircle = cell(max(mydatabase1.trackID),1);
-            obj.trackText = cell(max(mydatabase1.trackID),1);
-            handlesControl.infoBk_textMessage.String = sprintf('Importing Tracks...');
-            drawnow;
-            handlesControl.infoBk_textMessage.String = sprintf('Importing Circles...');
-            drawnow;
-            for i = 1:length(obj.trackCircle)
-                if ~any(obj.trackCenLogical(i,:))
-                    continue
-                end
-                myrec = rectangle('Parent',handles.axesCircles);
-                myrec.ButtonDownFcn = @obj.clickLoop;
-                myrec.UserData = i;
-                myrec.Curvature = [1,1];
-                myrec.FaceColor = obj.trackColor(mod(i,3)+1,:);
-                myrec.Position = [obj.trackCenCol(i,obj.trackCenLogical(i,:)).XData(1)-(obj.trackCircleSize-1)/2,obj.trackCenRow(i,obj.trackCenLogical(i,:)).YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                mclID = obj.pkTwo.mcl.track_makecell(i);
-                if mclID ~= 0
-                    myrec.EdgeColor = obj.trackColorHighlight2;
-                    myrec.LineWidth = 2;
-                else
-                    myrec.EdgeColor = [0,0,0];
-                    myrec.LineWidth = 0.5;
-                end
-                obj.trackCircle{i} = myrec;
-            end
-            handlesControl.infoBk_textMessage.String = sprintf('Transcribing Text...');
-            drawnow;
-            for i = 1:length(obj.trackText)
-                if ~any(obj.trackCenLogical(i,:))
-                    continue
-                end
-                obj.trackText{i} = text('Parent',handles.axesText);
-                obj.updateTrackText(i);
-            end
-            handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.pkTwo.indP);
-            drawnow;
-            obj.loop_stepX;
-            obj.pkTwo.gui_control.tabGPS_loop;
-            obj.pkTwo.gui_control.tabMakeCell_loop;
-            guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-        end
-        %%
-        %
-        function obj = visualizeTracks(obj)
-            handles = guidata(obj.gui_main);
-            handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-            %% Recalculate tracks
-            % Assumes image size remains the same for this settings
-            cellfun(@delete,obj.trackCircle);
-            obj.trackCircle = cell(max(obj.pkTwo.mcl.track_database.trackID),1);
-            handlesControl.infoBk_textMessage.String = sprintf('Importing Tracks...');
-            drawnow;
-            handlesControl.infoBk_textMessage.String = sprintf('Importing Circles...');
-            drawnow;
-            for i = 1:length(obj.trackCircle)
-                if ~obj.pkTwo.mcl.track_logical(i)
-                    continue
-                end
-                myrec = rectangle('Parent',handles.axesCircles);
-                myrec.ButtonDownFcn = @obj.clickLoop;
-                myrec.UserData = i;
-                myrec.Curvature = [1,1];
-                myrec.FaceColor = obj.trackColor(mod(i,3)+1,:);
-                myrec.Position = [obj.trackCenCol(i,obj.trackCenLogical(i,:)).XData(1)-(obj.trackCircleSize-1)/2,obj.trackCenRow(i,obj.trackCenLogical(i,:)).YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                obj.trackCircle{i} = myrec;
-            end
-            handlesControl.infoBk_textMessage.String = sprintf('Position %d',obj.pkTwo.indP);
-            drawnow;
-            guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-            obj.loop_stepX;
-        end
-        %%
-        %
-        function obj = loop_stepX(obj)
-            handles = guidata(obj.gui_main);
-            obj.imag3 = imread(fullfile(obj.pkTwo.moviePath,'.thumb',obj.pkTwo.smda_databaseSubset.filename{obj.pkTwo.indImage}));
-            handles.displayedImage.CData = obj.imag3;
-            obj.updateLimits;
-            guidata(obj.gui_main,handles);
-            
-            %%%
-            %   _____            _    __   ___
-            %  |_   _| _ __ _ __| |__ \ \ / (_)___
-            %    | || '_/ _` / _| / /  \ V /| (_-<
-            %    |_||_| \__,_\__|_\_\   \_/ |_/__/
-            %
-            if obj.pkTwo.gui_control.menu_viewTrackBool
-                switch obj.pkTwo.gui_control.menu_viewTime
-                    case 'all'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if ~obj.pkTwo.mcl.track_logical(i)
-                                continue
-                            end
-                            if obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            else
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            end
-                        end
-                    case 'now'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if ~obj.pkTwo.mcl.track_logical(i)
-                                continue
-                            end
-                            if obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            else
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            end
-                        end
-                end
-            end
-        end
-        %%
-        %
-        function obj = loop_stepRight(obj)
-            handles = guidata(obj.gui_main);
-            obj.imag3 = imread(fullfile(obj.pkTwo.moviePath,'.thumb',obj.pkTwo.smda_databaseSubset.filename{obj.pkTwo.indImage}));
-            handles.displayedImage.CData = obj.imag3;
-            obj.updateLimits;
-            guidata(obj.gui_main,handles);
-            
-            %%%
-            %   _____            _    __   ___
-            %  |_   _| _ __ _ __| |__ \ \ / (_)___
-            %    | || '_/ _` / _| / /  \ V /| (_-<
-            %    |_||_| \__,_\__|_\_\   \_/ |_/__/
-            %
-            if obj.pkTwo.gui_control.menu_viewTrackBool
-                switch obj.pkTwo.gui_control.menu_viewTime
-                    case 'all'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == 0 && ~obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                % do nothing
-                            elseif obj.trackCenLogical(i,obj.pkTwo.indImage) && obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == 0
-                                
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            elseif obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == -1
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            else
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            end
-                        end
-                    case 'now'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == 0 && ~obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                % do nothing
-                            elseif obj.trackCenLogical(i,obj.pkTwo.indImage) && obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == 0
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            elseif obj.trackCenLogicalDiff(i,obj.pkTwo.indImage-1) == -1
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            else
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            end
-                        end
-                end
-            end
-        end
-        %%
-        %
-        function obj = loop_stepLeft(obj)
-            handles = guidata(obj.gui_main);
-            obj.imag3 = imread(fullfile(obj.pkTwo.moviePath,'.thumb',obj.pkTwo.smda_databaseSubset.filename{obj.pkTwo.indImage}));
-            handles.displayedImage.CData = obj.imag3;
-            obj.updateLimits;
-            guidata(obj.gui_main,handles);
-            
-            %%%
-            %   _____            _    __   ___
-            %  |_   _| _ __ _ __| |__ \ \ / (_)___
-            %    | || '_/ _` / _| / /  \ V /| (_-<
-            %    |_||_| \__,_\__|_\_\   \_/ |_/__/
-            %
-            if obj.pkTwo.gui_control.menu_viewTrackBool
-                switch obj.pkTwo.gui_control.menu_viewTime
-                    case 'all'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 0 && ~obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                %do nothing
-                            elseif obj.trackCenLogical(i,obj.pkTwo.indImage) && obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 0
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            elseif obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 1
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            else
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            end
-                        end
-                    case 'now'
-                        trackCircleHalfSize = (obj.trackCircleSize-1)/2;
-                        for i = 1:length(obj.trackCircle)
-                            if obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 0 && ~obj.trackCenLogical(i,obj.pkTwo.indImage)
-                                %do nothing
-                            elseif obj.trackCenLogical(i,obj.pkTwo.indImage) && obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 0
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            elseif obj.trackCenLogicalDiff(i,obj.pkTwo.indImage) == 1
-                                obj.trackText{i}.Visible = 'off';
-                                obj.trackCircle{i}.Visible = 'off';
-                            else
-                                obj.trackText{i}.Visible = 'on';
-                                obj.trackText{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)+trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)+trackCircleHalfSize];
-                                obj.trackCircle{i}.Visible = 'on';
-                                obj.trackCircle{i}.Position = [obj.trackCenCol(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCenRow(i,obj.pkTwo.indImage)-trackCircleHalfSize,...
-                                    obj.trackCircleSize,obj.trackCircleSize];
-                            end
-                        end
-                end
-            end
-        end
+       
         %%
         %
         function obj = clickLoop(obj,myrec,~)
@@ -873,83 +574,6 @@ classdef cellularGPSSimpleViewer_object < handle
                 end
                 guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
             end
-        end
-        %%
-        %
-        function obj = highlightTrack(obj)
-            if obj.pkTwo.mcl.pointer_track2~=obj.pkTwo.mcl.pointer_track
-                myrec = obj.trackCircle{obj.pkTwo.mcl.pointer_track};
-                myrec.FaceColor = obj.trackColorHighlight;
-                
-                myrec2 = obj.trackCircle{obj.pkTwo.mcl.pointer_track2};
-                myrec2.FaceColor = obj.trackColor(mod(obj.pkTwo.mcl.pointer_track2,3)+1,:);
-            else
-                myrec = obj.trackCircle{obj.pkTwo.mcl.pointer_track};
-                myrec.FaceColor = obj.trackColorHighlight;
-            end
-            mclID = obj.pkTwo.mcl.track_makecell(obj.pkTwo.mcl.pointer_track);
-            if mclID ~= 0
-                myrec.EdgeColor = obj.trackColorHighlight2;
-                myrec.LineWidth = 2;
-            else
-                myrec.EdgeColor = [0,0,0];
-                myrec.LineWidth = 0.5;
-            end
-        end
-        %%
-        %
-        function obj = updateTrackText(obj,varargin)
-            %%%
-            % parse the input
-            q = inputParser;
-            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_imageViewer'));
-            addOptional(q, 'trackID',obj.pkTwo.mcl.pointer_track, @(x)isnumeric(x));
-            parse(q,obj,varargin{:});
-            trackID = q.Results.trackID;
-            obj.trackText{trackID}.Color = obj.trackTextColor;
-            obj.trackText{trackID}.BackgroundColor = obj.trackTextBackgroundColor;
-            obj.trackText{trackID}.FontSize = obj.trackTextFontSize;
-            obj.trackText{trackID}.Margin = obj.trackTextMargin;
-            obj.trackText{trackID}.UserData = trackID;
-            obj.trackText{trackID}.Position = [obj.trackLine{trackID}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{trackID}.YData(1)+(obj.trackCircleSize-1)/2];
-            myString = sprintf('trck#: %d',trackID);
-            mclID = obj.pkTwo.mcl.track_makecell(trackID);
-            if mclID ~= 0
-                myString = strcat(myString,sprintf('\nmkcl#: %d',mclID));
-                if obj.pkTwo.mcl.makecell_mother(mclID) ~= 0
-                    myString = strcat(myString,sprintf('\nmthr: %d',obj.pkTwo.mcl.makecell_mother(mclID)));
-                end
-                if obj.pkTwo.mcl.makecell_divisionStart(mclID) ~= 0
-                    myString = strcat(myString,sprintf('\ndvSt: %d',obj.pkTwo.mcl.makecell_divisionStart(mclID)));
-                elseif obj.pkTwo.mcl.makecell_apoptosisStart(mclID) ~= 0
-                    myString = strcat(myString,sprintf('\napSt: %d',obj.pkTwo.mcl.makecell_apoptosisStart(mclID)));
-                end
-            end
-            obj.trackText{trackID}.String = myString;
-        end
-        %%
-        %
-        function obj = clickme_image(obj,~,evt)
-            obj.connectBool = true;
-            obj.rowcol = round(evt.IntersectionPoint);
-            
-            handles = guidata(obj.gui_main);
-            if length(obj.trackCircle) >= obj.pkTwo.pointerConnectDatabase && isa(obj.trackCircle{obj.pkTwo.pointerConnectDatabase},'matlab.graphics.primitive.Rectangle')
-                myrec = obj.trackCircle{obj.pkTwo.pointerConnectDatabase};
-                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                myrec.FaceColor = obj.circleColor1;
-            else
-                myrec = rectangle('Parent',handles.axesCircles);
-                myrec.UserData = obj.pkTwo.pointerConnectDatabase;
-                myrec.Curvature = [1,1];
-                myrec.FaceColor = obj.circleColor1;
-                myrec.Position = [obj.rowcol(1)-(obj.trackCircleSize-1)/2,obj.rowcol(2)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                myrec.ButtonDownFcn = @(src,evt) obj.pkTwo.clickme_rec(src,evt);
-                obj.trackCircle{obj.pkTwo.pointerConnectDatabase} = myrec;
-            end
-            obj.pkTwo.connectCheck;
-            str = sprintf('row: %d ... col: %d',obj.rowcol(1),obj.rowcol(2));
-            disp(str);
         end
     end
 end
