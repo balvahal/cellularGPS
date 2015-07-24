@@ -24,7 +24,7 @@ classdef cellularGPSSimpleViewer_object < handle
         image_height;
         gui_main; %the main viewer figure handle
         kybrd_cmd; %a struct of function handles for keyboard commands
-       
+        
         indT = 1;
         indG = 1;
         indP = 1;
@@ -42,6 +42,7 @@ classdef cellularGPSSimpleViewer_object < handle
         moviePath;
         
         contrast;
+        zoom;
         rgbBool = false;
     end
     %% Methods
@@ -73,7 +74,7 @@ classdef cellularGPSSimpleViewer_object < handle
             %  \__, |\_,_|_|_|_|  |_\__,_|_|_||_|
             %  |___/      |___|
             % Create the figure
-            %            
+            %
             f = figure('Visible','off','Units','characters','MenuBar','none',...
                 'Resize','off','Name','Image Viewer',...
                 'Renderer','OpenGL',...
@@ -85,7 +86,7 @@ classdef cellularGPSSimpleViewer_object < handle
                 'YDir','reverse',...
                 'Visible','on'); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
             
-            displayedImage = image('Parent',axesImageViewer);           
+            displayedImage = image('Parent',axesImageViewer);
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -128,6 +129,7 @@ classdef cellularGPSSimpleViewer_object < handle
             %%
             %
             obj.contrast = cellularGPSSimpleViewer_contrast;
+            obj.zoom = cellularGPSSimpleViewer_zoom;
         end
         %% delete
         % for a clean delete make sure the objects that are stored as
@@ -169,7 +171,9 @@ classdef cellularGPSSimpleViewer_object < handle
                 handlesContrast = guidata(obj.contrast.gui_main);
                 mymin = handlesContrast.sliderMin.Value;
                 mymax = handlesContrast.sliderMax.Value;
-                obj.imag3 = imadjust(obj.imag3,[mymin mymin mymin; mymax mymax mymax],[]);
+                if mymin ~= 0 || mymax ~= 1
+                    obj.imag3 = imadjust(obj.imag3,[mymin mymin mymin; mymax mymax mymax],[]);
+                end
             else
                 obj.rgbBool = false;
             end
@@ -180,7 +184,7 @@ classdef cellularGPSSimpleViewer_object < handle
         %
         function obj = updateLimits(obj)
             handles = guidata(obj.gui_main);
-                       
+            
             handles.axesTracks.YLim = [1,obj.pkTwo.ityA.imageHeightNoBin/...
                 obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
             handles.axesTracks.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
@@ -349,7 +353,7 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             guidata(obj.gui_main,handles);
         end
-       
+        
         %%
         %
         function obj = clickLoop(obj,myrec,~)
