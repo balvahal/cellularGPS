@@ -65,7 +65,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
             Pix_SS = get(0,'screensize');
             set(0,'units','characters');
             Char_SS = get(0,'screensize');
-            ppChar = Pix_SS./Char_SS; %#ok<NASGU>
+            ppChar = Pix_SS./Char_SS; 
+            ppChar = ppChar([3,4]); %#ok<NASGU>
             set(0,'units',myunits);
             fwidth = 68.3; %683/ppChar(3);
             fheight = 35; %910/ppChar(4);
@@ -104,9 +105,9 @@ classdef cellularGPSSimpleViewer_contrast < handle
             axesContrast.YLabel.String = 'Pixel Count';
             %% Create controls
             %  two slider bars
-            hwidth = 56;
+            hwidth = 60;
             hheight = 1.5;
-            hx = (fwidth-hwidth)/2;
+            hx = (fwidth-hwidth)*0.7;
             hy = 3.25;
             %%% sliderMax
             %
@@ -123,7 +124,6 @@ classdef cellularGPSSimpleViewer_contrast < handle
             sliderMax.SliderStep = [sliderStep sliderStep];
             sliderMax.Position = [hx hy hwidth hheight];
             sliderMax.Callback = {@obj.sliderMax_Callback};
-            hx = (fwidth-hwidth)/2;
             hy = 1;
             %%% sliderMin
             %
@@ -342,9 +342,14 @@ classdef cellularGPSSimpleViewer_contrast < handle
                 mymaxValue = handles.plot.XData(indexMax);
                 handles.editMin.String = num2str(myminValue);
                 handles.editMax.String = num2str(mymaxValue);
-                handles2 = guidata(obj.viewer.gui_main);
-                handles2.axesImageViewer.CLim = [myminValue mymaxValue];
-                guidata(obj.viewer.gui_main,handles2);
+                
+                handlesViewer = guidata(obj.viewer.gui_main);
+                handlesViewer.axesImageViewer.CLim = [myminValue mymaxValue];
+                guidata(obj.viewer.gui_main,handlesViewer);
+                
+                handlesZoom = guidata(obj.viewer.zoom.gui_main);
+                handlesZoom.axesZoomMap.CLim = [myminValue mymaxValue];
+                guidata(obj.viewer.zoom.gui_main,handlesZoom);
             end
         end
         %%

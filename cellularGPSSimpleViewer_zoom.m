@@ -22,6 +22,7 @@ classdef cellularGPSSimpleViewer_zoom < handle
         image_height;
         gui_main; %the main viewer figure handle
         kybrd_cmd; %a struct of function handles for keyboard commands
+        kybrd_flag = false; %to prevent repeat entry into the keyboard callbacks when a key is held down.
         
         indT = 1;
         indG = 1;
@@ -44,6 +45,8 @@ classdef cellularGPSSimpleViewer_zoom < handle
         contrastHistogram;
         histogramEdges;
         rgbBool = false;
+        
+        panningActiveBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -67,295 +70,193 @@ classdef cellularGPSSimpleViewer_zoom < handle
             Char_SS = get(0,'screensize');
             ppChar = Pix_SS./Char_SS; %#ok<NASGU>
             set(0,'units',myunits);
-            fwidth = 68.3; %683/ppChar(3);
-            fheight = 35; %910/ppChar(4);
-            fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
-            fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             
             f = figure;
             f.Visible = 'off';
             f.Units = 'characters';
             f.MenuBar = 'none';
-            f.Position = [fx fy fwidth fheight];
-            f.CloseRequestFcn = {@fDeleteFcn};
-            f.Name = 'Contrast';
+            f.Name = 'Zoom';
+            f.Renderer = 'OpenGL';
+            f.Resize = 'off';
+            f.CloseRequestFcn = {@obj.fCloseRequestFcn};
+            f.KeyPressFcn = {@obj.fKeyPressFcn};
+            f.WindowButtonDownFcn = {@obj.fWindowButtonDownFcn};
+            f.WindowButtonMotionFcn = {@obj.fWindowButtonMotionFcn};
+            f.WindowButtonUpFcn = {@obj.fWindowButtonUpFcn};
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
-            hwidth = 52;
-            hheight = 20;
-            hx = (fwidth-hwidth)*0.6;
-            hy = 8;
-            axesContrast = axes;
-            axesContrast.Parent = f;
-            axesContrast.Units = 'characters';
-            axesContrast.Position = [hx hy hwidth hheight];
-            axesContrast.NextPlot = 'add';
-            axesContrast.ButtonDownFcn = @obj.axesContrast_ButtonDownFcn;
-            %%% semilogy plot
+            axesZoomMap = axes;
+            axesZoomMap.Parent = f;
+            axesZoomMap.Units = 'characters';
+            axesZoomMap.YDir = 'reverse';
+            
+            displayedImage = image;
+            displayedImage.Parent = axesZoomMap;
+            %% Add the rectangle that will be used to control the zoom and pan
             %
-            plot = semilogy(axesContrast,(0:255),rand(256,1),...
-                'Color',[0 0 0]/255,...
-                'LineWidth',3);
-            axesContrast.YScale = 'log';
-            axesContrast.XLim = [0,255];
-            axesContrast.YLim(1) = 0;
-            axesContrast.FontSize = 8;
-            axesContrast.XLabel.String = 'Intensity';
-            axesContrast.YLabel.String = 'Pixel Count';
-            %% Create controls
-            %  two slider bars
-            hwidth = 56;
-            hheight = 1.5;
-            hx = (fwidth-hwidth)/2;
-            hy = 3.25;
-            %%% sliderMax
-            %
-            sliderStep = 1/(256 - 1);
+            zoomMapRect = patch;
+            zoomMapRect.Parent = axesZoomMap;
+            zoomMapRect.Visible = 'off';
             
-            sliderMax = uicontrol;
-            sliderMax.Parent = f;
-            sliderMax.Style = 'slider';
-            sliderMax.Units = 'characters';
-            sliderMax.Min = 0;
-            sliderMax.Max = 1;
-            sliderMax.BackgroundColor = [255 255 255]/255;
-            sliderMax.Value = 1;
-            sliderMax.SliderStep = [sliderStep sliderStep];
-            sliderMax.Position = [hx hy hwidth hheight];
-            sliderMax.Callback = {@obj.sliderMax_Callback};
-            hx = (fwidth-hwidth)/2;
-            hy = 1;
-            %%% sliderMin
-            %
-            sliderStep = 1/(256 - 1);
             
-            sliderMin = uicontrol;
-            sliderMin.Parent = f;
-            sliderMin.Style = 'slider';
-            sliderMin.Units = 'characters';
-            sliderMin.Min = 0;
-            sliderMin.Max = 1;
-            sliderMin.BackgroundColor = [255 255 255]/255;
-            sliderMin.Value = 0;
-            sliderMin.SliderStep = [sliderStep sliderStep];
-            sliderMin.Position = [hx hy hwidth hheight];
-            sliderMin.Callback = {@obj.sliderMin_Callback};
-            %%
-            %
-            editMin = uicontrol;
-            editMin.Parent = f;
-            editMin.Style = 'edit';
-            editMin.Units = 'characters';
-            editMin.FontSize = 12;
-            editMin.FontName = 'Verdana';
-            editMin.String = num2str(1);
-            editMin.Position = [10, 30, 20, 2];
-            editMin.Callback = {@obj.editMin_Callback};
-            
-            textMin = uicontrol;
-            textMin.Parent = f;
-            textMin.Style = 'text';
-            textMin.Units = 'characters';
-            textMin.String = 'Min';
-            textMin.FontSize = 10;
-            textMin.FontName = 'Verdana';
-            textMin.HorizontalAlignment = 'left';
-            textMin.Position = [10, 32, 20, 1.5];
-            
-            editMax = uicontrol;
-            editMax.Parent = f;
-            editMax.Style = 'edit';
-            editMax.Units = 'characters';
-            editMax.FontSize = 12;
-            editMax.FontName = 'Verdana';
-            editMax.String = num2str(1);
-            editMax.Position = [38.3, 30, 20, 2];
-            editMax.Callback = {@obj.editMax_Callback};
-            
-            textMax = uicontrol;
-            textMax.Parent = f;
-            textMax.Style = 'text';
-            textMax.Units = 'characters';
-            textMax.String = 'Max';
-            textMax.FontSize = 10;
-            textMax.FontName = 'Verdana';
-            textMax.HorizontalAlignment = 'left';
-            textMax.Position = [38.3, 32, 20, 1.5];
-            %% Lines for the min and max contrast levels
-            %
-            hwidth = 52;
-            hheight = 20;
-            hx = (fwidth-hwidth)*0.6;
-            hy = 8;
-            
-            haxesLine = axes;
-            haxesLine.Parent = f;
-            haxesLine.Units = 'characters';
-            haxesLine.Position = [hx hy hwidth hheight];
-            haxesLine.NextPlot = 'add';
-            haxesLine.Visible = 'off';
-            haxesLine.YLim = [0,1];
-            haxesLine.XLim = [0,1];
-            
-            lineMin = line;
-            lineMin.Parent = haxesLine;
-            lineMin.Color = [29 97 175]/255;
-            lineMin.LineWidth = 3;
-            lineMin.LineStyle = ':';
-            lineMin.YData = [0,1];
-            lineMax = line;
-            lineMax.Parent = haxesLine;
-            lineMax.Color = [255 103 97]/255;
-            lineMax.LineWidth = 3;
-            lineMax.LineStyle = ':';
-            lineMax.YData = [0,1];
             %%
             % make the gui visible
-            set(f,'Visible','on');
             obj.gui_main = f;
-            
-            handles.editMin = editMin;
-            handles.editMax = editMax;
-            handles.haxesLine = haxesLine;
-            handles.lineMin = lineMin;
-            handles.lineMax = lineMax;
-            handles.plot = plot;
-            handles.axesContrast = axesContrast;
-            handles.sliderMax = sliderMax;
-            handles.sliderMin = sliderMin;
+            handles.axesZoomMap = axesZoomMap;
+            handles.displayedImage = displayedImage;
+            handles.zoomMapRect = zoomMapRect;
             guidata(obj.gui_main,handles);
         end
         %%
         % set the viewer object for this to work
         function obj = initialize(obj)
+            myunits = get(0,'units');
+            set(0,'units','pixels');
+            Pix_SS = get(0,'screensize');
+            set(0,'units','characters');
+            Char_SS = get(0,'screensize');
+            ppChar = Pix_SS./Char_SS;
+            ppChar = ppChar([3,4]);
+            set(0,'units',myunits);
+            
+            %% Create the axes that will show the contrast histogram
+            %
+            windowMeasure = 35*ppChar(2); %35 height characters, just like the contrast window
+            if obj.viewer.image_width/obj.viewer.image_height > 1
+                % then maximize the width
+                widthaxes = windowMeasure/ppChar(1);
+                heightaxes = windowMeasure*obj.viewer.image_height/obj.viewer.image_width/ppChar(2);
+            else
+                % then maximize the height
+                heightaxes  = windowMeasure/ppChar(2);
+                widthaxes  = windowMeasure*obj.viewer.image_width/obj.viewer.image_height/ppChar(1);
+            end
+            fx = Char_SS(3) - (Char_SS(3)*.1 + widthaxes);
+            fy = Char_SS(4) - (Char_SS(4)*.1 + heightaxes);
+            
             handles = guidata(obj.gui_main);
-            obj.imag3 = reshape(obj.viewer.imag3,1,[]);
-            obj.refresh;
-            handles.sliderMin.Value = 0;
-            handles.sliderMax.Value = 1;
-            obj.ContrastLineUpdate;
-            obj.newColormapFromContrastHistogram;
+            
+            obj.gui_main.Position = [fx fy widthaxes heightaxes];
+            obj.gui_main.Visible = 'on';
+            obj.gui_main.Colormap = colormap(gray(1024));
+            
+            
+            handles.axesZoomMap.Position = [0 0 widthaxes heightaxes];
+            handles.axesZoomMap.XLim = [0.5,obj.viewer.image_width+0.5];
+            handles.axesZoomMap.YLim = [0.5,obj.viewer.image_height+0.5];
+            
+            handles.displayedImage.CData = obj.viewer.imag3;
+            handles.displayedImage.CDataMapping = 'scaled';
+            
+            handles.zoomMapRect.Vertices = [1, 1;obj.viewer.image_width, 1;obj.viewer.image_width, obj.viewer.image_height;1, obj.viewer.image_height];
+            handles.zoomMapRect.Faces = [1,2,3,4];
+            handles.zoomMapRect.LineStyle = 'none';
+            handles.zoomMapRect.FaceColor = [255 215 0]/255;
+            handles.zoomMapRect.FaceAlpha = 0.2;
+            
             guidata(obj.gui_main,handles);
         end
         %%
         %
         function obj = refresh(obj)
-            obj.autoEdges;
-            %%%
-            % create the contrast histogram to be displayed in the axes
-            obj.findImageHistogram;
-            obj.ContrastLineUpdate;
-        end
-        %%
-        % A simple way to determine the edges of the histogram
-        function obj = autoEdges(obj)
-            if isa(obj.imag3,'uint8')
-                mymax = quantile(obj.imag3,0.98);
-                mymin = quantile(obj.imag3,0.02);
-                obj.histogramEdges = mymin:1:mymax;
-            elseif isa(obj.imag3,'uint16') || isa(obj.imag3,'uint32') ||...
-                    isa(obj.imag3,'uint64')
-                mymax = double(quantile(obj.imag3,0.99));
-                mymin = double(quantile(obj.imag3,0.01));
-                if mymax - mymin < 100
-                    binspan = 1;
-                else
-                    binspan = round((mymax-mymin)/100);
-                end
-                obj.histogramEdges = mymin:binspan:mymax;
-            elseif isa(obj.imag3,'double')
-                mymax = double(quantile(obj.imag3,0.98));
-                mymin = double(quantile(obj.imag3,0.02));
-                obj.histogramEdges = mymin:(mymax-mymin)/100:mymax;
-            end
+            
         end
         %%
         %
-        function obj = findImageHistogram(obj)
-            [obj.contrastHistogram,~] = histcounts(obj.imag3,obj.histogramEdges);
-            handles = guidata(obj.gui_main);
-            handles.plot.YData = obj.contrastHistogram/max(obj.contrastHistogram);
-            handles.plot.XData = diff(obj.histogramEdges)/2+obj.histogramEdges(1:end-1);
-            handles.axesContrast.XLim = [handles.plot.XData(1) handles.plot.XData(end)];
-            guidata(obj.gui_main,handles);
+        function fCloseRequestFcn(obj,~,~)
+            %do nothing. This means only the master object can close this
+            %window.
         end
         %%
         %
-        function obj = axesContrast_ButtonDownFcn(obj,~,~)
-            obj.refresh;
-        end
-        %%
-        %
-        function obj = sliderMax_Callback(obj,~,~)
-            handles = guidata(obj.gui_main);
-            sstep = handles.sliderMax.SliderStep;
-            mymax = handles.sliderMax.Value;
-            mymin = handles.sliderMin.Value;
-            if mymax == 0
-                handles.sliderMax.Value = sstep(1);
-                handles.sliderMin.Value = 0;
-            elseif mymax <= mymin
-                handles.sliderMin.Value = mymax-sstep(1);
-            end
-            obj.newColormapFromContrastHistogram;
-            obj.ContrastLineUpdate;
-            guidata(obj.gui_main,handles);
-        end
-        %%
-        %
-        function obj = sliderMin_Callback(obj,~,~)
-            handles = guidata(obj.gui_main);
-            sstep = handles.sliderMax.SliderStep;
-            mymax = handles.sliderMax.Value;
-            mymin = handles.sliderMin.Value;
-            if mymin == 1
-                handles.sliderMax.Value = 1;
-                handles.sliderMin.Value = 1-sstep(1);
-            elseif mymin >= mymax
-                handles.sliderMax.Value = mymin+sstep(1);
-            end
-            obj.newColormapFromContrastHistogram;
-            obj.ContrastLineUpdate;
-            guidata(obj.gui_main,handles);
-        end
-        %%
-        %
-        function obj = ContrastLineUpdate(obj)
-            handles = guidata(obj.gui_main);
-            handles.lineMin.XData = [handles.sliderMin.Value,handles.sliderMin.Value];
-            handles.lineMax.XData = [handles.sliderMax.Value,handles.sliderMax.Value];
-            guidata(obj.gui_main,handles);
-        end
-        %% newColormapFromContrastHistogram
-        %
-        function obj = newColormapFromContrastHistogram(obj)
-            if obj.viewer.rgbBool
-                obj.viewer.update_mainImage;
+        function fKeyPressFcn(obj,~,keyInfo)
+            if obj.kybrd_flag
+                return
             else
-                handles = guidata(obj.gui_main);
-                indexMin = floor((length(handles.plot.XData)-1)*handles.sliderMin.Value)+1;
-                indexMax = floor((length(handles.plot.XData)-1)*handles.sliderMax.Value)+1;
-                if indexMin == indexMax
-                    indexMax = indexMin + 1;
+                
+                switch keyInfo.Key
+                    case 'equal' %or |plus|
+                        %%
+                        % Zoom in
+                        obj.viewer.zoomIn;
+                    case 'hyphen' % or |minus|
+                        %%
+                        % Zoom out
+                        obj.viewer.zoomOut;
+                    case '0'
+                        %%
+                        % Return to top level zoom
+                        obj.viewer.zoomTop;
                 end
-                myminValue = handles.plot.XData(indexMin);
-                mymaxValue = handles.plot.XData(indexMax);
-                handles.editMin.String = num2str(myminValue);
-                handles.editMax.String = num2str(mymaxValue);
-                handles2 = guidata(obj.viewer.gui_main);
-                handles2.axesImageViewer.CLim = [myminValue mymaxValue];
-                guidata(obj.viewer.gui_main,handles2);
+                obj.kybrd_flag = false;
             end
         end
         %%
         %
-        function obj = editMin_Callback(obj)
+        function fWindowButtonDownFcn(obj,~,~)
+            handles = guidata(obj.gui_main);
+            if obj.viewer.zoomIndex == 1
+                return
+            end
             
+            obj.panningActiveBool = true;
+            handles.zoomMapRect.Visible = 'off';
+            myCurrentPoint = obj.gui_main.CurrentPoint;
+            figureSize = obj.gui_main.Position;
+            
+            myVertices = obj.evaluateNewCenter(myCurrentPoint, figureSize);
+            
+            handles.zoomMapRect.Vertices = myVertices;
+            obj.viewer.zoomPan;
+            handles.zoomMapRect.Visible = 'on';
+            guidata(obj.gui_main,handles)
         end
-        %%
-        %
-        function obj = editMax_Callback(obj)
+        
+        function fWindowButtonMotionFcn(obj,~,~)
+            handles = guidata(obj.gui_main);
+            if obj.viewer.zoomIndex == 1 || ~obj.panningActiveBool
+                return
+            end
+            handles.zoomMapRect.Visible = 'off';
+            myCurrentPoint = obj.gui_main.CurrentPoint;
+            figureSize = obj.gui_main.Position;
             
+            myVertices = obj.evaluateNewCenter(myCurrentPoint, figureSize);
+            
+            handles.zoomMapRect.Vertices = myVertices;
+            obj.viewer.zoomPan;
+            handles.zoomMapRect.Visible = 'on';
+            guidata(obj.gui_main,handles)
+        end
+        
+        function fWindowButtonUpFcn(obj,~,~)
+            obj.panningActiveBool = false;
+        end
+        
+        function myVertices = evaluateNewCenter(obj,myCurrentPoint, figureSize)
+            myCurrentPoint = [myCurrentPoint(1),figureSize(4)-myCurrentPoint(2)];
+            myCurrentPoint(1) = myCurrentPoint(1)/figureSize(3)*obj.viewer.image_width;
+            myCurrentPoint(2) = myCurrentPoint(2)/figureSize(4)*obj.viewer.image_height;
+            newHalfWidth = obj.viewer.image_width*obj.viewer.zoomArray(obj.viewer.zoomIndex)/2;
+            newHalfHeight = obj.viewer.image_height*obj.viewer.zoomArray(obj.viewer.zoomIndex)/2;
+            %%
+            % make sure the center does not move the rectangle |off screen|
+            if myCurrentPoint(1) - newHalfWidth < 1
+                myCurrentPoint(1) = newHalfWidth + 1;
+            elseif myCurrentPoint(1) + newHalfWidth > obj.viewer.image_width
+                myCurrentPoint(1) = obj.viewer.image_width - newHalfWidth;
+            end
+            
+            if myCurrentPoint(2) - newHalfHeight < 1
+                myCurrentPoint(2) = newHalfHeight + 1;
+            elseif myCurrentPoint(2) + newHalfHeight > obj.viewer.image_height
+                myCurrentPoint(2) = obj.viewer.image_height - newHalfHeight;
+            end
+            
+            myVertices(1,:) = round(myCurrentPoint + [-newHalfWidth,-newHalfHeight]);
+            myVertices(2,:) = round(myCurrentPoint + [newHalfWidth,-newHalfHeight]);
+            myVertices(3,:) = round(myCurrentPoint + [newHalfWidth,newHalfHeight]);
+            myVertices(4,:) = round(myCurrentPoint + [-newHalfWidth,newHalfHeight]);
         end
     end
 end

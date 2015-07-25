@@ -24,6 +24,7 @@ classdef cellularGPSSimpleViewer_object < handle
         image_height;
         gui_main; %the main viewer figure handle
         kybrd_cmd; %a struct of function handles for keyboard commands
+        kybrd_flag = false; %to prevent repeat entry into the keyboard callbacks when a key is held down.
         
         indT = 1;
         indG = 1;
@@ -44,6 +45,9 @@ classdef cellularGPSSimpleViewer_object < handle
         contrast;
         zoom;
         rgbBool = false;
+        
+        zoomArray = [1, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
+        zoomIndex = 1;
     end
     %% Methods
     %   __  __     _   _            _
@@ -80,13 +84,14 @@ classdef cellularGPSSimpleViewer_object < handle
                 'Renderer','OpenGL',...
                 'CloseRequestFcn',{@obj.delete},...
                 'KeyPressFcn',{@obj.fKeyPressFcn});
-            
+            f.BusyAction = 'cancel';
             axesImageViewer = axes('Parent',f,...
                 'Units','characters',...
                 'YDir','reverse',...
                 'Visible','on'); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
             
-            displayedImage = image('Parent',axesImageViewer);
+            displayedImage = image;
+            displayedImage.Parent = axesImageViewer;
             %% Handles
             %   _  _              _ _
             %  | || |__ _ _ _  __| | |___ ___
@@ -140,23 +145,29 @@ classdef cellularGPSSimpleViewer_object < handle
         %%
         %
         function obj = fKeyPressFcn(obj,~,keyInfo)
-            switch keyInfo.Key
-                case 'period'
-                    obj.kybrd_cmd.period(obj);
-                case 'comma'
-                    obj.kybrd_cmd.comma(obj);
-                case 'a'
-                    obj.kybrd_cmd.a(obj);
-                case 's'
-                    obj.kybrd_cmd.s(obj);
-                case 'q'
-                    obj.kybrd_cmd.q(obj);
-                case 'w'
-                    obj.kybrd_cmd.w(obj);
-                case 'z'
-                    obj.kybrd_cmd.z(obj);
-                case 'x'
-                    obj.kybrd_cmd.x(obj);
+            if obj.kybrd_flag
+                return
+            else
+                obj.kybrd_flag = true;
+                switch keyInfo.Key
+                    case 'period'
+                        obj.kybrd_cmd.period(obj);
+                    case 'comma'
+                        obj.kybrd_cmd.comma(obj);
+                    case 'a'
+                        obj.kybrd_cmd.a(obj);
+                    case 's'
+                        obj.kybrd_cmd.s(obj);
+                    case 'q'
+                        obj.kybrd_cmd.q(obj);
+                    case 'w'
+                        obj.kybrd_cmd.w(obj);
+                    case 'z'
+                        obj.kybrd_cmd.z(obj);
+                    case 'x'
+                        obj.kybrd_cmd.x(obj);
+                end
+                obj.kybrd_flag = false;
             end
         end
         %%
@@ -179,6 +190,10 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             handles.displayedImage.CData = obj.imag3;
             guidata(obj.gui_main,handles);
+            
+            handlesZoom = guidata(obj.zoom.gui_main);
+            handlesZoom.displayedImage.CData = obj.imag3;
+            guidata(obj.zoom.gui_main,handlesZoom);
         end
         %%
         %
@@ -306,6 +321,10 @@ classdef cellularGPSSimpleViewer_object < handle
             guidata(obj.gui_main,handles);
             %%
             %
+            obj.zoom.viewer = obj;
+            obj.zoom.initialize;
+            obj.zoom.refresh;
+            
             obj.contrast.viewer = obj;
             obj.contrast.initialize;
             obj.contrast.refresh;
@@ -578,6 +597,96 @@ classdef cellularGPSSimpleViewer_object < handle
                 end
                 guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
             end
+        end
+        %%
+        %
+        function obj = zoomIn(obj)
+            if obj.zoomIndex < length(obj.zoomArray)
+                obj.zoomIndex = obj.zoomIndex + 1;
+            else
+                return
+            end
+            %%
+            % get the patch position
+            newHalfWidth = obj.image_width*obj.zoomArray(obj.zoomIndex)/2;
+            newHalfHeight = obj.image_height*obj.zoomArray(obj.zoomIndex)/2;
+            handles = guidata(obj.zoom.gui_main);
+            handles.zoomMapRect.Visible = 'off';
+            myVertices = handles.zoomMapRect.Vertices;
+            myCenter = (myVertices(3,:) - myVertices(1,:))/2 + myVertices(1,:);
+            myVertices(1,:) = round(myCenter + [-newHalfWidth,-newHalfHeight]);
+            myVertices(2,:) = round(myCenter + [newHalfWidth,-newHalfHeight]);
+            myVertices(3,:) = round(myCenter + [newHalfWidth,newHalfHeight]);
+            myVertices(4,:) = round(myCenter + [-newHalfWidth,newHalfHeight]);
+            handles.zoomMapRect.Vertices = myVertices;
+            handles.zoomMapRect.Visible = 'on';
+            guidata(obj.zoom.gui_main,handles);
+            obj.zoomPan;
+        end
+        %%
+        %
+        function obj = zoomOut(obj)
+            if obj.zoomIndex > 2
+                obj.zoomIndex = obj.zoomIndex - 1;
+            elseif obj.zoomIndex == 2
+                obj.zoomTop;
+                return
+            else
+                return
+            end
+            %%
+            % get the patch position
+            newHalfWidth = obj.image_width*obj.zoomArray(obj.zoomIndex)/2;
+            newHalfHeight = obj.image_height*obj.zoomArray(obj.zoomIndex)/2;
+            handles = guidata(obj.zoom.gui_main);
+            handles.zoomMapRect.Visible = 'off';
+            myVertices = handles.zoomMapRect.Vertices;
+            myCenter = (myVertices(3,:)-myVertices(1,:))/2+myVertices(1,:);
+            %%
+            % make sure the center does not move the rectangle |off screen|
+            if myCenter(1) - newHalfWidth < 1
+                myCenter(1) = newHalfWidth + 1;
+            elseif myCenter(1) + newHalfWidth > obj.image_width
+                myCenter(1) = obj.image_width - newHalfWidth;
+            end
+            
+            if myCenter(2) - newHalfHeight < 1
+                myCenter(2) = newHalfHeight + 1;
+            elseif myCenter(2) + newHalfHeight > obj.image_height
+                myCenter(2) = obj.image_height - newHalfHeight;
+            end
+            
+            myVertices(1,:) = round(myCenter + [-newHalfWidth,-newHalfHeight]);
+            myVertices(2,:) = round(myCenter + [newHalfWidth,-newHalfHeight]);
+            myVertices(3,:) = round(myCenter + [newHalfWidth,newHalfHeight]);
+            myVertices(4,:) = round(myCenter + [-newHalfWidth,newHalfHeight]);
+            handles.zoomMapRect.Vertices = myVertices;
+            handles.zoomMapRect.Visible = 'on';
+            guidata(obj.zoom.gui_main,handles);
+            obj.zoomPan;
+        end
+        %%
+        %
+        function obj = zoomTop(obj)
+            obj.zoomIndex = 1;
+            handles = guidata(obj.zoom.gui_main);
+            handles.zoomMapRect.Visible = 'off';
+            handles.zoomMapRect.Vertices = [1, 1;obj.image_width, 1;obj.image_width, obj.image_height;1, obj.image_height];
+            guidata(obj.zoom.gui_main,handles);
+            obj.zoomPan;
+        end
+        %%
+        %
+        function obj = zoomPan(obj)
+            % Adjust the imageViewer limits to reflect the zoomMapRect
+            % position
+            handlesZoom = guidata(obj.zoom.gui_main);
+            myVertices = handlesZoom.zoomMapRect.Vertices;
+            handles = guidata(obj.gui_main);
+            handles.axesImageViewer.XLim = [myVertices(1,1)-0.5,myVertices(3,1)+0.5];
+            handles.axesImageViewer.YLim = [myVertices(1,2)-0.5,myVertices(3,2)+0.5];
+            guidata(obj.zoom.gui_main,handlesZoom);
+            guidata(obj.gui_main,handles);
         end
     end
 end
