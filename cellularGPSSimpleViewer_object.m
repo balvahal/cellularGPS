@@ -42,6 +42,7 @@ classdef cellularGPSSimpleViewer_object < handle
         smda_database;
         moviePath;
         
+        gps;
         contrast;
         zoom;
         rgbBool = false;
@@ -133,6 +134,7 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.kybrd_cmd.x = @cellularGPSSimpleViewer_kybrd_x;
             %%
             %
+            obj.gps = cellularGPSSimpleViewer_gps;
             obj.contrast = cellularGPSSimpleViewer_contrast;
             obj.zoom = cellularGPSSimpleViewer_zoom;
         end
@@ -321,6 +323,10 @@ classdef cellularGPSSimpleViewer_object < handle
             guidata(obj.gui_main,handles);
             %%
             %
+            obj.gps.viewer = obj;
+            obj.gps.initialize;
+            obj.gps.refresh;
+            
             obj.zoom.viewer = obj;
             obj.zoom.initialize;
             obj.zoom.refresh;
