@@ -168,7 +168,7 @@ classdef cellularGPSSimpleViewer_gps < handle
         %%
         %
         function obj = refresh(obj)
-            
+            obj.loop;
         end
         %%
         %
@@ -298,6 +298,25 @@ classdef cellularGPSSimpleViewer_gps < handle
         %%
         %
         function obj = loop(obj)
+            %%%
+            % a good snippet of code to update the table register and pull
+            % the referenced GPS from the pointer indices.
+            G = obj.smda_itinerary.order_group(obj.viewer.indG);
+            P = obj.smda_itinerary.order_position{G};
+            P = P(obj.viewer.indP);
+            S = obj.smda_itinerary.order_settings{P};
+            S = S(obj.viewer.indS);
+%             smda_databaseLogical = obj.smda_database.group_number == G...
+%                 & obj.smda_database.position_number == P...
+%                 & obj.smda_database.settings_number == S;
+%             mytable = obj.smda_database(smda_databaseLogical,:);
+%             obj.viewer.tblRegister = sortrows(mytable,{'timepoint'});
+%             if obj.viewer.indT > height(obj.tblRegister)
+%                 obj.viewer.indT = height(obj.tblRegister);
+%             end
+            %%%
+            %
+            
             handles = guidata(obj.gui_main);
             
             %% Group Table
@@ -317,9 +336,7 @@ classdef cellularGPSSimpleViewer_gps < handle
             %% Position Table
             % Show the data in the itinerary |position_order| property for a given
             % group
-            myGroupOrder = obj.smda_itinerary.order_group;
-            gInd = myGroupOrder(obj.viewer.indG);
-            myPositionOrder = obj.smda_itinerary.order_position{gInd};
+            myPositionOrder = obj.smda_itinerary.order_position{G};
             tablePositionData = cell(length(myPositionOrder),...
                 length(get(handles.tablePosition,'ColumnName')));
             n=0;
@@ -336,11 +353,8 @@ classdef cellularGPSSimpleViewer_gps < handle
             %% Region 4
             %
             %% Settings Table
-            % Show the prototype_settings
-            pInd = obj.smda_itinerary.ind_position{gInd};
-            %pInd = pInd(1);
-            pInd = obj.viewer.indP;
-            mySettingsOrder = obj.smda_itinerary.order_settings{pInd};
+            %
+            mySettingsOrder = obj.smda_itinerary.order_settings{P};
             tableSettingsData = cell(length(mySettingsOrder),...
                 length(get(handles.tableSettings,'ColumnName')));
             n=1;

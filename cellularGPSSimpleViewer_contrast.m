@@ -330,7 +330,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
         %
         function obj = newColormapFromContrastHistogram(obj)
             if obj.viewer.rgbBool
-                obj.viewer.update_mainImage;
+                obj.viewer.update_Image;
             else
                 handles = guidata(obj.gui_main);
                 indexMin = floor((length(handles.plot.XData)-1)*handles.sliderMin.Value)+1;

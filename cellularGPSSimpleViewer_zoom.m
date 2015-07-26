@@ -47,6 +47,7 @@ classdef cellularGPSSimpleViewer_zoom < handle
         rgbBool = false;
         
         panningActiveBool = false;
+        windowMotionBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -159,7 +160,7 @@ classdef cellularGPSSimpleViewer_zoom < handle
         %%
         %
         function obj = refresh(obj)
-            
+
         end
         %%
         %
@@ -213,8 +214,13 @@ classdef cellularGPSSimpleViewer_zoom < handle
         end
         
         function fWindowButtonMotionFcn(obj,~,~)
+            if obj.windowMotionBool
+                return
+            end
+            obj.windowMotionBool = true;
             handles = guidata(obj.gui_main);
             if obj.viewer.zoomIndex == 1 || ~obj.panningActiveBool
+                obj.windowMotionBool = false;
                 return
             end
             handles.zoomMapRect.Visible = 'off';
@@ -227,6 +233,7 @@ classdef cellularGPSSimpleViewer_zoom < handle
             obj.viewer.zoomPan;
             handles.zoomMapRect.Visible = 'on';
             guidata(obj.gui_main,handles)
+            obj.windowMotionBool = false;
         end
         
         function fWindowButtonUpFcn(obj,~,~)

@@ -31,6 +31,11 @@ classdef cellularGPSSimpleViewer_object < handle
         indP = 1;
         indS = 1;
         
+        T = 1;
+        G = 1;
+        P = 1;
+        S = 1;
+        
         tblG;
         tblP;
         tblS;
@@ -143,6 +148,9 @@ classdef cellularGPSSimpleViewer_object < handle
         % properties are also deleted.
         function delete(obj,~,~)
             delete(obj.gui_main);
+            delete(obj.gps.gui_main);
+            delete(obj.zoom.gui_main);
+            delete(obj.contrast.gui_main);
         end
         %%
         %
@@ -174,7 +182,7 @@ classdef cellularGPSSimpleViewer_object < handle
         end
         %%
         %
-        function obj = update_mainImage(obj)
+        function obj = update_Image(obj)
             handles = guidata(obj.gui_main);
             obj.imag3path = fullfile(obj.imag3dir,obj.tblRegister.filename{obj.indT});
             obj.imag3 = imread(obj.imag3path);
@@ -192,7 +200,7 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             handles.displayedImage.CData = obj.imag3;
             guidata(obj.gui_main,handles);
-            
+                                               
             handlesZoom = guidata(obj.zoom.gui_main);
             handlesZoom.displayedImage.CData = obj.imag3;
             guidata(obj.zoom.gui_main,handlesZoom);
@@ -259,7 +267,10 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.smda_itinerary.import(fullfile(obj.moviePath,'smdaITF.txt'));
             %% display image relative to the viewing screen
             %
-            handles = guidata(obj.gui_main);
+            
+            %%%
+            % a good snippet of code to update the table register and pull
+            % the referenced GPS from the pointer indices.
             G = obj.smda_itinerary.order_group(obj.indG);
             P = obj.smda_itinerary.order_position{G};
             P = P(obj.indP);
@@ -274,8 +285,9 @@ classdef cellularGPSSimpleViewer_object < handle
                 obj.indT = height(obj.tblRegister);
             end
             
-            obj.update_mainImage;
-            
+            obj.update_Image;
+            %%%
+            %
             obj.image_width = size(obj.imag3,2);
             obj.image_height = size(obj.imag3,1);
             
@@ -306,6 +318,7 @@ classdef cellularGPSSimpleViewer_object < handle
                 end
             end
             
+            handles = guidata(obj.gui_main);
             handles.fwidth = fwidth/ppChar(1);
             handles.fheight = fheight/ppChar(2);
             handles.ppChar = ppChar;
@@ -321,8 +334,10 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.gui_main.Colormap = colormap(gray(1024));
             
             guidata(obj.gui_main,handles);
-            %%
-            %
+            %% update other windows
+            % # The GPS
+            % # The zoom
+            % # The contrast
             obj.gps.viewer = obj;
             obj.gps.initialize;
             obj.gps.refresh;
@@ -334,6 +349,72 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.contrast.viewer = obj;
             obj.contrast.initialize;
             obj.contrast.refresh;
+        end
+        %%
+        %
+        function obj = refresh(obj)
+            obj.consistencyCheckGPS;
+            obj.update_Image;
+            obj.gps.refresh;
+            obj.zoom.refresh;
+            %obj.contrast.refresh; %This is super slow...
+        end
+        %%
+        %
+        function consistencyCheckGPS(obj)
+            %%%
+            % enforces consistency between the indices of the GPS and the
+            % values they reference. It operates under the assumption that
+            % the indices reflect the true state. However, if the *true
+            % state* is not valid, then correct the true state to the
+            % nearest valid GPS. The hope is this method will make changing
+            % the GPS easy from other functions or methods.
+            %
+            % Save the GPS already set
+            oldG = obj.G;
+            oldP = obj.P;
+            oldS = obj.S;
+            %%%
+            % Is the group index in range of the itinerary group list?
+            if obj.indG > obj.smda_itinerary.number_group
+                obj.indG = obj.smda_itinerary.number_group;
+            elseif obj.indG < 1
+                obj.indG = 1;
+            end
+            obj.G = obj.smda_itinerary.order_group(obj.indG);
+            %%%
+            % Is the position index in range of the itinerary position list?           
+            if obj.indP > obj.smda_itinerary.number_position(obj.G)
+                obj.indP = obj.smda_itinerary.number_position(obj.G);
+            elseif obj.indP < 1
+                obj.indP = 1;
+            end
+            obj.P = obj.smda_itinerary.order_position{obj.G}(obj.indP);
+            %%%
+            % Is the settings index in range of the itinerary settings list?
+            if obj.indS > obj.smda_itinerary.number_settings(obj.P)
+                obj.indS = obj.smda_itinerary.number_settings(obj.P);
+            end
+            obj.S = obj.smda_itinerary.order_settings{obj.P}(obj.indS);
+            %%%
+            % check to see if the table register needs to be updated. This
+            % is time consuming, so only update the table if the group,
+            % position, or settings has changed.
+            if (oldG ~= obj.G) || (oldP ~= obj.P) || (oldS ~= obj.S)
+                smda_databaseLogical = obj.smda_database.group_number == obj.G...
+                    & obj.smda_database.position_number == obj.P...
+                    & obj.smda_database.settings_number == obj.S;
+                mytable = obj.smda_database(smda_databaseLogical,:);
+                obj.tblRegister = sortrows(mytable,{'timepoint'});
+            end
+            %%%
+            % Make sure the time index reflects an actual timepoint.
+            if obj.indT > height(obj.tblRegister)
+                obj.indT = height(obj.tblRegister);
+            elseif obj.indT < 1
+                obj.indT = 1;
+            end
+            obj.T = obj.tblRegister.timepoint(obj.indT);
         end
         %%
         %
