@@ -300,7 +300,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
                 handles.sliderMin.Value = mymax-sstep(1);
             end
             obj.newColormapFromContrastHistogram;
-            obj.ContrastLineUpdate;
+            handles.lineMax.XData = [handles.sliderMax.Value,handles.sliderMax.Value];
+            %obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
@@ -317,7 +318,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
                 handles.sliderMax.Value = mymin+sstep(1);
             end
             obj.newColormapFromContrastHistogram;
-            obj.ContrastLineUpdate;
+            handles.lineMin.XData = [handles.sliderMin.Value,handles.sliderMin.Value];
+            %obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
@@ -356,13 +358,53 @@ classdef cellularGPSSimpleViewer_contrast < handle
         end
         %%
         %
-        function obj = editMin_Callback(obj)
+        function obj = editMin_Callback(obj,~,~)
+            handles = guidata(obj.gui_main);
+            newValue = str2double(handles.editMin.String);
+            if isnan(newValue) || isinf(newValue)
+                newValue = obj.histogramEdges(1);
+            end
+%             if newValue < 0
+%                 newValue = 0;
+%             end
             
+            handlesViewer = guidata(obj.viewer.gui_main);
+            CLimViewer = handlesViewer.axesImageViewer.CLim;
+            if newValue >= CLimViewer(2)
+                newValue = CLimViewer(2)*0.99;
+            end
+            handlesViewer.axesImageViewer.CLim = [newValue CLimViewer(2)];
+            guidata(obj.viewer.gui_main,handlesViewer);
+         
+            handlesZoom = guidata(obj.viewer.zoom.gui_main);
+            handlesZoom.axesZoomMap.CLim = [newValue CLimViewer(2)];
+            guidata(obj.viewer.zoom.gui_main,handlesZoom);
+            handles.editMin.String = num2str(newValue);
+            handles.lineMin.XData = ([newValue,newValue]-handles.plot.XData(1))/(handles.plot.XData(end)-handles.plot.XData(1));
+            guidata(obj.gui_main,handles);
         end
         %%
         %
-        function obj = editMax_Callback(obj)
+        function obj = editMax_Callback(obj,~,~)
+            handles = guidata(obj.gui_main);
+            newValue = str2double(handles.editMax.String);
+            if isnan(newValue) || isinf(newValue)
+                newValue = obj.histogramEdges(end);
+            end            
+            handlesViewer = guidata(obj.viewer.gui_main);
+            CLimViewer = handlesViewer.axesImageViewer.CLim;
+            if newValue <= CLimViewer(1)
+                newValue = CLimViewer(1)*1.01;
+            end
+            handlesViewer.axesImageViewer.CLim = [CLimViewer(1) newValue];
+            guidata(obj.viewer.gui_main,handlesViewer);
             
+            handlesZoom = guidata(obj.viewer.zoom.gui_main);
+            handlesZoom.axesZoomMap.CLim = [CLimViewer(1) newValue];
+            guidata(obj.viewer.zoom.gui_main,handlesZoom);
+            handles.editMax.String = num2str(newValue);         
+            handles.lineMax.XData = ([newValue,newValue]-handles.plot.XData(1))/(handles.plot.XData(end)-handles.plot.XData(1));
+            guidata(obj.gui_main,handles);
         end
         %%
         %
