@@ -80,6 +80,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
             f.Position = [fx fy fwidth fheight];
             f.CloseRequestFcn = {@fDeleteFcn};
             f.Name = 'Contrast';
+            f.Resize = 'off';
+            f.WindowButtonDownFcn = {@obj.fWindowButtonDownFcn};
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
             hwidth = 52;
@@ -361,6 +363,11 @@ classdef cellularGPSSimpleViewer_contrast < handle
         %
         function obj = editMax_Callback(obj)
             
+        end
+        %%
+        %
+        function obj = fWindowButtonDownFcn(obj,~,~)
+           obj.refresh; 
         end
     end
 end

@@ -71,8 +71,8 @@ classdef cellularGPSSimpleViewer_gps < handle
             ppChar = Pix_SS./Char_SS;
             ppChar = ppChar([3,4]);
             set(0,'units',myunits);
-            fwidth = 136.6; %683/ppChar(3);
-            fheight = 70; %910/ppChar(4);
+            fwidth = 91; %455/ppChar(3);
+            fheight = 46.1540; %600/ppChar(4);
             fx = Char_SS(3) - (Char_SS(3)*.1 + fwidth);
             fy = Char_SS(4) - (Char_SS(4)*.1 + fheight);
             
@@ -87,12 +87,12 @@ classdef cellularGPSSimpleViewer_gps < handle
             f.Position = [fx fy fwidth fheight];
             %% Create the axes that will show the contrast histogram
             % and the plot that will show the histogram
-            region1 = [0 56.1538]; %[0 730/ppChar(4)]; %180 pixels
-            region2 = [0 42.3077]; %[0 550/ppChar(4)]; %180 pixels
-            region3 = [0 13.8462]; %[0 180/ppChar(4)]; %370 pixels
+            region1 = [0 36.9232]; %[0 730/ppChar(4)]; %180 pixels
+            region2 = [0 27.6924]; %[0 550/ppChar(4)]; %180 pixels
+            region3 = [0 9.2308]; %[0 180/ppChar(4)]; %370 pixels
             region4 = [0 0]; %180 pixels
             
-            hwidth = 104;
+            hwidth = 91;
             hx = (fwidth-hwidth)/2;
             textBackgroundColorRegion1 = [37 124 224]/255; %tendoBlueLight
             buttonBackgroundColorRegion1 = [29 97 175]/255; %tendoBlueDark
@@ -116,7 +116,7 @@ classdef cellularGPSSimpleViewer_gps < handle
             tableGroup.FontSize = 8;
             tableGroup.FontName = 'Verdana';
             tableGroup.CellSelectionCallback = @obj.tableGroup_CellSelectionCallback;
-            tableGroup.Position = [hx, region2(2)+0.7692, hwidth, 13.0769];
+            tableGroup.Position = [hx, region2(2), hwidth, 9.2308];
             
             %% The position table
             %
@@ -131,7 +131,7 @@ classdef cellularGPSSimpleViewer_gps < handle
             tablePosition.FontSize = 8;
             tablePosition.FontName = 'Verdana';
             tablePosition.CellSelectionCallback = @obj.tablePosition_CellSelectionCallback;
-            tablePosition.Position = [hx, region3(2)+0.7692, hwidth, 28.1538];
+            tablePosition.Position = [hx, region3(2), hwidth, 18.4616];
             %% The settings table
             %
             tableSettings = uitable;
@@ -145,7 +145,7 @@ classdef cellularGPSSimpleViewer_gps < handle
             tableSettings.FontSize = 8;
             tableSettings.FontName = 'Verdana';
             tableSettings.CellSelectionCallback = @obj.tableSettings_CellSelectionCallback;
-            tableSettings.Position = [hx, region4(2)+0.7692, hwidth, 13.0769];
+            tableSettings.Position = [hx, region4(2), hwidth, 9.2308];
             
             %%
             % make the gui visible
@@ -207,29 +207,17 @@ classdef cellularGPSSimpleViewer_gps < handle
             if isempty(eventdata.Indices)
                 % if nothing is selected, which triggers after deleting data,
                 % make sure the pointer is still valid
-                if any(obj.tmn.pointerGroup > obj.smda_itinerary.number_group)
+                if any(obj.viewer.indG > obj.viewer.smda_itinerary.number_group)
                     % move pointer to last entry
-                    obj.tmn.pointerGroup = obj.smda_itinerary.number_group;
+                    obj.viewer.indG = obj.smda_itinerary.number_group;
+                    obj.viewer.refresh;
                 end
                 return
             else
-                obj.tmn.pointerGroup = sort(unique(eventdata.Indices(:,1)));
+                selectionG = sort(unique(eventdata.Indices(:,1)));
+                obj.viewer.indG = obj.smda_itinerary.order_group{selectionG(1)};
+                obj.viewer.refresh;
             end
-            
-            myGroupOrder = obj.smda_itinerary.order_group;
-            gInd = myGroupOrder(obj.tmn.pointerGroup(1));
-            if any(obj.tmn.pointerPosition > obj.smda_itinerary.number_position(gInd))
-                % move pointer to first entry
-                obj.tmn.pointerPosition = 1;
-            end
-            
-            obj.loop;
-            %%
-            % save changes made to the previous position
-            obj.tmn.mcl.export;
-            
-            obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
@@ -244,26 +232,20 @@ classdef cellularGPSSimpleViewer_gps < handle
             %
             % The pointer of the TravelAgent should always point to a valid
             % position from the the position_order in a given group.
-            myGroupOrder = obj.smda_itinerary.order_group;
-            gInd = myGroupOrder(obj.tmn.pointerGroup(1));
             if isempty(eventdata.Indices)
                 % if nothing is selected, which triggers after deleting data,
                 % make sure the pointer is still valid
-                if any(obj.tmn.pointerPosition > obj.smda_itinerary.number_position(gInd))
+                if any(obj.viewer.indP > obj.viewer.smda_itinerary.number_position(obj.viewer.G))
                     % move pointer to last entry
-                    obj.tmn.pointerPosition = obj.smda_itinerary.number_position(gInd);
+                    obj.viewer.indP = obj.smda_itinerary.number_position(obj.viewer.G);
+                    obj.viewer.refresh;
                 end
                 return
             else
-                obj.tmn.pointerPosition = sort(unique(eventdata.Indices(:,1)));
+                selectionP = sort(unique(eventdata.Indices(:,1)));
+                obj.viewer.indP = obj.smda_itinerary.order_position{obj.viewer.G}(selectionP(1));
+                obj.viewer.refresh;
             end
-            obj.loop;
-            %%
-            % save changes made to the previous position
-            obj.tmn.mcl.export;
-            
-            obj.tmn.gui_imageViewer.loadNewTracks;
-            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
@@ -277,23 +259,20 @@ classdef cellularGPSSimpleViewer_gps < handle
             % tables, which edit the itinerary directly, the settings table
             % will modify the the prototype, which will then be pushed to all
             % positions in a group.
-            myGroupOrder = obj.smda_itinerary.order_group;
-            gInd = myGroupOrder(obj.tmn.pointerGroup(1));
-            pInd = obj.smda_itinerary.ind_position{gInd};
-            pInd = pInd(1);
             if isempty(eventdata.Indices)
                 % if nothing is selected, which triggers after deleting data,
                 % make sure the pointer is still valid
-                if any(obj.tmn.pointerSettings > obj.smda_itinerary.number_settings{pInd})
+                if any(obj.viewer.S > obj.viewer.smda_itinerary.number_settings{obj.P})
                     % move pointer to last entry
-                    obj.tmn.pointerSettings = obj.smda_itinerary.number_settings(pInd);
+                    obj.viewer.indS = obj.viewer.smda_itinerary.number_settings(obj.P);
+                    obj.viewer.refresh;
                 end
                 return
             else
-                obj.tmn.pointerSettings = sort(unique(eventdata.Indices(:,1)));
+                selectionS = sort(unique(eventdata.Indices(:,1)));
+                obj.viewer.indS = obj.smda_itinerary.order_settings{obj.viewer.P}(selectionS(1));
+                obj.viewer.refresh;
             end
-            obj.loop;
-            obj.tmn.gui_imageViewer.loop_stepX;
         end
         %%
         %
