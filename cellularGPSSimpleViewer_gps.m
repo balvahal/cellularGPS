@@ -103,6 +103,57 @@ classdef cellularGPSSimpleViewer_gps < handle
             textBackgroundColorRegion4 = [255 103 97]/255; %tendoRedLight
             buttonBackgroundColorRegion4 = [199 80 76]/255; %tendoRedDark
             buttonSize = [20 3.0769]; %[100/ppChar(3) 40/ppChar(4)];
+            %% The timepoint box
+            %
+            editTime = uicontrol;
+            editTime.Parent = f;
+            editTime.Style = 'edit';
+            editTime.Units = 'characters';
+            editTime.FontSize = 16;
+            editTime.FontName = 'Verdana';
+            editTime.String = num2str(1);
+            editTime.Position = [4, region1(2)+5, 12, 3];
+            editTime.Callback = {@obj.editTime_Callback};
+            
+            textTime = uicontrol;
+            textTime.Parent = f;
+            textTime.Style = 'text';
+            textTime.Units = 'characters';
+            textTime.String = 'Timepoint';
+            textTime.FontSize = 12;
+            textTime.FontName = 'Verdana';
+            textTime.HorizontalAlignment = 'left';
+            textTime.Position = [20, region1(2)+5, 35, 3];
+            
+            textGroup = uicontrol;
+            textGroup.Parent = f;
+            textGroup.Style = 'text';
+            textGroup.Units = 'characters';
+            textGroup.String = 'Group';
+            textGroup.FontSize = 16;
+            textGroup.FontName = 'Verdana';
+            textGroup.HorizontalAlignment = 'left';
+            textGroup.Position = [4, region1(2)+0.5, 30, 3];
+            
+            textPosition = uicontrol;
+            textPosition.Parent = f;
+            textPosition.Style = 'text';
+            textPosition.Units = 'characters';
+            textPosition.String = 'Position';
+            textPosition.FontSize = 16;
+            textPosition.FontName = 'Verdana';
+            textPosition.HorizontalAlignment = 'left';
+            textPosition.Position = [58, region1(2)+5, 30, 3];
+            
+            textSettings = uicontrol;
+            textSettings.Parent = f;
+            textSettings.Style = 'text';
+            textSettings.Units = 'characters';
+            textSettings.String = 'Settings';
+            textSettings.FontSize = 16;
+            textSettings.FontName = 'Verdana';
+            textSettings.HorizontalAlignment = 'left';
+            textSettings.Position = [58, region1(2)+0.5, 30, 3];
             %% The group table
             %
             tableGroup = uitable;
@@ -154,6 +205,11 @@ classdef cellularGPSSimpleViewer_gps < handle
             handles.tableSettings = tableSettings;
             handles.tablePosition = tablePosition;
             handles.tableGroup = tableGroup;
+            handles.editTime = editTime;
+            handles.textTime = textTime;
+            handles.textGroup = textGroup;
+            handles.textPosition = textPosition;
+            handles.textSettings = textSettings;
             guidata(obj.gui_main,handles);
         end
         %%
@@ -169,6 +225,12 @@ classdef cellularGPSSimpleViewer_gps < handle
         %
         function obj = refresh(obj)
             obj.loop;
+            handles = guidata(obj.gui_main);
+            handles.textTime.String = sprintf('Timepoint %d of %d',obj.viewer.T,obj.viewer.smda_itinerary.number_of_timepoints);
+            handles.textGroup.String = sprintf('Group %d',obj.viewer.G);
+            handles.textPosition.String = sprintf('Position %d', obj.viewer.P);
+            handles.textSettings.String = sprintf('Settings %d', obj.viewer.S);
+            guidata(obj.gui_main,handles);
         end
         %%
         %
@@ -356,6 +418,20 @@ classdef cellularGPSSimpleViewer_gps < handle
             %%
             %
             %handles.infoBk_textTimepoint.String = sprintf('of %d\ntimepoint(s)',height(obj.tmn.smda_databaseSubset));
+            guidata(obj.gui_main,handles);
+        end
+        %%
+        %
+        function obj = editTime_Callback(obj,~,~)
+            handles = guidata(obj.gui_main);
+            newValue = str2double(handles.editTime.String);
+            if isnan(newValue) || isinf(newValue)
+                newValue = 1;
+            end
+            obj.viewer.indT = newValue;
+            obj.viewer.refresh;
+            handles.editTime.String = num2str(obj.viewer.indT);
+            handles.textTime.String = sprintf('Timepoint %d of %d',obj.viewer.T,obj.viewer.smda_itinerary.number_of_timepoints);
             guidata(obj.gui_main,handles);
         end
     end
