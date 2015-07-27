@@ -231,7 +231,6 @@ classdef cellularGPSSimpleViewer_contrast < handle
         % set the viewer object for this to work
         function obj = initialize(obj)
             handles = guidata(obj.gui_main);
-            obj.imag3 = reshape(obj.viewer.imag3,1,[]);
             obj.refresh;
             handles.sliderMin.Value = 0;
             handles.sliderMax.Value = 1;
@@ -242,6 +241,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
         %%
         %
         function obj = refresh(obj)
+            obj.imag3 = reshape(obj.viewer.imag3,1,[]);
             obj.autoEdges;
             %%%
             % create the contrast histogram to be displayed in the axes
@@ -252,8 +252,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
         % A simple way to determine the edges of the histogram
         function obj = autoEdges(obj)
             if isa(obj.imag3,'uint8')
-                mymax = quantile(obj.imag3,0.98);
-                mymin = quantile(obj.imag3,0.02);
+                mymax = quantile(obj.imag3,0.99);
+                mymin = quantile(obj.imag3,0.01);
                 obj.histogramEdges = mymin:1:mymax;
             elseif isa(obj.imag3,'uint16') || isa(obj.imag3,'uint32') ||...
                     isa(obj.imag3,'uint64')
@@ -266,8 +266,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
                 end
                 obj.histogramEdges = mymin:binspan:mymax;
             elseif isa(obj.imag3,'double')
-                mymax = double(quantile(obj.imag3,0.98));
-                mymin = double(quantile(obj.imag3,0.02));
+                mymax = double(quantile(obj.imag3,0.99));
+                mymin = double(quantile(obj.imag3,0.01));
                 obj.histogramEdges = mymin:(mymax-mymin)/100:mymax;
             end
         end

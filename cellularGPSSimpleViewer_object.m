@@ -31,10 +31,10 @@ classdef cellularGPSSimpleViewer_object < handle
         indP = 1;
         indS = 1;
         
-        T = 1;
-        G = 1;
-        P = 1;
-        S = 1;
+        T = 0;
+        G = 0;
+        P = 0;
+        S = 0;
         
         tblG;
         tblP;
@@ -271,20 +271,20 @@ classdef cellularGPSSimpleViewer_object < handle
             %%%
             % a good snippet of code to update the table register and pull
             % the referenced GPS from the pointer indices.
-            G = obj.smda_itinerary.order_group(obj.indG);
-            P = obj.smda_itinerary.order_position{G};
-            P = P(obj.indP);
-            S = obj.smda_itinerary.order_settings{P};
-            S = S(obj.indS);
-            smda_databaseLogical = obj.smda_database.group_number == G...
-                & obj.smda_database.position_number == P...
-                & obj.smda_database.settings_number == S;
-            mytable = obj.smda_database(smda_databaseLogical,:);
-            obj.tblRegister = sortrows(mytable,{'timepoint'});
-            if obj.indT > height(obj.tblRegister)
-                obj.indT = height(obj.tblRegister);
-            end
-            
+%             G = obj.smda_itinerary.order_group(obj.indG);
+%             P = obj.smda_itinerary.order_position{G};
+%             P = P(obj.indP);
+%             S = obj.smda_itinerary.order_settings{P};
+%             S = S(obj.indS);
+%             smda_databaseLogical = obj.smda_database.group_number == G...
+%                 & obj.smda_database.position_number == P...
+%                 & obj.smda_database.settings_number == S;
+%             mytable = obj.smda_database(smda_databaseLogical,:);
+%             obj.tblRegister = sortrows(mytable,{'timepoint'});
+%             if obj.indT > height(obj.tblRegister)
+%                 obj.indT = height(obj.tblRegister);
+%             end
+            obj.consistencyCheckGPS;
             obj.update_Image;
             %%%
             %
