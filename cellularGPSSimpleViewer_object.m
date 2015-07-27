@@ -204,37 +204,7 @@ classdef cellularGPSSimpleViewer_object < handle
             handlesZoom = guidata(obj.zoom.gui_main);
             handlesZoom.displayedImage.CData = obj.imag3;
             guidata(obj.zoom.gui_main,handlesZoom);
-        end
-        %%
-        %
-        function obj = updateLimits(obj)
-            handles = guidata(obj.gui_main);
-            
-            handles.axesTracks.YLim = [1,obj.pkTwo.ityA.imageHeightNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            handles.axesTracks.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            
-            handles.axesCircles.YLim = [1,obj.pkTwo.ityA.imageHeightNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            handles.axesCircles.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            
-            handles.axesText.YLim = [1,obj.pkTwo.ityA.imageHeightNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            handles.axesText.XLim = [1,obj.pkTwo.ityA.imageWidthNoBin/...
-                obj.pkTwo.ityA.settings_binning(obj.pkTwo.indAS)];
-            
-            handles.axesImageViewer.XLim = [0.5,obj.image_width+0.5];
-            handles.axesImageViewer.YLim = [0.5,obj.image_height+0.5];
-            handles.axesText.XLim = handles.axesImageViewer.XLim;
-            handles.axesText.YLim = handles.axesImageViewer.YLim;
-            handles.axesCircles.XLim = handles.axesImageViewer.XLim;
-            handles.axesCircles.YLim = handles.axesImageViewer.YLim;
-            
-            guidata(obj.gui_main,handles);
-        end
-        
+        end        
         %%
         % after specifying the moviePath, call this function to read the
         % database file, itinerary, and to display images.
@@ -267,23 +237,6 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.smda_itinerary.import(fullfile(obj.moviePath,'smdaITF.txt'));
             %% display image relative to the viewing screen
             %
-            
-            %%%
-            % a good snippet of code to update the table register and pull
-            % the referenced GPS from the pointer indices.
-%             G = obj.smda_itinerary.order_group(obj.indG);
-%             P = obj.smda_itinerary.order_position{G};
-%             P = P(obj.indP);
-%             S = obj.smda_itinerary.order_settings{P};
-%             S = S(obj.indS);
-%             smda_databaseLogical = obj.smda_database.group_number == G...
-%                 & obj.smda_database.position_number == P...
-%                 & obj.smda_database.settings_number == S;
-%             mytable = obj.smda_database(smda_databaseLogical,:);
-%             obj.tblRegister = sortrows(mytable,{'timepoint'});
-%             if obj.indT > height(obj.tblRegister)
-%                 obj.indT = height(obj.tblRegister);
-%             end
             obj.consistencyCheckGPS;
             obj.update_Image;
             %%%
@@ -394,6 +347,8 @@ classdef cellularGPSSimpleViewer_object < handle
             % Is the settings index in range of the itinerary settings list?
             if obj.indS > obj.smda_itinerary.number_settings(obj.P)
                 obj.indS = obj.smda_itinerary.number_settings(obj.P);
+            elseif obj.indS < 1
+                obj.indS = 1;
             end
             obj.S = obj.smda_itinerary.order_settings{obj.P}(obj.indS);
             %%%
@@ -462,228 +417,8 @@ classdef cellularGPSSimpleViewer_object < handle
         
         %%
         %
-        function obj = clickLoop(obj,myrec,~)
-            %%%
-            %   _____            _    __   ___
-            %  |_   _| _ __ _ __| |__ \ \ / (_)___
-            %    | || '_/ _` / _| / /  \ V /| (_-<
-            %    |_||_| \__,_\__|_\_\   \_/ |_/__/
-            %
-            if obj.pkTwo.gui_control.menu_viewTrackBool
-                %%%
-                % if the menu_viewTrackBool is true, then tracks are
-                % displayed
-                obj.pkTwo.mcl.pointer_track2 = obj.pkTwo.mcl.pointer_track;
-                obj.pkTwo.mcl.pointer_track = myrec.UserData;
-                obj.pkTwo.mcl.pointer_makecell2 = obj.pkTwo.mcl.pointer_makecell;
-                obj.pkTwo.mcl.pointer_makecell = obj.pkTwo.mcl.track_makecell(obj.pkTwo.mcl.pointer_track);
-                %% highlight
-                obj.highlightTrack;
-                handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                %% track edits
-                %
-                switch obj.pkTwo.makecell_mode
-                    case 'none'
-                        handlesControl.infoBk_textMessage.String = sprintf('track ID %d\nmakecell ID %d',obj.pkTwo.mcl.pointer_track,obj.pkTwo.mcl.pointer_makecell);
-                    case 'join'
-                        if obj.trackJoinBool
-                            if obj.pkTwo.mcl.pointer_track2 > obj.pkTwo.mcl.pointer_track
-                                keepTrack = obj.pkTwo.mcl.pointer_track;
-                                replaceTrack = obj.pkTwo.mcl.pointer_track2;
-                            else
-                                keepTrack = obj.pkTwo.mcl.pointer_track2;
-                                replaceTrack = obj.pkTwo.mcl.pointer_track;
-                            end
-                            obj.pkTwo.mcl.joinTrack(keepTrack,replaceTrack);
-                            obj.trackJoinBool = false;
-                            myLogical = ismember(obj.pkTwo.mcl.track_database.trackID,[keepTrack,replaceTrack]);
-                            myArray = 1:numel(myLogical);
-                            myArray = myArray(myLogical);
-                            obj.trackCenRow(keepTrack,:) = 0;
-                            obj.trackCenCol(keepTrack,:) = 0;
-                            obj.trackCenLogical(keepTrack,:) = false;
-                            obj.trackCenRow(replaceTrack,:) = 0;
-                            obj.trackCenCol(replaceTrack,:) = 0;
-                            obj.trackCenLogical(replaceTrack,:) = false;
-                            for v = myArray
-                                mytimepoint = obj.pkTwo.mcl.track_database.timepoint(v);
-                                mytrackID = obj.pkTwo.mcl.track_database.trackID(v);
-                                obj.trackCenRow(mytrackID,mytimepoint) = obj.pkTwo.mcl.track_database.centroid_row(v);
-                                obj.trackCenCol(mytrackID,mytimepoint) = obj.pkTwo.mcl.track_database.centroid_col(v);
-                                obj.trackCenLogical(mytrackID,mytimepoint) = true;
-                            end
-                            obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-                            
-                            obj.trackLine{replaceTrack}.Visible = 'off';
-                            obj.trackCircle{replaceTrack}.Visible = 'off';
-                            obj.trackText{replaceTrack}.Visible = 'off';
-                            
-                            obj.trackLine{keepTrack}.YData = obj.trackCenRow(keepTrack,obj.trackCenLogical(keepTrack,:));
-                            obj.trackLine{keepTrack}.XData = obj.trackCenCol(keepTrack,obj.trackCenLogical(keepTrack,:));
-                            obj.trackCircle{keepTrack}.Position = [obj.trackLine{keepTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{keepTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                            obj.trackText{keepTrack}.Position = [obj.trackLine{keepTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{keepTrack}.YData(1)+(obj.trackCircleSize-1)/2];
-                            handlesControl.infoBk_textMessage.String = sprintf('Joined track %d with\ntrack %d.',keepTrack,replaceTrack);
-                            %%
-                            % return to 'none' mode
-                            handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                            handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-                            obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-                            guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                        else
-                            handlesControl.infoBk_textMessage.String = sprintf('Join track %d with...',obj.pkTwo.mcl.pointer_track);
-                            obj.trackJoinBool = true;
-                        end
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        obj.loop_stepX;
-                    case 'break'
-                        oldTrack = obj.pkTwo.mcl.pointer_track;
-                        obj.pkTwo.mcl.breakTrack(obj.pkTwo.mcl.pointer_track,obj.pkTwo.indImage);
-                        newTrack = obj.pkTwo.mcl.pointer_track;
-                        obj.pkTwo.mcl.pointer_track = oldTrack;
-                        
-                        myLogical = ismember(obj.pkTwo.mcl.track_database.trackID,[oldTrack,newTrack]);
-                        myArray = 1:numel(myLogical);
-                        myArray = myArray(myLogical);
-                        obj.trackCenRow(oldTrack,:) = 0;
-                        obj.trackCenCol(oldTrack,:) = 0;
-                        obj.trackCenLogical(oldTrack,:) = false;
-                        obj.trackCenRow(newTrack,:) = 0;
-                        obj.trackCenCol(newTrack,:) = 0;
-                        obj.trackCenLogical(newTrack,:) = false;
-                        for v = myArray
-                            mytimepoint = obj.pkTwo.mcl.track_database.timepoint(v);
-                            mytrackID = obj.pkTwo.mcl.track_database.trackID(v);
-                            obj.trackCenRow(mytrackID,mytimepoint) = obj.pkTwo.mcl.track_database.centroid_row(v);
-                            obj.trackCenCol(mytrackID,mytimepoint) = obj.pkTwo.mcl.track_database.centroid_col(v);
-                            obj.trackCenLogical(mytrackID,mytimepoint) = true;
-                        end
-                        obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-                        
-                        handles = guidata(obj.gui_main);
-                        if newTrack > numel(obj.trackLine)
-                            myline = line('Parent',handles.axesTracks);
-                            myline.Color = obj.trackColor(mod(newTrack,3)+1,:);
-                            myline.LineWidth = 1;
-                            myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
-                            myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
-                            obj.trackLine{newTrack} = myline;
-                            
-                            myrec = rectangle('Parent',handles.axesCircles);
-                            myrec.ButtonDownFcn = @obj.clickLoop;
-                            myrec.UserData = newTrack;
-                            myrec.Curvature = [1,1];
-                            myrec.FaceColor = obj.trackLine{newTrack}.Color;
-                            myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                            obj.trackCircle{newTrack} = myrec;
-                            
-                            obj.trackText{newTrack} = text('Parent',handles.axesText);
-                            obj.updateTrackText(newTrack);
-                            obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
-                        else
-                            if isa(obj.trackLine{newTrack},'matlab.graphics.primitive.Line');
-                                obj.trackLine{newTrack}.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
-                                obj.trackLine{newTrack}.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
-                            else
-                                myline = line('Parent',handles.axesTracks);
-                                myline.Color = obj.trackColor(mod(newTrack,3)+1,:);
-                                myline.LineWidth = 1;
-                                myline.YData = obj.trackCenRow(newTrack,obj.trackCenLogical(newTrack,:));
-                                myline.XData = obj.trackCenCol(newTrack,obj.trackCenLogical(newTrack,:));
-                                obj.trackLine{newTrack} = myline;
-                            end
-                            if isa(obj.trackCircle{newTrack},'matlab.graphics.primitive.Rectangle')
-                                obj.trackCircle{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                            else
-                                myrec = rectangle('Parent',handles.axesCircles);
-                                myrec.ButtonDownFcn = @obj.clickLoop;
-                                myrec.UserData = newTrack;
-                                myrec.Curvature = [1,1];
-                                myrec.FaceColor = obj.trackLine{newTrack}.Color;
-                                myrec.Position = [obj.trackLine{newTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                                obj.trackCircle{newTrack} = myrec;
-                            end
-                            if isa(obj.trackLine{newTrack},'matlab.graphics.primitive.Text');
-                                obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
-                                
-                            else
-                                obj.trackText{newTrack} = text('Parent',handles.axesText);
-                                obj.trackText{newTrack}.Position = [obj.trackLine{newTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{newTrack}.YData(1)+(obj.trackCircleSize-1)/2];
-                            end
-                            obj.updateTrackText(newTrack);
-                            obj.trackLine{newTrack}.Visible = 'on';
-                            obj.trackCircle{newTrack}.Visible = 'on';
-                            obj.trackText{newTrack}.Visible = 'on';
-                        end
-                        obj.trackLine{oldTrack}.YData = obj.trackCenRow(oldTrack,obj.trackCenLogical(oldTrack,:));
-                        obj.trackLine{oldTrack}.XData = obj.trackCenCol(oldTrack,obj.trackCenLogical(oldTrack,:));
-                        obj.trackCircle{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)-(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)-(obj.trackCircleSize-1)/2,obj.trackCircleSize,obj.trackCircleSize];
-                        obj.trackText{oldTrack}.Position = [obj.trackLine{oldTrack}.XData(1)+(obj.trackCircleSize-1)/2,obj.trackLine{oldTrack}.YData(1)+(obj.trackCircleSize-1)/2];
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        obj.loop_stepX;
-                        %%
-                        % return to 'none' mode
-                        handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-                        obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-                        guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                    case 'delete'
-                        replaceTrack = obj.pkTwo.mcl.pointer_track;
-                        obj.pkTwo.mcl.deleteTrack(replaceTrack);
-                        
-                        obj.trackCenRow(replaceTrack,:) = 0;
-                        obj.trackCenCol(replaceTrack,:) = 0;
-                        obj.trackCenLogical(replaceTrack,:) = false;
-                        obj.trackCenLogicalDiff = diff(obj.trackCenLogical,1,2);
-                        
-                        obj.trackLine{replaceTrack}.Visible = 'off';
-                        obj.trackCircle{replaceTrack}.Visible = 'off';
-                        obj.trackText{replaceTrack}.Visible = 'off';
-                        
-                        handlesControl.infoBk_textMessage.String = sprintf('Deleted track %d.',replaceTrack);
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        obj.loop_stepX;
-                        
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        %%
-                        % return to 'none' mode
-                        handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-                        obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-                        guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                    case 'mother'
-                        if obj.makecellMotherBool
-                            obj.makecellMotherBool = false;
-                            [mom,dau] = obj.pkTwo.mcl.identifyMother(obj.pkTwo.mcl.pointer_makecell2,obj.pkTwo.mcl.pointer_makecell);
-                            handlesControl.infoBk_textMessage.String = sprintf('Cell %d is the mother of\ncell %d.',mom,dau);
-                            %%
-                            % return to 'none' mode
-                            handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                            handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-                            obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-                            obj.updateTrackText;
-                            guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                        else
-                            handlesControl.infoBk_textMessage.String = sprintf('Cell %d will be the mother of...',obj.pkTwo.mcl.pointer_makecell);
-                            obj.makecellMotherBool = true;
-                        end
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        obj.loop_stepX;
-                    case 'track 2 cell'
-                        obj.pkTwo.mcl.addTrack2Cell(obj.pkTwo.mcl.pointer_track,obj.pkTwo.mcl.pointer_makecell3);
-                        obj.pkTwo.gui_control.tabMakeCell_loop;
-                        obj.updateTrackText;
-                        obj.highlightTrack;
-                        %%
-                        % return to 'none' mode
-                        handlesControl = guidata(obj.pkTwo.gui_control.gui_main);
-                        handlesControl.tabMakeCell_togglebuttonNone.Value = 1;
-                        obj.pkTwo.gui_control.tabMakeCell_buttongroup_SelectionChangedFcn;
-                        guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-                    otherwise
-                        fprintf('trackID %d\n',obj.pkTwo.mcl.pointer_track);
-                end
-                guidata(obj.pkTwo.gui_control.gui_main,handlesControl);
-            end
+        function obj = clickLoop(obj,~,~)
+
         end
         %%
         %
