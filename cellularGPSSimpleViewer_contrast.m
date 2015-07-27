@@ -18,27 +18,8 @@ classdef cellularGPSSimpleViewer_contrast < handle
     %
     properties
         imag3; %named with a number so it doesn't interfere with the built-in _image_ command.
-        image_width;
-        image_height;
         gui_main; %the main viewer figure handle
-        kybrd_cmd; %a struct of function handles for keyboard commands
-        
-        indT = 1;
-        indG = 1;
-        indP = 1;
-        indS = 1;
-        
-        tblG;
-        tblP;
-        tblS;
-        tblRegister;
-        
-        stepSize = 1;
-        
-        smda_itinerary;
-        smda_database;
-        moviePath;
-        
+       
         viewer;
         
         contrastHistogram;

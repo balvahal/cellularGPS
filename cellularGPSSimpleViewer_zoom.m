@@ -24,28 +24,8 @@ classdef cellularGPSSimpleViewer_zoom < handle
         kybrd_cmd; %a struct of function handles for keyboard commands
         kybrd_flag = false; %to prevent repeat entry into the keyboard callbacks when a key is held down.
         
-        indT = 1;
-        indG = 1;
-        indP = 1;
-        indS = 1;
-        
-        tblG;
-        tblP;
-        tblS;
-        tblRegister;
-        
-        stepSize = 1;
-        
-        smda_itinerary;
-        smda_database;
-        moviePath;
-        
         viewer;
-        
-        contrastHistogram;
-        histogramEdges;
-        rgbBool = false;
-        
+
         panningActiveBool = false;
         windowMotionBool = false;
     end

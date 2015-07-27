@@ -17,36 +17,11 @@ classdef cellularGPSSimpleViewer_gps < handle
     %              |_|
     %
     properties
-        imag3; %named with a number so it doesn't interfere with the built-in _image_ command.
-        image_width;
-        image_height;
         gui_main; %the main viewer figure handle
-        kybrd_cmd; %a struct of function handles for keyboard commands
-        kybrd_flag = false; %to prevent repeat entry into the keyboard callbacks when a key is held down.
-                
-        indT = 1;
-        indG = 1;
-        indP = 1;
-        indS = 1;
-        
-        tblG;
-        tblP;
-        tblS;
-        tblRegister;
-        
-        stepSize = 1;
+        viewer;
         
         smda_itinerary;
         smda_database;
-        moviePath;
-        
-        viewer;
-        
-        contrastHistogram;
-        histogramEdges;
-        rgbBool = false;
-        
-        panningActiveBool = false;
     end
     %% Methods
     %   __  __     _   _            _
@@ -238,21 +213,6 @@ classdef cellularGPSSimpleViewer_gps < handle
             %do nothing. This means only the master object can close this
             %window.
         end
-        function obj = infoBk_editTimepoint_Callback(obj,~,~)
-            handles = guidata(obj.gui_main);
-            indImage = str2double(handles.infoBk_editTimepoint.String);
-            indImage = round(indImage);
-            if indImage < 1
-                obj.tmn.indImage = 1;
-            elseif indImage > height(obj.tmn.smda_databaseSubset)
-                obj.tmn.indImage = height(obj.tmn.smda_databaseSubset);
-            else
-                obj.tmn.indImage = indImage;
-            end
-            obj.tmn.gui_imageViewer.loop_stepX;
-            handles.infoBk_editTimepoint.String = num2str(obj.tmn.indImage);
-            guidata(obj.gui_main,handles);
-        end
         %%
         %
         function obj = tableGroup_CellSelectionCallback(obj,~,eventdata)
@@ -347,16 +307,6 @@ classdef cellularGPSSimpleViewer_gps < handle
             P = P(obj.viewer.indP);
             S = obj.smda_itinerary.order_settings{P};
             S = S(obj.viewer.indS);
-%             smda_databaseLogical = obj.smda_database.group_number == G...
-%                 & obj.smda_database.position_number == P...
-%                 & obj.smda_database.settings_number == S;
-%             mytable = obj.smda_database(smda_databaseLogical,:);
-%             obj.viewer.tblRegister = sortrows(mytable,{'timepoint'});
-%             if obj.viewer.indT > height(obj.tblRegister)
-%                 obj.viewer.indT = height(obj.tblRegister);
-%             end
-            %%%
-            %
             
             handles = guidata(obj.gui_main);
             
@@ -406,18 +356,8 @@ classdef cellularGPSSimpleViewer_gps < handle
                 n = n + 1;
             end
             set(handles.tableSettings,'Data',tableSettingsData);
-            %% obj.tmn indices
-            %
-%             myGroupOrder = obj.smda_itinerary.order_group;
-%             obj.tmn.indG = myGroupOrder(obj.tmn.pointerGroup(1));
-%             myPositionOrder = obj.smda_itinerary.ind_position{gInd};
-%             obj.tmn.indP = myPositionOrder(obj.tmn.pointerPosition(1));
-%             mySettingsOrder = obj.smda_itinerary.ind_settings{pInd};
-%             obj.tmn.indS = mySettingsOrder(obj.tmn.pointerSettings(1));
-%             obj.tmn.updateFilenameListImage;
             %%
             %
-            %handles.infoBk_textTimepoint.String = sprintf('of %d\ntimepoint(s)',height(obj.tmn.smda_databaseSubset));
             guidata(obj.gui_main,handles);
         end
         %%

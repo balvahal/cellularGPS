@@ -36,13 +36,8 @@ classdef cellularGPSSimpleViewer_object < handle
         P = 0;
         S = 0;
         
-        tblG;
-        tblP;
-        tblS;
         tblRegister;
-        
-        stepSize = 1;
-        
+                
         smda_itinerary;
         smda_database;
         moviePath;
