@@ -260,6 +260,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             handles.plot.YData = obj.contrastHistogram/max(obj.contrastHistogram);
             handles.plot.XData = diff(obj.histogramEdges)/2+obj.histogramEdges(1:end-1);
             handles.axesContrast.XLim = [handles.plot.XData(1) handles.plot.XData(end)];
+            handles.axesContrast.YLim = [0.001 1.1];
             guidata(obj.gui_main,handles);
         end
         %%
@@ -282,7 +283,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             end
             obj.newColormapFromContrastHistogram;
             handles.lineMax.XData = [handles.sliderMax.Value,handles.sliderMax.Value];
-            %obj.ContrastLineUpdate;
+            obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
@@ -300,7 +301,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             end
             obj.newColormapFromContrastHistogram;
             handles.lineMin.XData = [handles.sliderMin.Value,handles.sliderMin.Value];
-            %obj.ContrastLineUpdate;
+            obj.ContrastLineUpdate;
             guidata(obj.gui_main,handles);
         end
         %%
@@ -361,7 +362,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             handlesZoom.axesZoomMap.CLim = [newValue CLimViewer(2)];
             guidata(obj.viewer.zoom.gui_main,handlesZoom);
             handles.editMin.String = num2str(newValue);
-            handles.lineMin.XData = ([newValue,newValue]-handles.plot.XData(1))/(handles.plot.XData(end)-handles.plot.XData(1));
+            handles.lineMin.XData = ([newValue,newValue]-double(handles.plot.XData(1)))/(double(handles.plot.XData(end))-double(handles.plot.XData(1)));
             guidata(obj.gui_main,handles);
         end
         %%
@@ -384,7 +385,7 @@ classdef cellularGPSSimpleViewer_contrast < handle
             handlesZoom.axesZoomMap.CLim = [CLimViewer(1) newValue];
             guidata(obj.viewer.zoom.gui_main,handlesZoom);
             handles.editMax.String = num2str(newValue);         
-            handles.lineMax.XData = ([newValue,newValue]-handles.plot.XData(1))/(handles.plot.XData(end)-handles.plot.XData(1));
+            handles.lineMax.XData = ([newValue,newValue]-double(handles.plot.XData(1)))/(double(handles.plot.XData(end))-double(handles.plot.XData(1)));
             guidata(obj.gui_main,handles);
         end
         %%

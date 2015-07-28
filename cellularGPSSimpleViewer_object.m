@@ -180,7 +180,11 @@ classdef cellularGPSSimpleViewer_object < handle
         function obj = update_Image(obj)
             handles = guidata(obj.gui_main);
             obj.imag3path = fullfile(obj.imag3dir,obj.tblRegister.filename{obj.indT});
-            obj.imag3 = imread(obj.imag3path);
+            if exist(obj.imag3path,'file')
+                obj.imag3 = imread(obj.imag3path);
+            else
+                error('viewer:nofile','image not found');
+            end
             mydims = ndims(obj.imag3);
             if mydims == 3
                 obj.rgbBool = true;
@@ -216,8 +220,10 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             %%%
             %
+            obj.smda_database = readtable(fullfile(obj.moviePath,'smda_database.txt'),'Delimiter','\t');
             if exist(fullfile(obj.moviePath,'thumb'),'dir')
                 obj.imag3dir = fullfile(obj.moviePath,'thumb');
+                obj.smda_database = readtable(fullfile(obj.moviePath,'thumb_database.txt'),'Delimiter','\t');
             elseif exist(fullfile(obj.moviePath,'PROCESSED_DATA'),'dir')
                 obj.imag3dir = fullfile(obj.moviePath,'PROCESSED_DATA');
             elseif exist(fullfile(obj.moviePath,'RAW_DATA'),'dir')
@@ -227,7 +233,7 @@ classdef cellularGPSSimpleViewer_object < handle
             end
             %%%
             %
-            obj.smda_database = readtable(fullfile(obj.moviePath,'smda_database.txt'),'Delimiter','\t');
+            
             obj.smda_itinerary = SuperMDAItineraryTimeFixed_object;
             obj.smda_itinerary.import(fullfile(obj.moviePath,'smdaITF.txt'));
             %% display image relative to the viewing screen
