@@ -12,6 +12,7 @@ classdef cellularGPSTrackingManual_object_makecell < handle
         makecell_divisionEnd = 0;
         makecell_apoptosisStart = 0;
         makecell_apoptosisEnd = 0;
+        makecell_offscreenInd = 0;
         
         track_database
         track_logical

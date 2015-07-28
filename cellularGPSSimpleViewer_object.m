@@ -50,6 +50,10 @@ classdef cellularGPSSimpleViewer_object < handle
         zoomArray = [1, 0.8, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1];
         zoomIndex = 1;
     end
+    
+    properties (SetObservable = true)
+        imag3RowCol = [1,1];
+    end
     %% Methods
     %   __  __     _   _            _
     %  |  \/  |___| |_| |_  ___  __| |___
@@ -80,17 +84,25 @@ classdef cellularGPSSimpleViewer_object < handle
             %  |___/      |___|
             % Create the figure
             %
-            f = figure('Visible','off','Units','characters','MenuBar','none',...
-                'Resize','off','Name','Image Viewer',...
-                'Renderer','OpenGL',...
-                'CloseRequestFcn',{@obj.delete},...
-                'KeyPressFcn',{@obj.fKeyPressFcn});
+            f = figure;
+            f.Visible = 'off';
+            f.Units = 'characters';
+            f.MenuBar = 'none';
+            f.Resize = 'off';
+            f.Name = 'Image Viewer';
+            f.Renderer = 'OpenGL';
+            f.CloseRequestFcn = {@obj.delete};
+            f.KeyPressFcn = {@obj.fKeyPressFcn};
+            f.WindowButtonDownFcn = {@obj.getImag3RowCol};
             f.BusyAction = 'cancel';
-            axesImageViewer = axes('Parent',f,...
-                'Units','characters',...
-                'YDir','reverse',...
-                'Visible','on'); %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
             
+            axesImageViewer = axes;
+            axesImageViewer.Parent = f;
+            axesImageViewer.Units = 'characters';
+            axesImageViewer.YDir = 'reverse';
+            axesImageViewer.Visible = 'on';
+
+            %when displaying images the center of the pixels are located at the position on the axis. Therefore, the limits must account for the half pixel border.
             displayedImage = image;
             displayedImage.Parent = axesImageViewer;
             %% Handles
@@ -121,7 +133,7 @@ classdef cellularGPSSimpleViewer_object < handle
             % obj.updateLimits;
             %%%
             % make the gui visible
-            set(f,'Visible','on');
+            f.Visible = 'on';
             %%
             %
             obj.kybrd_cmd.period = @cellularGPSSimpleViewer_kybrd_period;
@@ -510,6 +522,28 @@ classdef cellularGPSSimpleViewer_object < handle
             handles.axesImageViewer.YLim = [myVertices(1,2)-0.5,myVertices(3,2)+0.5];
             guidata(obj.zoom.gui_main,handlesZoom);
             guidata(obj.gui_main,handles);
+        end
+        %%
+        %
+        function out = getImag3RowCol(obj,~,~)
+            myCurrentPoint = obj.gui_main.CurrentPoint;
+            handles = guidata(obj.gui_main);
+            axesOrigin = handles.axesImageViewer.Position;
+            myRelativePoint = myCurrentPoint - axesOrigin([1,2]);
+            if any(myRelativePoint<0) || ...
+                    myRelativePoint(1) > axesOrigin(3) || ...
+                    myRelativePoint(2) > axesOrigin(4)
+                obj.imag3RowCol = [];
+            else
+                myXLim = handles.axesImageViewer.XLim;
+                myYLim = handles.axesImageViewer.YLim;
+                
+                x = myRelativePoint(1)/axesOrigin(3)*(myXLim(2)-myXLim(1))+myXLim(1);
+                y = (axesOrigin(4)-myRelativePoint(2))/axesOrigin(4)*(myYLim(2)-myYLim(1))+myYLim(1);
+
+                obj.imag3RowCol = ceil([y,x]-0.5);              
+            end
+            out = obj.imag3RowCol;
         end
     end
 end
