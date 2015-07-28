@@ -1,0 +1,9 @@
+{
+	"channel_name": [
+		"Cy5_5","YFP"
+	],
+	"channel_number": [
+		2,7
+	],
+	"date": "2014-11-14 16:12:23"
+}

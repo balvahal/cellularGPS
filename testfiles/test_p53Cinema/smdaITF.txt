@@ -1,0 +1,90 @@
+{
+	"channel_names": [
+		"unknown","Cy5_5","unknown","unknown","unknown","unknown","YFP"
+	],
+	"gps": [
+		[1,4,1],
+		[1,4,2]
+	],
+	"gps_logical": [
+		1,1
+	],
+	"orderVector": [
+		1,2
+	],
+	"output_directory": [
+		"C:","Users","Kyle","Documents","GitHub","cellularGPS","testfiles","test_p53Cinema"
+	],
+	"imageHeightNoBin": 1024,
+	"imageWidthNoBin": 1344,
+	"group_function_after": "SuperMDAItineraryTimeFixed_group_function_after",
+	"group_function_before": "SuperMDAItineraryTimeFixed_group_function_before",
+	"group_label": "group1",
+	"group_logical": 1,
+	"position_continuous_focus_offset": [
+		0,0,0,1.862500e+02
+	],
+	"position_continuous_focus_bool": [
+		0,0,0,1
+	],
+	"position_function_after": "SuperMDAItineraryTimeFixed_position_function_after",
+	"position_function_before": "SuperMDAItineraryTimeFixed_position_function_before",
+	"position_label": [
+		"unknown","unknown","unknown","pos4_x4_y1"
+	],
+	"position_logical": [
+		0,0,0,1
+	],
+	"position_xyz": [
+		[0,0,0],
+		[0,0,0],
+		[0,0,0],
+		[18583,53099,4.192075e+03]
+	],
+	"settings_binning": [
+		2,2
+	],
+	"settings_channel": [
+		2,7
+	],
+	"settings_exposure": [
+		1100,400
+	],
+	"settings_function": [
+		"SuperMDAItineraryTimeFixed_settings_function","SuperMDAItineraryTimeFixed_settings_function"
+	],
+	"settings_logical": [
+		1,1
+	],
+	"settings_period_multiplier": [
+		1,1
+	],
+	"settings_timepoints": [
+		1,1
+	],
+	"settings_z_origin_offset": [
+		0,0
+	],
+	"settings_z_stack_lower_offset": [
+		0,0
+	],
+	"settings_z_stack_upper_offset": [
+		0,0
+	],
+	"settings_z_step_size": [
+		3.000000e-01,3.000000e-01
+	],
+	"ind_first_group": 1,
+	"ind_last_group": 2,
+	"ind_next_gps": 3,
+	"ind_next_group": 2,
+	"ind_next_position": 1,
+	"ind_next_settings": 3,
+	"pointer_next_group": 0,
+	"pointer_next_position": 6000,
+	"pointer_next_settings": 0,
+	"duration": 0,
+	"fundamental_period": 6000,
+	"clock_relative": 0,
+	"number_of_timepoints": 74
+}
