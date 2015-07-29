@@ -202,6 +202,7 @@ classdef cellularGPSSimpleViewer_gps < handle
             obj.loop;
             handles = guidata(obj.gui_main);
             handles.textTime.String = sprintf('Timepoint %d of %d',obj.viewer.T,obj.viewer.smda_itinerary.number_of_timepoints);
+            handles.editTime.String = num2str(obj.viewer.T);
             handles.textGroup.String = sprintf('Group %d',obj.viewer.G);
             handles.textPosition.String = sprintf('Position %d', obj.viewer.P);
             handles.textSettings.String = sprintf('Settings %d', obj.viewer.S);

@@ -20,8 +20,8 @@ classdef cellularGPSSimpleViewer_object < handle
         imag3; %named with a number so it doesn't interfere with the built-in _image_ command.
         imag3dir;
         imag3path;
-        image_width;
-        image_height;
+        image_width; %of the file being read
+        image_height; %of the file being read
         gui_main; %the main viewer figure handle
         kybrd_cmd; %a struct of function handles for keyboard commands
         kybrd_flag = false; %to prevent repeat entry into the keyboard callbacks when a key is held down.
@@ -53,6 +53,7 @@ classdef cellularGPSSimpleViewer_object < handle
     
     properties (SetObservable = true)
         imag3RowCol = [1,1];
+        imag3RowColIntensity = 0;
     end
     %% Methods
     %   __  __     _   _            _
@@ -94,6 +95,7 @@ classdef cellularGPSSimpleViewer_object < handle
             f.CloseRequestFcn = {@obj.delete};
             f.KeyPressFcn = {@obj.fKeyPressFcn};
             f.WindowButtonDownFcn = {@obj.getImag3RowCol};
+            f.WindowButtonMotionFcn = {@obj.fWindowButtonMotionFcn};
             f.BusyAction = 'cancel';
             
             axesImageViewer = axes;
@@ -144,6 +146,10 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.kybrd_cmd.w = @cellularGPSSimpleViewer_kybrd_w;
             obj.kybrd_cmd.z = @cellularGPSSimpleViewer_kybrd_z;
             obj.kybrd_cmd.x = @cellularGPSSimpleViewer_kybrd_x;
+            obj.kybrd_cmd.backslash = @cellularGPSSimpleViewer_kybrd_backslash;
+            obj.kybrd_cmd.o = @cellularGPSSimpleViewer_kybrd_o;
+            obj.kybrd_cmd.p = @cellularGPSSimpleViewer_kybrd_p;
+            obj.kybrd_cmd.zero = @cellularGPSSimpleViewer_kybrd_zero;
             %%
             %
             obj.gps = cellularGPSSimpleViewer_gps;
@@ -179,10 +185,20 @@ classdef cellularGPSSimpleViewer_object < handle
                         obj.kybrd_cmd.q(obj);
                     case 'w'
                         obj.kybrd_cmd.w(obj);
+                    case 'o'
+                        obj.kybrd_cmd.o(obj);
+                    case 'p'
+                        obj.kybrd_cmd.p(obj);
                     case 'z'
                         obj.kybrd_cmd.z(obj);
                     case 'x'
                         obj.kybrd_cmd.x(obj);
+                    case 'rightbracket'
+                    case 'leftbracket'
+                    case 'backslash'
+                        obj.kybrd_cmd.backslash(obj);
+                    case '0'
+                        obj.kybrd_cmd.zero(obj);
                 end
                 obj.kybrd_flag = false;
             end
@@ -215,7 +231,9 @@ classdef cellularGPSSimpleViewer_object < handle
             handlesZoom = guidata(obj.zoom.gui_main);
             handlesZoom.displayedImage.CData = obj.imag3;
             guidata(obj.zoom.gui_main,handlesZoom);
-        end        
+        end
+        function obj = fWindowButtonMotionFcn(obj,~,~)
+        end
         %%
         % after specifying the moviePath, call this function to read the
         % database file, itinerary, and to display images.
@@ -535,14 +553,19 @@ classdef cellularGPSSimpleViewer_object < handle
                     myRelativePoint(2) > axesOrigin(4)
                 obj.imag3RowCol = [];
             else
-                myXLim = handles.axesImageViewer.XLim;
-                myYLim = handles.axesImageViewer.YLim;
-                
+                scalefactor = obj.smda_itinerary.imageWidthNoBin/obj.image_width/obj.smda_itinerary.settings_binning(obj.S); %this should be the same for both X and Y direction, so using the width is arbitrary.
+                myXLim = handles.axesImageViewer.XLim*scalefactor;
+                myYLim = handles.axesImageViewer.YLim*scalefactor;
                 x = myRelativePoint(1)/axesOrigin(3)*(myXLim(2)-myXLim(1))+myXLim(1);
                 y = (axesOrigin(4)-myRelativePoint(2))/axesOrigin(4)*(myYLim(2)-myYLim(1))+myYLim(1);
-
-                obj.imag3RowCol = ceil([y,x]-0.5);              
+                
+                rc = ceil([y,x]-0.5*scalefactor);
+                rcIntensity = round(rc/2);
+                obj.imag3RowColIntensity = obj.imag3(rcIntensity(1),rcIntensity(2));
+                
+                obj.imag3RowCol = rc; %observable event
             end
+            
             out = obj.imag3RowCol;
         end
     end
