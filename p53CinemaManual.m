@@ -5,7 +5,7 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
         scrollTimerIndex = 1;
         scrollTimer;
         
-        
+        makecell;
     end
     properties (SetAccess = private)
         
@@ -19,6 +19,11 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
         
             obj.kybrd_cmd.o = @p53CinemaManual_kybrd_o;
             obj.kybrd_cmd.p = @p53CinemaManual_kybrd_p;
+            obj.kybrd_cmd.e = @p53CinemaManual_kybrd_e;
+            obj.kybrd_cmd.q = @p53CinemaManual_kybrd_q;
+            obj.kybrd_cmd.w = @p53CinemaManual_kybrd_w;
+            obj.kybrd_cmd.a = @p53CinemaManual_kybrd_a;
+            obj.kybrd_cmd.s = @p53CinemaManual_kybrd_s;
             obj.kybrd_cmd.zero = @p53CinemaManual_kybrd_zero;
       
             obj.scrollTimer = timer;
@@ -27,15 +32,16 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             obj.scrollTimer.TimerFcn = @(~,~) obj.timer_scrollTimerFcn;
             obj.scrollTimer.Period = 1;
             
-            obj.gps.viewer = obj;
-            obj.gps.initialize;
-            obj.gps.refresh;
+            obj.makecell = p53CinemaManual_makecell;
+            obj.makecell.viewer = obj;
+            obj.makecell.initialize;
         end
         
         function obj = timer_scrollTimerFcn(obj,~,~)
             %% identify location of the mouse and save to cell
             %
             obj.getImag3RowCol;
+            obj.makecell.makecell_ind{obj.makecell.pointer_makecell}(obj.indT) = sub2ind([obj.smda_itinerary.imageHeightNoBin/obj.smda_itinerary.settings_binning(obj.S),obj.smda_itinerary.imageWidthNoBin/obj.smda_itinerary.settings_binning(obj.S)],obj.imag3RowCol(1),obj.imag3RowCol(2));
             %% update the image and move it forward
             %
             obj.indT = obj.indT + 1;
