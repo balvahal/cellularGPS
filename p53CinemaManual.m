@@ -1,9 +1,10 @@
 classdef p53CinemaManual < cellularGPSSimpleViewer_object
     properties
         listenImag3RowCol;
-        scrollTimerArray = [Inf 1 0.8 0.6 0.4 0.2 0.1 0.05];
+        scrollTimerArray = [Inf 1 0.5 0.25 0.125 0.06 0.03];
         scrollTimerIndex = 1;
         scrollTimer;
+        
         
     end
     properties (SetAccess = private)
@@ -25,13 +26,21 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             obj.scrollTimer.BusyMode = 'drop';
             obj.scrollTimer.TimerFcn = @(~,~) obj.timer_scrollTimerFcn;
             obj.scrollTimer.Period = 1;
+            
+            obj.gps.viewer = obj;
+            obj.gps.initialize;
+            obj.gps.refresh;
         end
         
         function obj = timer_scrollTimerFcn(obj,~,~)
+            %% identify location of the mouse and save to cell
+            %
             obj.getImag3RowCol;
+            %% update the image and move it forward
+            %
             obj.indT = obj.indT + 1;
             if obj.indT == obj.smda_itinerary.number_of_timepoints+1
-                obj.kybrd_cmd.zero;
+                obj.kybrd_cmd.zero(obj);
             end
             obj.refresh;
         end

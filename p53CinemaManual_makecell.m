@@ -17,6 +17,8 @@ classdef p53CinemaManual_makecell < handle
         pointer_makecell3 = 1;
         pointer_next_makecell = 1;
         pointer_timepoint = 1;
+        
+        viewer;
     end
     properties (SetAccess = private)
         
@@ -26,7 +28,16 @@ classdef p53CinemaManual_makecell < handle
     end
     methods
         function obj = p53CinemaManual_makecell()
+
+        end
+        %%
+        % set the viewer object for this to work
+        function obj = initialize(obj)
+            if ~isdir(fullfile(obj.viewer.moviePath,'MAKECELL_DATA'))
+                mkdir(fullfile(obj.viewer.moviePath,'MAKECELL_DATA'));
+            end
             
+            obj.positionIndex = obj.viewer.P;
         end
     end
 end
