@@ -6,6 +6,7 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
         scrollTimer;
         
         makecell;
+        makecell_viewer;
     end
     properties (SetAccess = private)
         
@@ -15,6 +16,8 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
     end
     methods
         function obj = p53CinemaManual()
+            obj@cellularGPSSimpleViewer_object;
+            
             obj.listenImag3RowCol = addlistener(obj,'imag3RowCol','PostSet',@obj.listenerImag3RowCol);
         
             obj.kybrd_cmd.o = @p53CinemaManual_kybrd_o;
@@ -35,6 +38,10 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             obj.makecell = p53CinemaManual_makecell;
             obj.makecell.viewer = obj;
             obj.makecell.initialize;
+            
+            obj.makecell_viewer = p53CinemaManual_makecell_viewer;
+            obj.makecell_viewer.makecell = obj.makecell;
+            obj.makecell_viewer.initialize;
         end
         
         function obj = timer_scrollTimerFcn(obj,~,~)
@@ -61,6 +68,7 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             delete(obj.gps.gui_main);
             delete(obj.zoom.gui_main);
             delete(obj.contrast.gui_main);
+            delete(obj.makecell_viewer.gui_main);
         end
     end
     methods (Static)

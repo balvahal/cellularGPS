@@ -30,7 +30,7 @@ classdef p53CinemaManual_makecell < handle
     end
     methods
         function obj = p53CinemaManual_makecell()
-
+            
         end
         %%
         % set the viewer object for this to work
@@ -43,7 +43,7 @@ classdef p53CinemaManual_makecell < handle
         end
         %%
         %
-                %% make
+        %% make
         %
         function obj = make(obj)
             obj.find_pointer_next_makecell;
@@ -57,7 +57,7 @@ classdef p53CinemaManual_makecell < handle
             obj.makecell_apoptosisEnd(obj.pointer_makecell) = 0;
             obj.makecell_offscreenInd(obj.pointer_makecell) = 0;
         end
-                %% find_pointer_next_makecell
+        %% find_pointer_next_makecell
         %
         function obj = find_pointer_next_makecell(obj)
             if any(~obj.makecell_logical)
