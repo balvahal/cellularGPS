@@ -1,6 +1,6 @@
 %%
 % decrease step position
-function [sv] = cellularGPSSimpleViewer_kybrd_a(sv)
+function [sv] = p53CinemaManual_kybrd_a(sv)
 sv.indP = sv.indP - 1;
 sv.refresh;
 %%

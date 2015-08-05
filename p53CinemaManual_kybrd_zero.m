@@ -1,7 +1,7 @@
 function [sv] = p53CinemaManual_kybrd_zero(sv)
 if strcmp(sv.scrollTimer.Running,'on')
     stop(sv.scrollTimer);
-    sv.scrollTimerIndex = 1;
+    sv.scrollTimerIndex = 7;
 end
 %%
 % user update

@@ -234,6 +234,7 @@ classdef cellularGPSSimpleViewer_object < handle
             handlesZoom = guidata(obj.zoom.gui_main);
             handlesZoom.displayedImage.CData = obj.imag3;
             guidata(obj.zoom.gui_main,handlesZoom);
+            drawnow limitrate;
         end
         function obj = fWindowButtonMotionFcn(obj,~,~)
         end

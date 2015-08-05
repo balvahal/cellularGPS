@@ -56,6 +56,7 @@ classdef p53CinemaManual_makecell < handle
             obj.makecell_apoptosisStart(obj.pointer_makecell) = 0;
             obj.makecell_apoptosisEnd(obj.pointer_makecell) = 0;
             obj.makecell_offscreenInd(obj.pointer_makecell) = 0;
+            obj.find_pointer_next_makecell;
         end
         %% find_pointer_next_makecell
         %

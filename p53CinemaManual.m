@@ -1,12 +1,13 @@
 classdef p53CinemaManual < cellularGPSSimpleViewer_object
     properties
         listenImag3RowCol;
-        scrollTimerArray = [Inf 1 0.5 0.25 0.125 0.06 0.03];
-        scrollTimerIndex = 1;
+        scrollTimerArray = [0.03 0.06 0.125 0.25 0.5 1 Inf 1 0.5 0.25 0.125 0.06 0.03];
+        scrollTimerIndex = 7;
         scrollTimer;
         
         makecell;
         makecell_viewer;
+        makecellBool = true;
     end
     properties (SetAccess = private)
         
@@ -47,14 +48,24 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
         function obj = timer_scrollTimerFcn(obj,~,~)
             %% identify location of the mouse and save to cell
             %
-            obj.getImag3RowCol;
-            obj.makecell.makecell_ind{obj.makecell.pointer_makecell}(obj.indT) = sub2ind([obj.smda_itinerary.imageHeightNoBin/obj.smda_itinerary.settings_binning(obj.S),obj.smda_itinerary.imageWidthNoBin/obj.smda_itinerary.settings_binning(obj.S)],obj.imag3RowCol(1),obj.imag3RowCol(2));
-            %% update the image and move it forward
-            %
-            obj.indT = obj.indT + 1;
-            if obj.indT == obj.smda_itinerary.number_of_timepoints+1
-                obj.kybrd_cmd.zero(obj);
+            if obj.makecellBool
+                obj.getImag3RowCol;
+                obj.makecell.makecell_ind{obj.makecell.pointer_makecell}(obj.indT) = sub2ind([obj.smda_itinerary.imageHeightNoBin/obj.smda_itinerary.settings_binning(obj.S),obj.smda_itinerary.imageWidthNoBin/obj.smda_itinerary.settings_binning(obj.S)],obj.imag3RowCol(1),obj.imag3RowCol(2));
             end
+            %% update the image and move it forward or backward
+            %
+            if obj.scrollTimerIndex > 7
+                obj.indT = obj.indT + 1;
+                if obj.indT == obj.smda_itinerary.number_of_timepoints+1
+                    obj.kybrd_cmd.zero(obj);
+                end
+            elseif obj.scrollTimerIndex < 7
+                obj.indT = obj.indT - 1;
+                if obj.indT == 0
+                    obj.kybrd_cmd.zero(obj);
+                end
+            end
+                
             obj.refresh;
         end
         

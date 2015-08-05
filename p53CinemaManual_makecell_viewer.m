@@ -182,7 +182,7 @@ obj.loop;
                 return
             else
                 handles = guidata(obj.gui_main);
-                obj.makecell.pointer_makecell3 = handles.tabMakeCell_table.Data{eventdata.Indices(1,1),1};
+                obj.makecell.pointer_makecell3 = handles.tableMakeCell.Data{eventdata.Indices(1,1),1};
                 if isempty(obj.makecell.pointer_makecell3)
                     obj.makecell.pointer_makecell3 = obj.makecell.pointer_next_makecell;
                 end
