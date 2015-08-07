@@ -202,9 +202,9 @@ classdef p53CinemaManual_makecell_viewer < handle
                     obj.makecell.pointer_makecell3 = obj.makecell.pointer_next_makecell;
                     obj.makecell.pointer_makecell = obj.makecell.pointer_next_makecell;
                 end
-                if ~isempty(obj.makecell.makecell_ind{obj.makecell.pointer_makecell3})
+%                if ~isempty(obj.makecell.makecell_ind{obj.makecell.pointer_makecell3})
 
-                end
+                %end
             end
             obj.loop;
         end

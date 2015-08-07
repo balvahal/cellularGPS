@@ -27,6 +27,7 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             obj.patchMakecell.MarkerFaceColor = 'flat';
             obj.patchMakecell.Marker = 'o';
             obj.patchMakecell.EdgeColor = 'none';
+            obj.patchMakecell.FaceColor = 'none';
             guidata(obj.gui_main,handles);
             
             obj.kybrd_cmd.o = @p53CinemaManual_kybrd_o;

@@ -113,9 +113,7 @@ classdef p53CinemaManual_makecell < handle
                 obj.makecell_divisionEnd = 0;
                 obj.makecell_apoptosisStart = 0;
                 obj.makecell_apoptosisEnd = 0;
-                obj.track_makecell = zeros(size(obj.track_logical));
-                obj.pointer_track = 1;
-                obj.pointer_track2 = 1;
+                obj.makecell_offscreenInd = 0;
                 obj.pointer_makecell = 1;
                 obj.pointer_makecell2 = 1;
                 obj.pointer_makecell3 = 1;
