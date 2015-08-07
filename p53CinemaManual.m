@@ -37,6 +37,10 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             obj.kybrd_cmd.a = @p53CinemaManual_kybrd_a;
             obj.kybrd_cmd.s = @p53CinemaManual_kybrd_s;
             obj.kybrd_cmd.zero = @p53CinemaManual_kybrd_zero;
+            obj.kybrd_cmd.backslash = @p53CinemaManual_kybrd_backslash;
+            obj.kybrd_cmd.comma = @p53CinemaManual_kybrd_comma;
+            obj.kybrd_cmd.period = @p53CinemaManual_kybrd_period;
+
       
             obj.scrollTimer = timer;
             obj.scrollTimer.ExecutionMode = 'fixedRate';
@@ -46,13 +50,11 @@ classdef p53CinemaManual < cellularGPSSimpleViewer_object
             
             obj.makecell = p53CinemaManual_makecell;
             obj.makecell.viewer = obj;
-            
-            
+                        
             obj.makecell_viewer = p53CinemaManual_makecell_viewer;
             obj.makecell_viewer.viewer = obj;
             obj.makecell_viewer.makecell = obj.makecell;
-            
-            
+                       
             obj.listenImag3RowCol = addlistener(obj,'imag3RowCol','PostSet',@obj.listenerImag3RowCol);
             obj.listenMakecellBool = addlistener(obj,'makecellBool','PostSet',@obj.listenerMakecellBool);
         end
