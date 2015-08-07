@@ -20,6 +20,7 @@ classdef p53CinemaManual_makecell_viewer < handle
         gui_main; %the main viewer figure handle
         
         makecell;
+        viewer;
     end
     %% Methods
     %   __  __     _   _            _
@@ -102,13 +103,23 @@ classdef p53CinemaManual_makecell_viewer < handle
             textMake.Parent = f;
             textMake.Style = 'text';
             textMake.Units = 'characters';
-            textMake.String = 'make';
+            textMake.String = 'makecell:';
             textMake.FontSize = 10;
             textMake.FontName = 'Verdana';
             textMake.HorizontalAlignment = 'left';
             textMake.Position = [buttonSize(1) + 8, region1(2)+5, buttonSize(1),2.6923];
             %textMake.ForegroundColor = textColor;
 
+            togglebuttonMake = uicontrol;
+            togglebuttonMake.Parent = f;
+            togglebuttonMake.Style = 'togglebutton';
+            togglebuttonMake.Units = 'characters';
+            togglebuttonMake.BackgroundColor = [1 0.3 0];
+            togglebuttonMake.FontSize = 14;
+            togglebuttonMake.FontName = 'Verdana';
+            togglebuttonMake.String = 'OFF';
+            togglebuttonMake.Callback = {@obj.togglebuttonMake_Callback};
+            togglebuttonMake.Position = [2*(buttonSize(1)+8), region1(2)+5, buttonSize(1),buttonSize(2)];
             %% The makecell table
             %
             tableMakeCell = uitable;
@@ -127,24 +138,26 @@ classdef p53CinemaManual_makecell_viewer < handle
             % make the gui visible
             f.Visible = 'on';
             obj.gui_main = f;
+            handles.textMake = textMake;
             handles.tableMakeCell = tableMakeCell;
+            handles.togglebuttonMake = togglebuttonMake;
             guidata(obj.gui_main,handles);
         end
         %%
         % set the makecell object for this to work
         function obj = initialize(obj)
-obj.loop;
+            obj.loop;
         end
         %%
         %
         function obj = refresh(obj)
             obj.loop;
-            
         end
         %%
         %
         function obj = pushbuttonMake_Callback(obj,~,~)
-            
+            obj.makecell.make;
+            obj.loop;
         end
         %%
         %
@@ -152,7 +165,6 @@ obj.loop;
             %do nothing. This means only the master object can close this
             %window.
         end
-        
         %%
         %
         function obj = loop(obj)
@@ -171,6 +183,8 @@ obj.loop;
                 %makeCellData{n,3} = obj.makecell_mother(i);
             end
             handles.tableMakeCell.Data = makeCellData;
+            handles.textMake.String = sprintf('makecell:%d',obj.makecell.pointer_makecell);
+            guidata(obj.gui_main,handles);
         end
         %%
         %
@@ -183,13 +197,24 @@ obj.loop;
             else
                 handles = guidata(obj.gui_main);
                 obj.makecell.pointer_makecell3 = handles.tableMakeCell.Data{eventdata.Indices(1,1),1};
+                obj.makecell.pointer_makecell = handles.tableMakeCell.Data{eventdata.Indices(1,1),1};
                 if isempty(obj.makecell.pointer_makecell3)
                     obj.makecell.pointer_makecell3 = obj.makecell.pointer_next_makecell;
+                    obj.makecell.pointer_makecell = obj.makecell.pointer_next_makecell;
                 end
                 if ~isempty(obj.makecell.makecell_ind{obj.makecell.pointer_makecell3})
-                    obj.makecell.pointer_track2 = obj.makecell.pointer_track;
-                    obj.makecell.pointer_track = obj.makecell.makecell_ind{obj.makecell.pointer_makecell3}(1);
+
                 end
+            end
+            obj.loop;
+        end
+        %%
+        %
+        function obj = togglebuttonMake_Callback(obj,src,~)
+            if src.Value == 1
+                obj.viewer.makecellBool = true;
+            else
+                obj.viewer.makecellBool = false;
             end
         end
     end

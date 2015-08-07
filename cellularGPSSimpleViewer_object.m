@@ -146,6 +146,8 @@ classdef cellularGPSSimpleViewer_object < handle
             obj.kybrd_cmd.w = @cellularGPSSimpleViewer_kybrd_w;
             obj.kybrd_cmd.z = @cellularGPSSimpleViewer_kybrd_z;
             obj.kybrd_cmd.x = @cellularGPSSimpleViewer_kybrd_x;
+            obj.kybrd_cmd.rightbracket = @cellularGPSSimpleViewer_kybrd_rightbracket;
+            obj.kybrd_cmd.leftbracket = @cellularGPSSimpleViewer_kybrd_leftbracket;
             obj.kybrd_cmd.backslash = @cellularGPSSimpleViewer_kybrd_backslash;
             obj.kybrd_cmd.o = @cellularGPSSimpleViewer_kybrd_o;
             obj.kybrd_cmd.p = @cellularGPSSimpleViewer_kybrd_p;
@@ -197,7 +199,9 @@ classdef cellularGPSSimpleViewer_object < handle
                     case 'e'
                         obj.kybrd_cmd.e(obj);
                     case 'rightbracket'
+                        obj.kybrd_cmd.rightbracket(obj);
                     case 'leftbracket'
+                        obj.kybrd_cmd.leftbracket(obj);
                     case 'backslash'
                         obj.kybrd_cmd.backslash(obj);
                     case '0'

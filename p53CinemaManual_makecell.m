@@ -49,7 +49,7 @@ classdef p53CinemaManual_makecell < handle
             obj.find_pointer_next_makecell;
             obj.pointer_makecell = obj.pointer_next_makecell;
             obj.makecell_logical(obj.pointer_makecell) = true;
-            obj.makecell_ind{obj.pointer_makecell} = [];
+            obj.makecell_ind{obj.pointer_makecell} = zeros(1,obj.viewer.smda_itinerary.number_of_timepoints);
             obj.makecell_mother(obj.pointer_makecell) = 0;
             obj.makecell_divisionStart(obj.pointer_makecell) = 0;
             obj.makecell_divisionEnd(obj.pointer_makecell) = 0;
@@ -99,26 +99,11 @@ classdef p53CinemaManual_makecell < handle
             %%%
             % parse the input
             q = inputParser;
-            addRequired(q, 'obj', @(x) isa(x,'cellularGPSTrackingManual_object_makecell'));
+            addRequired(q, 'obj', @(x) isa(x,'p53CinemaManual_makecell'));
             addOptional(q, 'pInd',obj.positionIndex, @(x)isnumeric(x));
             parse(q,obj,varargin{:});
             obj.positionIndex = q.Results.pInd;
-            if exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('trackingPosition_%d.txt',obj.positionIndex)),'file')
-                obj.track_database = readtable(fullfile(obj.moviePath,'MAKECELL_DATA',...
-                    sprintf('trackingPosition_%d.txt',obj.positionIndex)),...
-                    'Delimiter','\t');
-            else
-                obj.track_database = readtable(fullfile(obj.moviePath,'TRACKING_DATA',...
-                    sprintf('trackingPosition_%d.txt',obj.positionIndex)),...
-                    'Delimiter','\t');
-                obj.track_database = obj.track_database(:,{'trackID','timepoint','centroid_row','centroid_col'});
-            end
-            trackID = unique(obj.track_database.trackID);
-            obj.track_logical = false(max(trackID),1);
-            obj.track_makecell = zeros(max(trackID),1);
-            obj.track_logical(trackID) = true;
-            obj.find_pointer_next_track;
-            if ~exist(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'file')
+            if ~exist(fullfile(obj.viewer.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)),'file')
                 warning('makecell:nofile','The makecell file does not exist for position %d.',obj.positionIndex);
                 obj.makecell_logical = false;
                 obj.makecell_order = cell(1,1);
@@ -138,7 +123,7 @@ classdef p53CinemaManual_makecell < handle
             else
                 %%
                 %
-                json = fileread(fullfile(obj.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
+                json = fileread(fullfile(obj.viewer.moviePath,'MAKECELL_DATA',sprintf('makeCellPosition_%d.txt',obj.positionIndex)));
                 data = parse_json(json);
                 data = data{1}; %the data struct comes wrapped in a cell.
                 obj.positionIndex = data.positionIndex;
@@ -192,19 +177,6 @@ classdef p53CinemaManual_makecell < handle
                 else
                     obj.makecell_apoptosisEnd = data.makecell_apoptosisEnd;
                 end
-                if iscell(data.track_logical)
-                    obj.track_logical = logical(cell2mat(data.track_logical));
-                else
-                    obj.track_logical = logical(data.track_logical);
-                end
-                if iscell(data.track_makecell)
-                    obj.track_makecell = cell2mat(data.track_makecell);
-                else
-                    obj.track_makecell = data.track_makecell;
-                end
-                obj.pointer_track = data.pointer_track;
-                obj.pointer_track2 = data.pointer_track2;
-                obj.pointer_next_track = data.pointer_next_track;
                 obj.pointer_makecell = data.pointer_makecell;
                 obj.pointer_makecell2 = data.pointer_makecell2;
                 obj.pointer_makecell3 = data.pointer_makecell3;
